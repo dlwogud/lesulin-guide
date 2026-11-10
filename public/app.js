@@ -386,9 +386,14 @@ function openFav() {
   if (!$("favWrap")) return;
   renderFavGrid(); $("favWrap").hidden = false;
 }
-function closeFav() {
+/* record=true 일 때만 "물어봤다"고 기록합니다.
+   바깥을 클릭하거나 Esc 로 닫은 것은 고른 게 아니므로 다음에 다시 묻습니다.
+   전에는 어느 쪽이든 기록해서, 실수로 바깥을 한 번 누르면
+   그 뒤로 영원히 안 뜨었습니다. */
+function closeFav(record) {
   if ($("favWrap")) $("favWrap").hidden = true;
-  saveFav(); syncFavBtn(); renderCres(); refresh(false);
+  if (record) saveFav();
+  syncFavBtn(); renderCres(); refresh(false);
 }
 function syncFavBtn() {
   if ($("favEdit")) $("favEdit").textContent =
@@ -537,13 +542,14 @@ function wire() {
   $("zFit").onclick = () => drawPins(true);
   /* 요소 하나가 없어도 나머지 배선이 멈추지 않게 둡니다 */
   if ($("favEdit")) $("favEdit").onclick = openFav;
-  if ($("favGo"))   $("favGo").onclick   = closeFav;
-  if ($("favSkip")) $("favSkip").onclick = () => { fav.clear(); closeFav(); };
+  if ($("favGo"))   $("favGo").onclick   = () => closeFav(true);
+  if ($("favSkip")) $("favSkip").onclick = () => { fav.clear(); closeFav(true); };
   if ($("favReset")) $("favReset").onclick = () => { fav.clear(); renderFavGrid(); };
   if ($("favClear")) $("favClear").onclick = clearFav;
-  if ($("favWrap")) $("favWrap").onclick = e => { if (e.target.id === "favWrap") closeFav(); };
+  // 바깥 클릭은 기록하지 않습니다 — 다음에 다시 묻습니다
+  if ($("favWrap")) $("favWrap").onclick = e => { if (e.target.id === "favWrap") closeFav(false); };
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && !$("favWrap").hidden) closeFav();
+    if (e.key === "Escape" && !$("favWrap").hidden) closeFav(false);
   });
 }
 
@@ -957,8 +963,8 @@ function instrument() {
   window.__cre = id => { track("creator_pick", { creatorId: id }); return _cre(id); };
 
   const _closeFav = closeFav;
-  closeFav = function () {
-    if (fav.size) track("fav_set", { q: [...fav].join(",") });
+  closeFav = function (record) {
+    if (record && fav.size) track("fav_set", { q: [...fav].join(",") });
     return _closeFav.apply(this, arguments);
   };
 
