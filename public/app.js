@@ -790,14 +790,20 @@ window.__reply = async id => {
 };
 
 /* ── 올리기 ─────────────────────────────────────────────── */
-function pollTagText() {
-  if (pollTarget) return `📍 ${pollTarget.n} 에 대해 — 좋아요·싫어요가 달립니다`;
-  if (myLoc) return `📍 ${myLoc.label} 근처로 올라갑니다`;
-  return "위치 없이 올라갑니다 (지도를 움직이면 그 자리 기준)";
+function pollTagHTML() {
+  if (pollTarget) return `📍 <b>${esc(pollTarget.n)}</b> 에 대해 — 좋아요·싫어요가 달립니다`;
+  if (gpsState === "asking") return "📍 현재 위치를 확인하는 중…";
+  const sw = `<button class="locsw" onclick="window.__loctoggle()">`;
+  if (myLoc && myLoc.src === "gps")
+    return `📍 <b>${esc(myLoc.label)}</b> (현재 위치) ${sw}지도 중심으로</button>`;
+  const why = gpsState === "denied" ? "위치 권한이 거부돼 " : gpsState === "unavailable" ? "위치를 못 받아 " : "";
+  if (myLoc)
+    return `📍 ${why}<b>${esc(myLoc.label)}</b> (지도 중심) ${sw}현재 위치 쓰기</button>`;
+  return `위치 없이 올라갑니다 ${sw}현재 위치 쓰기</button>`;
 }
 function syncForm() {
   const t = $("pollText"); if (!t) return;
-  $("pollTag").textContent = pollTagText();
+  $("pollTag").innerHTML = pollTagHTML();
   $("pollSend").disabled = t.value.trim().length < 2;
 }
 
@@ -824,26 +830,66 @@ async function sendPoll() {
   syncForm();
 }
 
-/* 위치는 지도 중심을 씁니다 — 브라우저 위치 권한을 묻지 않아도
-   "내가 지금 보고 있는 동네"가 사실 더 맞습니다. 권한을 준 경우엔 그걸 씁니다. */
+/* ── 글을 올릴 위치 ────────────────────────────────────────
+   "주변 맛집 아시는 분" 같은 질문은 **글쓴 사람이 서 있는 자리**가 기준이어야
+   합니다. 서울에 있으면서 부산 지도를 보고 있으면 지도 중심은 틀린 답입니다.
+   그래서 현재 위치를 먼저 쓰고, 권한을 안 주거나 실패하면 지도 중심으로 돌아갑니다.
+   정확한 좌표는 보내지 않습니다 — 서버가 가장 가까운 식당의 시군구만 저장합니다. */
+let locMode = "gps";             // gps | map
+let gpsState = "idle";           // idle | asking | ok | denied | unavailable
+
+function nearestRegion(lat, lng) {
+  const near = stores.reduce((b, s) => {
+    const d = (s.lat - lat) ** 2 + (s.lng - lng) ** 2;
+    return !b || d < b.d ? { d, s } : b;
+  }, null);
+  return near ? shortRegion(near.s.r) : null;
+}
+
 function locFromMap() {
   if (!kmap) return;
   const c = kmap.getCenter();
-  myLoc = { lat: c.getLat(), lng: c.getLng(), label: "지도 중심" };
-  const near = stores.reduce((b, s) => {
-    const d = (s.lat - myLoc.lat) ** 2 + (s.lng - myLoc.lng) ** 2;
-    return !b || d < b.d ? { d, s } : b;
-  }, null);
-  if (near) myLoc.label = shortRegion(near.s.r);
+  myLoc = { lat: c.getLat(), lng: c.getLng(),
+            label: nearestRegion(c.getLat(), c.getLng()) || "지도 중심", src: "map" };
   syncForm();
 }
+
+function locFromGPS() {
+  if (!navigator.geolocation) { gpsState = "unavailable"; locMode = "map"; locFromMap(); return; }
+  gpsState = "asking"; syncForm();
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      /* 국내 범위를 벗어나면 쓰지 않습니다 — VPN·오차로 엉뚱한 좌표가 올 수 있습니다 */
+      if (!(lat > 33 && lat < 39 && lng > 124 && lng < 132)) {
+        gpsState = "unavailable"; locMode = "map"; locFromMap(); return;
+      }
+      gpsState = "ok"; locMode = "gps";
+      myLoc = { lat, lng, label: nearestRegion(lat, lng) || "현재 위치", src: "gps" };
+      syncForm();
+    },
+    err => {
+      gpsState = err.code === err.PERMISSION_DENIED ? "denied" : "unavailable";
+      locMode = "map"; locFromMap();
+    },
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+  );
+}
+
+window.__loctoggle = () => {
+  if (locMode === "gps") { locMode = "map"; locFromMap(); }
+  else if (gpsState === "ok") { locMode = "gps"; syncForm(); locFromGPS(); }
+  else locFromGPS();
+};
 
 function openPolls() {
   if (!$("pollWrap")) return;
   pollOn = true; $("pollWrap").hidden = false;
   document.body.classList.add("pollopen");
   $("bell")?.classList.add("open");
-  locFromMap(); renderPolls(); markSeen();
+  locFromMap();                              // 먼저 지도 중심으로 채워 두고
+  if (locMode === "gps" && gpsState === "idle") locFromGPS();   // 현재 위치를 물어봅니다
+  renderPolls(); markSeen();
 }
 function closePolls() {
   pollOn = false;
