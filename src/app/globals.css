@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* ── 르슐랭 디자인 토큰 ──
+   지도가 주인공이다. UI는 지도 위에서 물러선다. */
+:root{
+  --bg:#FFFFFF;
+  --surface:#FFFFFF;
+  --surface-2:#F6F7F5;
+  --ink:#16181A;
+  --ink-2:#5A6066;
+  --ink-3:#8E959B;
+  --line:#E6E8E6;
+  --line-2:#D3D7D3;
+  --accent:#5B7F3A;          /* 절제된 라임-올리브 */
+  --accent-ink:#41602A;
+  --accent-soft:#EDF2E6;
+  --on-accent:#FFFFFF;
+  --good:#2F7D4F; --warn:#9A6B14; --bad:#A33B2E;
+  --shadow-sm:0 1px 2px rgba(22,24,26,.06);
+  --shadow-md:0 2px 8px rgba(22,24,26,.08), 0 1px 2px rgba(22,24,26,.06);
+  --shadow-lg:0 8px 28px rgba(22,24,26,.12);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121413; --surface:#1A1D1B; --surface-2:#222624;
+    --ink:#ECEFEC; --ink-2:#A8AFA9; --ink-3:#7B827D;
+    --line:#2A2E2B; --line-2:#3A3F3B;
+    --accent:#9CC46B; --accent-ink:#B5D88A; --accent-soft:#1E2A16;
+    --on-accent:#13200B;
+    --good:#6FC48C; --warn:#D7A64A; --bad:#E0796A;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 2px 8px rgba(0,0,0,.5);
+    --shadow-lg:0 8px 28px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121413; --surface:#1A1D1B; --surface-2:#222624;
+  --ink:#ECEFEC; --ink-2:#A8AFA9; --ink-3:#7B827D;
+  --line:#2A2E2B; --line-2:#3A3F3B;
+  --accent:#9CC46B; --accent-ink:#B5D88A; --accent-soft:#1E2A16;
+  --on-accent:#13200B;
+  --good:#6FC48C; --warn:#D7A64A; --bad:#E0796A;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,
+    "Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.num{font-variant-numeric:tabular-nums}
+.truncate-1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

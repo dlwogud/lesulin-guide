@@ -1,0 +1,431 @@
+"use strict";
+/* 르슐랭 가이드 — 카카오맵 위에 올린 버전.
+   아티팩트(claude.ai)에서는 CSP가 dapi.kakao.com 스크립트와 daumcdn 타일을 막아
+   이 화면이 뜨지 않습니다. 로컬(또는 도메인 등록한 호스트)에서만 동작합니다. */
+
+const $ = id => document.getElementById(id);
+let SEED, stores, creators, CRE, META;
+let q = "", picked = new Set(), region = null, cat = null, selected = null;
+let onlyRated = false, onlyWait = false, minViews = 0, minEv = 0, sort = "ev";
+let kmap = null, overlays = [], lastPinch = 0;
+
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const nfm = n => n.toLocaleString("ko-KR");
+const views = n => n >= 10000 ? (n/10000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/,"") + "만회"
+                 : n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,"") + "천회" : n + "회";
+const dateK = d => d.replace(/-/g, ".");
+const chImg = id => `img/ch/${id}.jpg`;
+const vdImg = id => `img/vid/${id}.jpg`;
+const YT = id => "https://www.youtube.com/watch?v=" + id;
+const topVid = s => s.vids[0];
+const rated = s => s.status === "RATED";
+const stem = s => s.replace(/(특별자치도|특별자치시|특별시|광역시|도)$/, "");
+const shortRegion = r => {
+  const [a, ...b] = r.split(" ");
+  const h = stem(a).replace(/^(전라|경상|충청)(남|북)?$/, (m,p,d) => p[0] + (d||""));
+  return b.length ? h + " " + b.join(" ") : h;
+};
+const LVL = { 1:"들러볼 곳", 2:"우회해도 갈 곳", 3:"이곳을 위해" };
+const ASPECT_LABEL = { "대기":"대기 없음" };
+/* 조회수 슬라이더: 1천~1000만을 로그로 펼칩니다 */
+const sliderToViews = v => v <= 0 ? 0 : Math.round(1000 * Math.pow(10, (v/100) * 4));
+
+/* ══ 필터 ══ */
+function filtered() {
+  const t = q.trim().toLowerCase();
+  const out = stores.filter(s => {
+    if (onlyRated && !rated(s)) return false;
+    if (onlyWait && !(s.waitN >= 3)) return false;
+    if (picked.size && !s.cs.some(c => picked.has(c))) return false;
+    if (region && s.r !== region) return false;
+    if (cat && s.cat !== cat) return false;
+    if (minEv && (s.cUsed || 0) < minEv) return false;
+    if (minViews && Math.max(0, ...s.vids.map(v => v.vw || 0)) < minViews) return false;
+    if (t) {
+      const hay = s.n + " " + s.addr + " " + s.r + " " + s.cat + " "
+        + s.cs.map(i => CRE.get(i).n).join(" ") + " " + s.vids.map(v => v.t).join(" ");
+      if (!hay.toLowerCase().includes(t)) return false;
+    }
+    return true;
+  });
+  const by = {
+    ev:     (a,b) => b.cUsed - a.cUsed || b.cVisit - a.cVisit,
+    neg:    (a,b) => (b.negN ?? -1) - (a.negN ?? -1) || b.cUsed - a.cUsed,
+    wait:   (a,b) => (b.waitN ?? -1) - (a.waitN ?? -1) || b.cUsed - a.cUsed,
+    views:  (a,b) => (topVid(b)?.vw||0) - (topVid(a)?.vw||0),
+    recent: (a,b) => (topVid(b)?.at||"").localeCompare(topVid(a)?.at||""),
+    name:   (a,b) => a.n.localeCompare(b.n, "ko"),
+  }[sort];
+  return out.sort(by);
+}
+
+/* ══ 카카오맵 ══ */
+function initMap() {
+  kmap = new kakao.maps.Map($("kmap"), {
+    center: new kakao.maps.LatLng(36.5, 127.8), level: 13,
+  });
+  /* 카카오 클러스터러 대신 직접 묶습니다. 기본 마커를 숨기고 프로필 핀만 남기려면
+     그 편이 깔끔하고, 화면 거리 기준이라 줌에 따라 자연스럽게 풀립니다. */
+  kakao.maps.event.addListener(kmap, "idle", () => drawPins());
+
+  /* 맥 트랙패드 핀치는 ctrlKey 가 붙은 wheel 로 들어옵니다.
+     카카오 지도는 이걸 안 받아서, 막지 않으면 브라우저가 페이지 전체를 확대·축소합니다.
+     커서 위치를 기준점으로 삼아 지도 줌으로 돌려 줍니다. */
+  $("kmap").addEventListener("wheel", e => {
+    if (!e.ctrlKey) return;                  // 일반 휠은 카카오가 알아서 처리
+    e.preventDefault();
+    const now = Date.now();
+    if (now - lastPinch < 90) return;        // 핀치는 이벤트가 촘촘해 그대로 쓰면 너무 빨리 튑니다
+    lastPinch = now;
+    const r = $("kmap").getBoundingClientRect();
+    const anchor = kmap.getProjection().coordsFromContainerPoint(
+      new kakao.maps.Point(e.clientX - r.left, e.clientY - r.top));
+    const next = Math.min(14, Math.max(1, kmap.getLevel() + (e.deltaY > 0 ? 1 : -1)));
+    kmap.setLevel(next, { anchor, animate: false });
+  }, { passive: false });
+
+  drawPins(true);
+}
+
+const CLUSTER_PX = 44;
+
+function drawPins(fit) {
+  if (!kmap) return;
+  overlays.forEach(o => o.setMap(null));
+  overlays = [];
+  const list = filtered();
+
+  if (fit && list.length) {
+    const b = new kakao.maps.LatLngBounds();
+    for (const s of list) b.extend(new kakao.maps.LatLng(s.lat, s.lng));
+    kmap.setBounds(b, 60, 60, 60, 60);
+  }
+
+  const proj = kmap.getProjection();
+  const pt = s => proj.containerPointFromCoords(new kakao.maps.LatLng(s.lat, s.lng));
+  const groups = [];
+  for (const s of list) {
+    if (s.id === selected) { groups.push({ items: [s], p: pt(s), fixed: true }); continue; }
+    const p = pt(s);
+    const hit = groups.find(g => !g.fixed && Math.hypot(g.p.x - p.x, g.p.y - p.y) < CLUSTER_PX);
+    if (hit) {
+      hit.items.push(s);
+      const n = hit.items.length;
+      hit.p = { x: (hit.p.x * (n - 1) + p.x) / n, y: (hit.p.y * (n - 1) + p.y) / n };
+    } else groups.push({ items: [s], p });
+  }
+
+  const W = $("kmap").clientWidth, H = $("kmap").clientHeight;
+  for (const g of groups) {
+    if (g.p.x < -80 || g.p.x > W + 80 || g.p.y < -80 || g.p.y > H + 80) continue;
+    const pos = proj.coordsFromContainerPoint(new kakao.maps.Point(g.p.x, g.p.y));
+    const box = document.createElement("div");
+    if (g.items.length > 1) {
+      const r = 16 + Math.min(g.items.length, 10);
+      // 그 묶음에서 가장 많은 채널의 얼굴을 얹습니다
+      const tally = {};
+      for (const s of g.items) for (const c of s.cs) tally[c] = (tally[c] || 0) + 1;
+      const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
+      box.className = "kcluster";
+      box.style.cssText = `width:${r * 2}px;height:${r * 2}px`;
+      box.innerHTML = `<img src="${chImg(top)}" alt="">
+        <span class="n" style="font-size:${Math.max(10, r * .6).toFixed(1)}px">${g.items.length}</span>`;
+      box.onclick = () => {
+        const b = new kakao.maps.LatLngBounds();
+        for (const s of g.items) b.extend(new kakao.maps.LatLng(s.lat, s.lng));
+        kmap.setBounds(b, 80, 80, 80, 80);
+      };
+      overlays.push(new kakao.maps.CustomOverlay({ position: pos, content: box, clickable: true, zIndex: 2 }));
+    } else {
+      const s = g.items[0], on = s.id === selected, cr = CRE.get(s.cs[0]);
+      box.className = "pinbox" + (on ? " sel" : "");
+      box.innerHTML = `<img src="${chImg(cr.id)}" alt="${esc(cr.n)}">
+        ${s.lvl ? `<span class="lv">${"◆".repeat(s.lvl)}</span>` : ""}
+        <span class="tail"></span>
+        ${on ? `<span class="nm">${esc(s.n)}</span>` : ""}`;
+      box.onclick = e => { e.stopPropagation(); select(s.id); };
+      overlays.push(new kakao.maps.CustomOverlay({ position: pos, content: box, yAnchor: 1,
+                                                   clickable: true, zIndex: on ? 10 : 3 }));
+    }
+  }
+  overlays.forEach(o => o.setMap(kmap));
+}
+
+/* ══ 우측 ══ */
+/* 결과 카드를 한 번에 514개 그리면 DOM이 1만 개가 되어 지도까지 버벅입니다.
+   보이는 만큼만 그리고, 아래로 내려가면 이어 붙입니다. */
+const PAGE = 24;
+let listCache = [], listShown = 0;
+
+function cardHTML(s, i) {
+  const v = topVid(s), cr = CRE.get(s.cs[0]);
+  const more = s.cs.length > 1 ? ` 외 ${s.cs.length - 1}` : "";
+  return `<button class="rcard" onclick="window.__sel('${s.id}')">
+    <span class="img">
+      ${v ? `<img src="${vdImg(v.id)}" alt="" loading="lazy" decoding="async" width="240" height="135">` : ""}
+      ${s.lvl ? `<span class="lvchip">${"◆".repeat(s.lvl)} ${LVL[s.lvl]}</span>` : `<span class="rk">${i + 1}</span>`}
+      <span class="ytstack"><img src="${chImg(cr.id)}" alt="" width="18" height="18">${esc(cr.h)}${more}</span>
+      ${v && v.dur ? `<span class="durchip">${v.dur}</span>` : ""}
+    </span>
+    <span class="rmeta"><h5 class="t1">${esc(s.n)}</h5>
+      <span class="rsub"><span>${esc(shortRegion(s.r))}</span>
+      ${s.cat ? `<i class="dot"></i><span>${esc(s.cat)}</span>` : ""}
+      ${v ? `<i class="dot"></i><span>${views(v.vw)}</span>` : ""}
+      <i class="dot"></i>
+      ${rated(s) ? `<span class="ev">반응 ${s.cUsed}</span>${s.negN ? `<i class="dot"></i><span class="ng">쓴소리 ${s.negN}</span>` : ""}${s.waitN >= 3 ? `<i class="dot"></i><span class="wt">줄 ${s.waitN}</span>` : ""}`
+                 : `<span>방문댓글 ${s.cVisit}</span>`}
+    </span></span></button>`;
+}
+
+function appendCards() {
+  const box = $("results"); if (!box) return;
+  const next = listCache.slice(listShown, listShown + PAGE);
+  if (!next.length) return;
+  box.insertAdjacentHTML("beforeend", next.map((s, k) => cardHTML(s, listShown + k)).join(""));
+  listShown += next.length;
+}
+
+function renderResults() {
+  listCache = filtered(); listShown = 0;
+  $("panel").innerHTML = `
+    <div class="panel-h"><b>${nfm(listCache.length)}<i>곳</i></b>
+      <select id="sort">
+        <option value="ev">방문 반응 많은 순</option>
+        <option value="neg">쓴소리 많은 순</option>
+        <option value="wait">줄 서는 집 순</option>
+        <option value="views">조회수 많은 순</option>
+        <option value="recent">최근 영상 순</option>
+        <option value="name">이름순</option>
+      </select></div>
+    <div class="results" id="results">${listCache.length ? "" :
+      `<p class="empty">조건에 맞는 식당이 없습니다.<br>필터를 풀어 보세요.</p>`}</div>`;
+  $("sort").value = sort;
+  $("sort").onchange = e => { sort = e.target.value; renderResults(); };
+  const box = $("results");
+  box.onscroll = () => {
+    if (box.scrollTop + box.clientHeight > box.scrollHeight - 400) appendCards();
+  };
+  appendCards();
+}
+
+function renderDetail(s) {
+  const hero = topVid(s);
+  const vids = s.vids.map(v => {
+    const c = CRE.get(v.c);
+    return `<a class="vid" href="${YT(v.id)}" target="_blank" rel="noreferrer">
+      <span class="vthumb"><img src="${vdImg(v.id)}" alt="" loading="lazy"><span class="play">▶</span>
+        ${v.dur ? `<span class="dur">${v.dur}</span>` : ""}</span>
+      <span class="vinfo"><span class="vt t2">${esc(v.t)}</span>
+        <span class="vc"><img src="${chImg(c.id)}" alt="">${esc(c.n)}</span>
+        <span class="vm">${views(v.vw)} · ${dateK(v.at)}</span></span></a>`;
+  }).join("");
+  const body = rated(s) ? `
+    <div class="blk"><p class="blk-t">방문자 반응 · 댓글 ${nfm(s.cUsed)}건 집계</p>
+      <div class="aspects">${s.aspects.map(a => `<div class="asp">
+        <span class="an">${ASPECT_LABEL[a.a] || a.a}</span>
+        <span class="bar"><i class="p" style="width:${a.p}%"></i><i class="n" style="width:${100-a.p}%"></i></span>
+        <span class="av">${a.p}% · ${a.n}건</span></div>`).join("")}</div>
+      <p class="caveat">유튜브 댓글은 칭찬에 쏠려 있습니다 — 맛 항목 전체 96.2% 긍정.
+        <b>반응의 양과 쓴소리</b>를 보세요.${s.waitN ? ` “대기 없음”이 낮을수록 줄을 섰다는 뜻입니다 — 이 집은 ${s.waitN}명이 기다렸다고 적었습니다.` : ""}</p>
+      ${["pos","neg"].map(k => s.quotes[k] ? `<div class="quote">${esc(s.quotes[k].x)}
+        <span class="qm"><span>유튜브 댓글</span><span>${dateK(s.quotes[k].at)}</span>${s.quotes[k].like ? `<span>좋아요 ${nfm(s.quotes[k].like)}</span>` : ""}</span></div>` : "").join("")}
+    </div>`
+    : `<div class="blk"><p class="blk-t">방문자 반응</p>
+       <p class="note">아직 점수를 내지 않았습니다. 댓글 ${nfm(s.cTotal)}개 중 방문 경험을 밝힌 것이 ${s.cVisit}개라
+       ${s.cVisit >= 5 ? "항목이 잡히지 않았습니다" : "최소 근거(5개)에 못 미칩니다"}. 근거가 모자라면 비워 둡니다.</p></div>`;
+
+  const kakaoTo = `https://map.kakao.com/link/to/${encodeURIComponent(s.n)},${s.lat},${s.lng}`;
+  $("panel").innerHTML = `
+    <div class="det">
+      <div class="det-hero">${hero ? `<img src="${vdImg(hero.id)}" alt="">` : ""}
+        <button class="det-back" onclick="window.__close()">&larr;</button>
+        ${hero ? `<a class="det-play" href="${YT(hero.id)}" target="_blank" rel="noreferrer">▶</a>
+          ${hero.dur ? `<span class="det-dur">${hero.dur}</span>` : ""}` : ""}</div>
+      <div class="det-b">
+        <div class="det-title">
+          <div class="badges">
+            ${s.lvl ? `<span class="bdg c">${"◆".repeat(s.lvl)} ${LVL[s.lvl]}</span>` : ""}
+            ${rated(s) ? `<span class="bdg t">방문 반응 ${s.cUsed}</span>` : `<span class="bdg n">근거 부족</span>`}
+            ${s.waitN >= 3 ? `<span class="bdg w">줄 서는 집</span>` : ""}
+            ${s.cat ? `<span class="bdg n">${esc(s.cat)}</span>` : ""}
+          </div>
+          <h3>${esc(s.n)}</h3><p class="addr">${esc(s.addr || shortRegion(s.r))}</p>
+        </div>
+        <div class="blk"><p class="blk-t">소개한 영상 ${s.vids.length}편</p>${vids}</div>
+        <div class="blk"><p class="blk-t">수집된 댓글</p>
+          <dl class="kv">
+            <div><dt>전체</dt><dd>${nfm(s.cTotal)}</dd></div>
+            <div><dt>방문 명시</dt><dd>${nfm(s.cVisit)}</dd></div>
+            <div><dt>집계됨</dt><dd>${nfm(s.cUsed)}</dd></div>
+          </dl></div>
+        ${body}
+      </div>
+      <div class="acts">
+        <a class="pri" href="${kakaoTo}" target="_blank" rel="noreferrer">카카오맵 길찾기</a>
+      </div></div>`;
+}
+
+function select(id) {
+  const s = stores.find(v => v.id === id); if (!s) return;
+  selected = id; renderDetail(s);
+  if (kmap) { kmap.setLevel(4); kmap.panTo(new kakao.maps.LatLng(s.lat, s.lng)); drawPins(); }
+}
+window.__sel = select;
+window.__close = () => { selected = null; renderResults(); drawPins(); };
+
+/* ══ 좌측 ══ */
+function renderChips() {
+  const m = new Map();
+  for (const s of stores) m.set(s.r, (m.get(s.r)||0) + 1);
+  const rs = [...m].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0],"ko"));
+  $("regHint").textContent = `${m.size}개 시군구`;
+  $("regList").innerHTML = rs.map(([r,n]) => `<button class="chip${region===r?" on":""}"
+    onclick="window.__reg('${r}')">${esc(shortRegion(r))}<span class="c">${n}</span></button>`).join("");
+  $("regLabel").textContent = region ? shortRegion(region) : "지역";
+  $("regToggle").classList.toggle("on", !!region);
+}
+function regOpen(v) {
+  $("regPop").hidden = !v;
+  $("regToggle").setAttribute("aria-expanded", String(v));
+  if (v) { const on = $("regList").querySelector(".chip.on"); if (on) on.scrollIntoView({ block:"nearest" }); }
+}
+function renderCres() {
+  $("cres").innerHTML = creators.map(c => {
+    const n = stores.filter(s => s.cs.includes(c.id)).length, on = picked.has(c.id);
+    return `<button class="ytrow${on?" on":""}" onclick="window.__cre('${c.id}')" aria-pressed="${on}">
+      <img src="${chImg(c.id)}" alt="">
+      <span class="nm"><b class="t1">${esc(c.n)}</b><span class="t1">${esc(c.handle||"")}</span></span>
+      <span class="cnt">${n}</span><span class="chk">✓</span></button>`;
+  }).join("");
+  $("creHint").textContent = picked.size ? `${picked.size}개 선택` : `${creators.length}개 채널`;
+}
+function renderFeed() {
+  const vs = [];
+  for (const s of filtered()) for (const v of s.vids) vs.push({ ...v, s });
+  vs.sort((a,b) => b.at.localeCompare(a.at));
+  const seen = new Set(), top = [];
+  for (const v of vs) { if (seen.has(v.id)) continue; seen.add(v.id); top.push(v); if (top.length >= 30) break; }
+  $("feedCnt").textContent = `${nfm(seen.size)}편`;
+  $("feed").innerHTML = top.map(v => `<button class="fitem" onclick="window.__sel('${v.s.id}')">
+    <img src="${vdImg(v.id)}" alt="" loading="lazy">
+    <span class="ft"><b class="t2">${esc(v.t)}</b><span>${views(v.vw)} · ${dateK(v.at)}</span></span></button>`).join("")
+    || `<p class="empty" style="padding:18px 0">표시할 영상이 없습니다</p>`;
+}
+function renderCats() {
+  const m = new Map();
+  for (const s of stores) if (s.cat) m.set(s.cat, (m.get(s.cat)||0) + 1);
+  const cs = [...m].sort((a,b) => b[1]-a[1]).slice(0, 12);
+  $("catHint").textContent = `${m.size}종`;
+  $("cats").innerHTML = cs.map(([c,n]) => `<button class="chip${cat===c?" on":""}"
+    onclick="window.__cat('${c}')">${esc(c)}<span class="c">${n}</span></button>`).join("");
+}
+function renderHist() {
+  const buckets = new Array(22).fill(0);
+  for (const s of stores) {
+    const v = Math.max(0, ...s.vids.map(x => x.vw || 0));
+    if (v < 1000) continue;
+    const i = Math.min(21, Math.floor((Math.log10(v/1000)/4) * 22));
+    buckets[i]++;
+  }
+  const mx = Math.max(...buckets, 1), onFrom = Math.floor((minViews > 0 ? (Math.log10(minViews/1000)/4) : 0) * 22);
+  $("vwHist").innerHTML = buckets.map((b,i) =>
+    `<i class="${i >= onFrom ? "on" : ""}" style="height:${Math.max(2, Math.round(b/mx*22))}px"></i>`).join("");
+}
+window.__cre = id => { picked.has(id) ? picked.delete(id) : picked.add(id); selected = null; refresh(true); };
+window.__reg = r => { region = region === r ? null : r; selected = null; regOpen(false); refresh(true); };
+window.__cat = c => { cat = cat === c ? null : c; selected = null; refresh(true); };
+
+function refresh(fit) {
+  renderChips(); renderCres(); renderFeed(); renderCats(); renderHist();
+  const list = filtered();
+  $("tbStores").textContent = nfm(list.length);
+  $("tbVids").textContent = nfm(new Set(list.flatMap(s => s.vids.map(v => v.id))).size);
+  $("tbCmt").textContent = nfm(list.reduce((a,s) => a + s.cTotal, 0));
+  $("vwLab").textContent = minViews ? views(minViews) + " 이상" : "전체";
+  $("evLab").textContent = minEv ? minEv + "건 이상" : "전체";
+  if (selected && list.some(s => s.id === selected)) renderDetail(stores.find(s => s.id === selected));
+  else { selected = null; renderResults(); }
+  if (kmap) drawPins(fit);
+  const t = $("toast");
+  if (!list.length) { t.hidden = false; t.textContent = "조건에 맞는 식당이 없습니다"; } else t.hidden = true;
+}
+
+/* ══ 검색 ══ */
+let acTimer;
+function suggest() {
+  const t = q.trim().toLowerCase();
+  if (!t) { $("ac").hidden = true; return; }
+  const cs = creators.filter(c => (c.n + c.h).toLowerCase().includes(t)).slice(0, 4);
+  const rm = new Map(); for (const s of stores) rm.set(s.r, (rm.get(s.r)||0) + 1);
+  const rs = [...rm].filter(([r]) => (r + shortRegion(r)).toLowerCase().includes(t)).slice(0, 5);
+  const ss = filtered().slice(0, 6);
+  if (!cs.length && !rs.length && !ss.length) {
+    $("ac").innerHTML = `<p class="empty">검색 결과가 없습니다</p>`; $("ac").hidden = false; return;
+  }
+  const grp = (l, items) => items.length ? `<div class="g"><p class="gl">${l}</p>${items.join("")}</div>` : "";
+  $("ac").innerHTML =
+    grp("유튜버", cs.map(c => `<button onclick="window.__pick('c','${c.id}')">
+      <img src="${chImg(c.id)}" style="width:20px;height:20px;border-radius:50%"><span class="m">${esc(c.n)}</span>
+      <span class="s">${stores.filter(s => s.cs.includes(c.id)).length}곳</span></button>`)) +
+    grp("지역", rs.map(([r,n]) => `<button onclick="window.__pick('r','${r}')">
+      <span class="m">${esc(shortRegion(r))}</span><span class="s">${n}곳</span></button>`)) +
+    grp("식당", ss.map(s => `<button onclick="window.__pick('s','${s.id}')">
+      <span class="m t1">${esc(s.n)}</span><span class="s">${esc(shortRegion(s.r))}</span></button>`));
+  $("ac").hidden = false;
+}
+window.__pick = (k, v) => {
+  q = ""; $("q").value = ""; $("clr").hidden = true; $("ac").hidden = true;
+  if (k === "c") { picked = new Set([v]); selected = null; refresh(true); }
+  else if (k === "r") { region = v; selected = null; refresh(true); }
+  else { refresh(false); select(v); }
+};
+
+/* ══ 시작 ══ */
+function wire() {
+  $("q").addEventListener("input", e => {
+    q = e.target.value; $("clr").hidden = !q;
+    clearTimeout(acTimer); acTimer = setTimeout(() => { suggest(); refresh(false); }, 150);
+  });
+  $("clr").onclick = () => { q = ""; $("q").value = ""; $("clr").hidden = true; $("ac").hidden = true; refresh(true); };
+  document.addEventListener("pointerdown", e => { if (!e.target.closest(".srch")) $("ac").hidden = true; });
+  $("regToggle").onclick = () => regOpen($("regPop").hidden);
+  $("regClear").onclick = () => { region = null; selected = null; regOpen(false); refresh(true); };
+  document.addEventListener("pointerdown", e => { if (!e.target.closest(".regbtn")) regOpen(false); });
+  addEventListener("keydown", e => { if (e.key === "Escape") regOpen(false); });
+  $("onlyRated").onclick = () => { onlyRated = !onlyRated; $("onlyRated").setAttribute("aria-pressed", onlyRated); selected = null; refresh(true); };
+  $("onlyWait").onclick = () => { onlyWait = !onlyWait; $("onlyWait").setAttribute("aria-pressed", onlyWait); selected = null; refresh(true); };
+  $("vwMin").oninput = e => { minViews = sliderToViews(+e.target.value); refresh(false); };
+  $("evMin").oninput = e => { minEv = +e.target.value; refresh(false); };
+  $("resetF").onclick = () => {
+    picked.clear(); region = null; cat = null; onlyRated = onlyWait = false; minViews = minEv = 0;
+    $("vwMin").value = 0; $("evMin").value = 0;
+    $("onlyRated").setAttribute("aria-pressed", "false"); $("onlyWait").setAttribute("aria-pressed", "false");
+    selected = null; refresh(true);
+  };
+  $("zIn").onclick = () => kmap && kmap.setLevel(kmap.getLevel() - 1);
+  $("zOut").onclick = () => kmap && kmap.setLevel(kmap.getLevel() + 1);
+  $("zFit").onclick = () => drawPins(true);
+}
+
+function mapFailed(msg) {
+  $("mapmsg").hidden = false;
+  $("mapmsgBody").innerHTML = msg;
+}
+
+(async function boot() {
+  SEED = await (await fetch("data/seed.json")).json();
+  stores = SEED.stores; creators = SEED.creators; META = SEED.meta;
+  CRE = new Map(creators.map(c => [c.id, c]));
+  wire(); refresh(false);
+
+  const key = window.__MAPKEY__;
+  if (!key) return mapFailed(
+    "지도 JS 키가 없습니다. 주소 뒤에 <code>?key=발급받은_JavaScript_키</code>를 붙여 다시 여세요.");
+  const sc = document.createElement("script");
+  sc.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false`;
+  sc.onerror = () => mapFailed(
+    "카카오 지도 SDK를 불러오지 못했습니다.<br>" +
+    "카카오 개발자 콘솔 → 앱 설정 → 플랫폼 → Web 에 <code>" + location.origin + "</code> 을 등록했는지 확인하세요.");
+  sc.onload = () => kakao.maps.load(() => { try { initMap(); } catch (e) { mapFailed(String(e)); } });
+  document.head.appendChild(sc);
+})();

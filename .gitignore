@@ -1,0 +1,21 @@
+node_modules
+.next
+.vercel
+.venv
+__pycache__
+*.pyc
+
+# 비밀값 — 절대 올리지 않습니다
+.env
+.env.local
+.env*.local
+
+# 수집 원본·중간 산출물 (용량이 크고 재생성 가능합니다)
+data/raw
+data/*.db
+*.parquet
+data/images.json
+data/golden.json
+
+# 썸네일 1,541장 (약 10MB) — 재수집 가능합니다
+public/img/vid

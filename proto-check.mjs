@@ -1,0 +1,14 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1280, height: 860 } });
+const errs = [];
+p.on('pageerror', e => errs.push('JS: ' + e.message));
+p.on('console', m => { if (m.type() === 'error') errs.push('CONSOLE: ' + m.text()); });
+await p.goto('file:///Users/ijaehyeong/코테/.report-assets/proto.html');
+await p.waitForTimeout(1600);
+console.log(errs.length ? '오류:\n  ' + errs.slice(0,4).join('\n  ') : '오류 없음');
+const pins = await p.locator('#map .pin').count();
+const cnt  = await p.locator('#count').textContent();
+console.log('핀/클러스터:', pins, '· 카운트:', cnt);
+await p.screenshot({ path: 'shots/p-map.png' });
+await b.close();

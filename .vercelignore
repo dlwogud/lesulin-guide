@@ -1,0 +1,7 @@
+.venv
+__pycache__
+data/raw
+labeling
+shots
+*.pptx
+*.zip

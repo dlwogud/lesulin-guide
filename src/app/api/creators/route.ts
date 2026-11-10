@@ -1,0 +1,5 @@
+import { NextResponse } from "next/server";
+import { getCreators } from "@/lib/data";
+export function GET() {
+  return NextResponse.json({ creators: getCreators() });
+}
