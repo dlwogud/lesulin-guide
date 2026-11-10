@@ -556,17 +556,11 @@ async function mapKey() {
   } catch { return ""; }
 }
 
-/* 카카오는 요청의 Referer 로 등록된 도메인인지 봅니다.
-   localhost 는 콘솔에 등록할 수 없어서(등록해도 401) 로컬에서만 리퍼러를 끕니다.
-   배포된 도메인에서는 그대로 보내야 도메인 검사가 작동합니다 —
-   여기서 끄면 링크를 아는 누구나 이 키를 쓸 수 있습니다. */
-function setMapReferrer() {
-  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-  if (!local) return;
-  const m = document.createElement("meta");
-  m.name = "referrer"; m.content = "no-referrer";
-  document.head.appendChild(m);
-}
+/* 리퍼러 우회는 없앴습니다.
+   도메인 등록을 "앱 설정 → 앱 키 → JavaScript 키 → JavaScript SDK 도메인"에
+   하면 localhost 도 정상 등록됩니다. 전에 8가지 변형이 다 401 이었던 것은
+   등록 위치가 틀렸기 때문이었습니다("플랫폼" 페이지가 아닙니다).
+   그래서 로컬·배포 모두 카카오의 도메인 검사를 그대로 받습니다. */
 
 function mapFailed(msg) {
   $("mapmsg").hidden = false;
@@ -604,7 +598,6 @@ function srcLabel(kind) {
   const key = window.__MAPKEY__ || await mapKey();
   if (!key) return mapFailed(
     "지도 JS 키가 없습니다. 주소 뒤에 <code>?key=발급받은_JavaScript_키</code>를 붙여 다시 여세요.");
-  setMapReferrer();                          // 로컬에서만 리퍼러를 끕니다
   const sc = document.createElement("script");
   sc.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false`;
   sc.onerror = () => mapFailed(
