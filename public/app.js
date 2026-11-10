@@ -598,7 +598,11 @@ function srcLabel(kind) {
   CRE = new Map(creators.map(c => [c.id, c]));
   const asked = loadFav();
   wire(); syncFavBtn(); refresh(false);
-  if (!asked) openFav();                     // 첫 방문에만 묻습니다
+  /* 첫 방문에만 묻습니다.
+     ?pick=1 을 붙이면 이미 고른 사람에게도 띄웁니다 —
+     시연에서 "처음 들어온 사용자" 화면을 보여줄 때 씁니다. */
+  const force = new URLSearchParams(location.search).has("pick");
+  if (!asked || force) openFav();
   instrument();                              // 사용 기록을 켭니다 (아래 정의)
 
   const key = window.__MAPKEY__ || await mapKey();
