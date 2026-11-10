@@ -1,3 +1,8 @@
+/* 이 화면은 로그인 쿠키를 봐야 하니 미리 렌더할 수 없습니다.
+   Next 16 의 cacheComponents 는 프리렌더를 기본으로 하므로
+   "요청마다 서버에서 그린다"고 명시합니다. */
+export const instant = false;
+
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { currentAdmin } from "@/lib/auth";

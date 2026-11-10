@@ -19,3 +19,4 @@ data/golden.json
 
 # 썸네일 1,541장 (약 10MB) — 재수집 가능합니다
 public/img/vid
+.env*
