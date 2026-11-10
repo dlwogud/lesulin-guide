@@ -55,6 +55,9 @@ export function readToken(tok: string | undefined): Admin | null {
   return { id: Number(id), role };
 }
 
+/* 주의: 이 함수를 .catch(() => null) 로 감싸지 마세요.
+   Next 는 프리렌더를 중단할 때 예외를 던지는데, 그걸 삼키면 페이지가
+   정적으로 구워져 로그인 없이도 서빙됩니다(실제로 그렇게 새어 나갔습니다). */
 export async function currentAdmin(): Promise<Admin | null> {
   /* 토큰 만료 확인에 Date.now() 를 씁니다. Next 16 의 cacheComponents 는
      프리렌더 중 "값이 바뀌는 것"을 금지하므로, 요청 시점에 실행된다고

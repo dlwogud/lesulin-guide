@@ -14,7 +14,7 @@ import Logout from "./Logout";
    로그인 화면은 /login 에 따로 뒀습니다 — /admin 안에 두면 이 레이아웃이
    로그인 화면에도 걸려서 자기 자신으로 무한히 돌아갑니다. */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const me = await currentAdmin().catch(() => null);
+  const me = await currentAdmin();
   if (!me) redirect("/login");
 
   const tabs = [

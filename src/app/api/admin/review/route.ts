@@ -6,7 +6,7 @@ import { reviewQueue } from "@/lib/admin";
 const ASPECTS = new Set(["맛", "양", "가격", "서비스", "대기", "분위기"]);
 
 export async function GET(req: NextRequest) {
-  const me = await currentAdmin().catch(() => null);
+  const me = await currentAdmin();
   if (!me) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   if (!(await dbReady())) return NextResponse.json({ error: "DB 연결 실패" }, { status: 503 });
   const only = req.nextUrl.searchParams.get("only");
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const me = await currentAdmin().catch(() => null);
+  const me = await currentAdmin();
   if (!me) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;

@@ -8,7 +8,7 @@ const STATUS = new Set(["open", "doing", "done", "rejected"]);
 export async function PATCH(
   req: NextRequest, { params }: { params: Promise<{ id: string }> }
 ) {
-  const me = await currentAdmin().catch(() => null);
+  const me = await currentAdmin();
   if (!me) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   if (!(await dbReady())) return NextResponse.json({ error: "DB 연결 실패" }, { status: 503 });
 

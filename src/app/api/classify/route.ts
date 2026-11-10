@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-    const me = await currentAdmin().catch(() => null);
+    const me = await currentAdmin();
     caller = me ? "admin" : "user";
 
     const texts = Array.isArray(b.texts)
