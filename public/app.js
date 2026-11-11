@@ -8,7 +8,9 @@ let SEED, stores, creators, CRE, META;
 let q = "", picked = new Set(), region = null, cat = null, selected = null;
 let onlyRated = false, onlyWait = false, minViews = 0, minEv = 0, sort = "ev";
 let fav = new Set();            // 내가 고른 유튜버(최대 3명) — 숨기지 않고 위로 올립니다
-let kmap = null, overlays = [], lastPinch = 0;
+let kmap = null, lastPinch = 0;
+/* 핀·묶음 오버레이를 키로 보관해 다시 씁니다 (키: 묶인 식당 id 들) */
+const pinPool = new Map();
 
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 const nfm = n => n.toLocaleString("ko-KR");
@@ -169,10 +171,19 @@ function drawPins(fit) {
     }
   }
 
-  overlays.forEach(o => o.setMap(null));
-  overlays = [];
+  /* 오버레이를 버리지 않고 재사용합니다.
+     전에는 지도를 멈출 때마다 핀 100여 개를 전부 지우고 새로 만들었습니다.
+     그때마다 img 100여 개가 다시 붙어서 드래그를 멈춘 순간 걸렸습니다. */
+  const want = new Set();
   for (const g of groups) {
     const pos = new kakao.maps.LatLng(g.lat, g.lng);      // 실제 좌표 — 역변환하지 않습니다
+    g.key = g.items.length > 1
+      ? "c:" + g.items.length + ":" + g.items.map(s => s.id).sort().join(",")
+      : "p:" + g.items[0].id + (g.items[0].id === selected ? ":sel" : "");
+    want.add(g.key);
+    const hit = pinPool.get(g.key);
+    if (hit) { hit.ov.setPosition(pos); continue; }        // 이미 있으면 위치만 옮깁니다
+
     const box = document.createElement("div");
     if (g.items.length > 1) {
       const r = 16 + Math.min(g.items.length, 10);
@@ -193,7 +204,8 @@ function drawPins(fit) {
         for (const s of g.items) b.extend(new kakao.maps.LatLng(s.lat, s.lng));
         kmap.setBounds(b, 80, 80, 80, 80);
       };
-      overlays.push(new kakao.maps.CustomOverlay({ position: pos, content: box, clickable: true, zIndex: 2 }));
+      const ov = new kakao.maps.CustomOverlay({ position: pos, content: box, clickable: true, zIndex: 2 });
+      ov.setMap(kmap); pinPool.set(g.key, { ov });
     } else {
       const s = g.items[0], on = s.id === selected, cr = CRE.get(faceOf(s));
       box.className = "pinbox" + (on ? " sel" : "") + (isMine(s) ? " mine" : "");
@@ -202,11 +214,16 @@ function drawPins(fit) {
         <span class="tail"></span>
         ${on ? `<span class="nm">${esc(s.n)}</span>` : ""}`;
       box.onclick = e => { e.stopPropagation(); select(s.id); };
-      overlays.push(new kakao.maps.CustomOverlay({ position: pos, content: box, yAnchor: 1,
-                                                   clickable: true, zIndex: on ? 10 : 3 }));
+      const ov = new kakao.maps.CustomOverlay({ position: pos, content: box, yAnchor: 1,
+                                                clickable: true, zIndex: on ? 10 : 3 });
+      ov.setMap(kmap); pinPool.set(g.key, { ov });
     }
   }
-  overlays.forEach(o => o.setMap(kmap));
+  /* 화면에서 사라진 것만 떼어 냅니다. 풀이 너무 커지면 비웁니다 —
+     계속 모으면 메모리가 늘어납니다. */
+  for (const [k, v] of pinPool) {
+    if (!want.has(k)) { v.ov.setMap(null); pinPool.delete(k); }
+  }
 }
 
 /* ══ 우측 ══ */
