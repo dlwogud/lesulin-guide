@@ -1162,3 +1162,94 @@ if ($("fbWrap")) {
     if (e.key === "Escape" && !$("fbWrap").hidden) closeFb();
   });
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   바 폭 조절 — 가장자리를 끌어 왼쪽·오른쪽 바를 늘리고 줄입니다.
+
+   폭은 CSS 변수 하나(--side-w / --panel-w)로 두고, 그 변수를 상단바·패널·
+   투표창·알림 위치가 전부 따라 쓰게 해 두었습니다. 그래서 여기서는
+   변수 값만 바꿉니다.
+
+   지도 컨테이너 크기가 바뀌면 카카오에 알려 줘야 합니다(relayout).
+   안 그러면 타일이 어긋나고 핀 위치가 틀어집니다.
+   ══════════════════════════════════════════════════════════════════ */
+const BAR = {
+  side:  { v: "--side-w",  min: 220, max: 460, key: "lesulin.sideW" },
+  panel: { v: "--panel-w", min: 260, max: 560, key: "lesulin.panelW" },
+};
+
+function setBar(which, px) {
+  const b = BAR[which];
+  const w = Math.round(Math.min(b.max, Math.max(b.min, px)));
+  document.documentElement.style.setProperty(b.v, w + "px");
+  try { localStorage.setItem(b.key, String(w)); } catch {}
+  return w;
+}
+
+function loadBars() {
+  for (const k of Object.keys(BAR)) {
+    try {
+      const v = Number(localStorage.getItem(BAR[k].key));
+      if (Number.isFinite(v) && v > 0) setBar(k, v);
+    } catch {}
+  }
+}
+
+function wireGrips() {
+  const jobs = [["gripL", "side", +1], ["gripR", "panel", -1]];
+  for (const [id, which, dir] of jobs) {
+    const el = $(id);
+    if (!el) continue;
+    el.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      const start = e.clientX;
+      const base = parseFloat(getComputedStyle(document.documentElement)
+        .getPropertyValue(BAR[which].v)) || 0;
+      el.classList.add("on");
+      document.body.classList.add("resizing");
+      el.setPointerCapture(e.pointerId);
+
+      let raf = 0, pending = base;
+      const move = ev => {
+        pending = base + (ev.clientX - start) * dir;
+        if (raf) return;                     // 프레임당 한 번만 적용합니다
+        raf = requestAnimationFrame(() => { raf = 0; setBar(which, pending); });
+      };
+      const up = () => {
+        el.removeEventListener("pointermove", move);
+        el.removeEventListener("pointerup", up);
+        el.removeEventListener("pointercancel", up);
+        el.classList.remove("on");
+        document.body.classList.remove("resizing");
+        if (raf) cancelAnimationFrame(raf);
+        setBar(which, pending);
+        /* 지도 컨테이너가 넓어지거나 좁아졌으니 카카오에 알려 줍니다 */
+        if (kmap) { kmap.relayout(); drawPins(); }
+      };
+      el.addEventListener("pointermove", move);
+      el.addEventListener("pointerup", up);
+      el.addEventListener("pointercancel", up);
+    });
+
+    /* 더블클릭하면 기본값으로 돌아갑니다 */
+    el.addEventListener("dblclick", () => {
+      setBar(which, which === "side" ? 276 : 330);
+      if (kmap) { kmap.relayout(); drawPins(); }
+    });
+
+    /* 키보드로도 조절됩니다 (←→, 10px) */
+    el.tabIndex = 0;
+    el.addEventListener("keydown", e => {
+      const step = e.shiftKey ? 40 : 10;
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      const cur = parseFloat(getComputedStyle(document.documentElement)
+        .getPropertyValue(BAR[which].v)) || 0;
+      setBar(which, cur + (e.key === "ArrowRight" ? step : -step) * dir);
+      if (kmap) { kmap.relayout(); drawPins(); }
+    });
+  }
+}
+
+loadBars();
+wireGrips();

@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
 :root{
+  --side-w:276px; --panel-w:330px;   /* 드래그로 바뀝니다 (app.js) */
   --paper:#FFFFFF; --sub:#F6F5F3; --sub2:#EFEEE9; --shell:#F4F2EF;
   --ink:#15161A; --ink2:#43444B; --muted:#8A8780; --line:#E8E6E1;
   --coral:#FF5A2B; --coral-soft:#FFE9E0; --coral-ink:#C33C13;
@@ -37,7 +38,7 @@ img{display:block;max-width:100%}
 #app{display:flex;flex-direction:column;height:100dvh;background:var(--paper)}
 .topbar{flex:none;height:62px;display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
 /* 상단 좌·우 칸의 경계선이 아래 패널과 맞아떨어지게 폭을 고정합니다 */
-.topleft{width:276px;flex:none;display:flex;align-items:stretch;border-right:1px solid var(--line)}
+.topleft{width:var(--side-w);flex:none;display:flex;align-items:stretch;border-right:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:9px;padding:0 16px;flex:none}
 .brand .mark{width:26px;height:26px;border-radius:8px;background:var(--coral);display:grid;place-items:center;color:#fff;font-size:13px}
 .brand b{font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
@@ -55,14 +56,18 @@ img{display:block;max-width:100%}
 .ac .m{font-size:13px;font-weight:500;min-width:0}
 .ac .s{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto;white-space:nowrap}
 .ac .empty{margin:0;padding:16px 14px;font-size:12.5px;color:var(--muted)}
-.tbstat{width:330px;flex:none;display:flex;align-items:center;justify-content:space-around;gap:4px;
+.tbstat{width:var(--panel-w);flex:none;display:flex;align-items:center;justify-content:space-around;gap:4px;
   padding:0 18px;border-left:1px solid var(--line)}
 .tbstat div{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.2}
 .tbstat b{font-family:var(--mono);font-size:14px;font-weight:600}
 .tbstat span{font-size:10px;color:var(--muted)}
 
 .body{flex:1;display:flex;min-height:0}
-.side{width:276px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;overflow-y:auto}
+/* 폭·손잡이는 wrap 이, 스크롤은 안쪽 aside 가 맡습니다.
+   손잡이를 overflow-y:auto 안에 두면 잘려서 집히지 않습니다. */
+.sidewrap{width:var(--side-w);flex:none;position:relative;display:flex;min-height:0;
+  border-right:1px solid var(--line)}
+.side{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;overflow-y:auto}
 .feed{max-height:250px}
 .sgrp{padding:14px 16px;border-bottom:1px solid var(--line)}
 .sect-t{display:flex;align-items:center;justify-content:space-between;margin:0 0 9px}
@@ -77,7 +82,7 @@ img{display:block;max-width:100%}
 .regbtn > button.on{color:var(--coral-ink)}
 .regbtn svg{transition:transform .15s}
 .regbtn > button[aria-expanded=true] svg{transform:rotate(180deg)}
-.regpop{position:absolute;left:0;top:calc(100% + 1px);z-index:70;width:330px;background:var(--paper);
+.regpop{position:absolute;left:0;top:calc(100% + 1px);z-index:70;width:var(--panel-w);background:var(--paper);
   border:1px solid var(--line);border-radius:0 0 14px 14px;box-shadow:var(--sh3);overflow:hidden;
   display:flex;flex-direction:column;max-height:min(62vh,520px)}
 .regpop-h{flex:none;display:flex;align-items:baseline;gap:8px;padding:13px 15px 9px;border-bottom:1px solid var(--line)}
@@ -186,7 +191,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
   box-shadow:var(--sh2);border-radius:999px;padding:8px 16px;font-size:12.5px;color:var(--ink2);white-space:nowrap}
 
 /* 우측 */
-.panel{width:330px;flex:none;border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.panelwrap{width:var(--panel-w);flex:none;position:relative;display:flex;min-height:0;
+  border-left:1px solid var(--line)}
+.panel{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
 .panel-h{flex:none;padding:15px 18px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .panel-h b{font-size:15px;font-weight:650}
 .panel-h b i{font-style:normal;font-weight:400;color:var(--muted);font-size:12.5px}
@@ -206,6 +213,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
 .durchip{position:absolute;right:9px;bottom:9px;background:rgba(0,0,0,.76);color:#fff;border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:9.5px}
 /* ══ 실시간 투표 ══ */
 /* 식당·영상·댓글과 같은 칸 모양으로 둡니다 — 같은 줄의 네 번째 지표입니다 */
+/* ══ 바 폭 조절 ══
+   가장자리를 끌어 왼쪽·오른쪽 바를 늘리고 줄입니다.
+   손잡이는 6px 로 얇게 두고, 끌 때만 선이 보입니다. */
+.grip{position:absolute;top:0;bottom:0;width:7px;z-index:20;cursor:col-resize;
+  background:transparent;border:0;padding:0}
+.grip::after{content:"";position:absolute;top:0;bottom:0;left:3px;width:1px;background:transparent;
+  transition:background .12s}
+.grip:hover::after,.grip.on::after{background:var(--coral)}
+.grip.L{right:-4px}
+.grip.R{left:-4px}
+body.resizing{cursor:col-resize;user-select:none}
+body.resizing iframe,body.resizing #kmap{pointer-events:none}
 .bell{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;
   line-height:1.2;border:0;background:none;cursor:pointer;font-family:inherit;
   padding:3px 8px;border-radius:9px;color:inherit}
@@ -255,8 +274,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
 
    자리: 지도 오른쪽 위 모서리. 오른쪽 바(330px)는 지금 읽는 목록이라 가리지 않고,
    확대·축소 버튼은 아래로 내려 모서리를 비웠습니다. */
-.ntfs{position:fixed;right:344px;top:76px;z-index:80;display:flex;flex-direction:column;
-  align-items:flex-end;gap:8px;width:290px;max-width:calc(100vw - 640px);pointer-events:none}
+.ntfs{position:fixed;right:calc(var(--panel-w) + 14px);top:76px;z-index:80;display:flex;flex-direction:column;
+  align-items:flex-end;gap:8px;width:290px;max-width:calc(100vw - var(--side-w) - var(--panel-w) - 70px);pointer-events:none}
 .ntf{position:static;pointer-events:auto;width:100%;box-sizing:border-box;
   background:rgba(255,255,255,.96);backdrop-filter:blur(12px);
   border:1px solid var(--line);border-radius:13px;padding:10px 12px;cursor:pointer;
@@ -278,7 +297,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
 /* 투표 패널 */
 /* 오른쪽 바(.panel 330px)와 같은 폭·같은 자리에 둡니다 — 떠 있는 카드가 아니라
    그 칸이 투표로 바뀐 것처럼 보이게 합니다. */
-.pollwrap{position:fixed;right:0;top:62px;bottom:0;width:330px;z-index:65;display:flex;
+.pollwrap{position:fixed;right:0;top:62px;bottom:0;width:var(--panel-w);z-index:65;display:flex;
   flex-direction:column;background:#fff;border-left:1px solid var(--line);
   box-shadow:-10px 0 28px rgba(0,0,0,.08);overflow:hidden}
 .pollwrap[hidden]{display:none!important}
@@ -461,7 +480,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
     </div>
   </header>
   <div class="body">
-    <aside class="side">
+    <div class="sidewrap">
+      <button class="grip L" id="gripL" aria-label="왼쪽 바 폭 조절"></button>
+      <aside class="side">
       <div class="sgrp">
         <p class="sect-t" style="margin-bottom:6px"><b style="font-size:10px;color:var(--muted);font-weight:500">데이터 출처</b><span id="srcTag" style="font-size:10px">확인 중</span></p>
       <p class="sect-t"><b>유튜버</b>
@@ -498,7 +519,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
         <p class="sect-t"><b>업종</b><span id="catHint"></span></p>
         <div class="catrow" id="cats"></div>
       </div>
-    </aside>
+      </aside>
+    </div>
     <div class="mapwrap">
       <div id="kmap"></div>
       <div class="mapmsg" id="mapmsg" hidden><div>
@@ -510,7 +532,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
       </div>
       <div class="toast" id="toast" hidden></div>
     </div>
-    <section class="panel" id="panel"></section>
+    <div class="panelwrap">
+      <button class="grip R" id="gripR" aria-label="오른쪽 바 폭 조절"></button>
+      <section class="panel" id="panel"></section>
+    </div>
   </div>
 </div>
   <div class="ntfs" id="ntfs" aria-live="polite"></div>
@@ -571,5 +596,5 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=2c4ecdcc"></script>
+<script src="app.js?v=f8984614"></script>
 </body></html>
