@@ -16,7 +16,10 @@ type Hit = {
 };
 
 export async function POST(req: NextRequest) {
-  if (!(await dbReady())) return NextResponse.json({ ok: false }, { status: 204 });
+  /* 기록은 실패해도 화면이 멈추면 안 됩니다. 조용히 200 으로 넘깁니다.
+     (전에 204 로 본문을 같이 보내서 Response 생성에서 500 이 났습니다 —
+      204 는 본문을 가질 수 없습니다.) */
+  if (!(await dbReady())) return NextResponse.json({ ok: false, skipped: true });
   const body = (await req.json().catch(() => null)) as { hits?: Hit[] } | null;
   const hits = Array.isArray(body?.hits) ? body!.hits.slice(0, 50) : [];
   if (!hits.length) return NextResponse.json({ ok: true, n: 0 });
