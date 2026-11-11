@@ -1,3 +1,10 @@
+/* 배포된 화면을 실제 브라우저로 열어 확인합니다.
+ *
+ *   node scripts/probe.mjs [주소]        기본값: 배포 주소
+ *
+ * 코드만 읽고 추측하면 틀립니다. 실제로 이것 때문에 한참 헤맸습니다 —
+ * "영상이 안 눌린다"의 원인이 썸네일 링크가 아니라 상세 패널 전체가
+ * 예외로 안 그려지던 것이었고, 이 스크립트를 돌리자 한 줄로 나왔습니다. */
 import { chromium } from "playwright";
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
@@ -7,7 +14,8 @@ pg.on("console", m => { if (m.type() === "error") errs.push("console: " + m.text
 pg.on("pageerror", e => errs.push("pageerror: " + String(e).slice(0, 200)));
 pg.on("requestfailed", r => errs.push("요청실패: " + r.url().slice(0, 90)));
 
-await pg.goto("https://lesulin-guide.vercel.app/", { waitUntil: "networkidle", timeout: 60000 });
+const URL = process.argv[2] || "https://lesulin-guide.vercel.app/";
+await pg.goto(URL, { waitUntil: "networkidle", timeout: 60000 });
 await pg.waitForTimeout(2500);
 
 // 모달이 떠 있으면 닫습니다
