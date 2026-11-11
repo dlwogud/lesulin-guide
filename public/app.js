@@ -273,6 +273,7 @@ function renderResults() {
 }
 
 function renderDetail(s) {
+  if (s.quotes === undefined) loadQuotes(s);       // 없으면 받아 옵니다
   const hero = topVid(s);
   const vids = s.vids.map(v => {
     const c = CRE.get(v.c);
@@ -291,7 +292,7 @@ function renderDetail(s) {
         <span class="av">${a.p}% · ${a.n}건</span></div>`).join("")}</div>
       <p class="caveat">유튜브 댓글은 칭찬에 쏠려 있습니다 — 맛 항목 전체 96.2% 긍정.
         <b>반응의 양과 쓴소리</b>를 보세요.${s.waitN ? ` “대기 없음”이 낮을수록 줄을 섰다는 뜻입니다 — 이 집은 ${s.waitN}명이 기다렸다고 적었습니다.` : ""}</p>
-      ${["pos","neg"].map(k => s.quotes[k] ? `<div class="quote">${esc(s.quotes[k].x)}
+      ${["pos","neg"].map(k => (s.quotes || {})[k] ? `<div class="quote">${esc(s.quotes[k].x)}
         <span class="qm"><span>유튜브 댓글</span><span>${dateK(s.quotes[k].at)}</span>${s.quotes[k].like ? `<span>좋아요 ${nfm(s.quotes[k].like)}</span>` : ""}</span></div>` : "").join("")}
     </div>`
     : `<div class="blk"><p class="blk-t">방문자 반응</p>
@@ -336,6 +337,23 @@ function renderDetail(s) {
         <button class="sec" style="flex:none;padding:8px 12px;font-size:11.5px"
           onclick="window.__report('${s.id}')">정보가 틀렸어요</button>
       </div></div>`;
+}
+
+/* 대표 인용문은 /api/seed 에 담지 않습니다 — 전체의 33%(355KB)인데
+   식당 하나를 열 때만 필요합니다. 그래서 열 때 받아 와서 채웁니다.
+   받아오기 전에도 화면은 그대로 뜨고, 도착하면 인용문만 덧붙습니다. */
+const quoteWait = new Set();
+async function loadQuotes(s) {
+  if (s.quotes !== undefined || quoteWait.has(s.id)) return;
+  quoteWait.add(s.id);
+  try {
+    const r = await fetch(`/api/store/${encodeURIComponent(s.id)}`);
+    if (!r.ok) { s.quotes = null; return; }
+    const d = await r.json();
+    s.quotes = d.quotes ?? null;
+    if (selected === s.id) renderDetail(s);        // 열려 있으면 다시 그립니다
+  } catch { s.quotes = null; }
+  finally { quoteWait.delete(s.id); }
 }
 
 function select(id) {
