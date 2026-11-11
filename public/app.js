@@ -106,6 +106,12 @@ function initMap() {
 
 const CLUSTER_PX = 44;
 
+/* 핀에 어느 얼굴을 올릴지.
+   한 식당을 여러 유튜버가 소개했으면, 내가 고른 사람을 먼저 보여 줍니다.
+   전에는 늘 cs[0] 이라서 유튜버를 바꿔도 지도가 그대로였습니다. */
+const faceOf = s => s.cs.find(c => fav.has(c)) || s.cs[0];
+const isMine = s => fav.size > 0 && s.cs.some(c => fav.has(c));
+
 function drawPins(fit) {
   if (!kmap) return;
   const list = filtered();
@@ -173,8 +179,12 @@ function drawPins(fit) {
       // 그 묶음에서 가장 많은 채널의 얼굴을 얹습니다
       const tally = {};
       for (const s of g.items) for (const c of s.cs) tally[c] = (tally[c] || 0) + 1;
-      const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0];
-      box.className = "kcluster";
+      // 내가 고른 유튜버가 묶음 안에 있으면 그 사람을 얹습니다
+      const picks = Object.keys(tally).filter(c => fav.has(c));
+      const pool = picks.length ? picks : Object.keys(tally);
+      const top = pool.sort((a, b) => tally[b] - tally[a])[0];
+      const mineN = g.items.filter(isMine).length;
+      box.className = "kcluster" + (mineN ? " mine" : "");
       box.style.cssText = `width:${r * 2}px;height:${r * 2}px`;
       box.innerHTML = `<img src="${chImg(top)}" alt="">
         <span class="n" style="font-size:${Math.max(10, r * .6).toFixed(1)}px">${g.items.length}</span>`;
@@ -185,8 +195,8 @@ function drawPins(fit) {
       };
       overlays.push(new kakao.maps.CustomOverlay({ position: pos, content: box, clickable: true, zIndex: 2 }));
     } else {
-      const s = g.items[0], on = s.id === selected, cr = CRE.get(s.cs[0]);
-      box.className = "pinbox" + (on ? " sel" : "");
+      const s = g.items[0], on = s.id === selected, cr = CRE.get(faceOf(s));
+      box.className = "pinbox" + (on ? " sel" : "") + (isMine(s) ? " mine" : "");
       box.innerHTML = `<img src="${chImg(cr.id)}" alt="${esc(cr.n)}">
         ${s.lvl ? `<span class="lv">${"◆".repeat(s.lvl)}</span>` : ""}
         <span class="tail"></span>
@@ -208,7 +218,8 @@ let listCache = [], listShown = 0;
 function cardHTML(s, i) {
   const v = topVid(s);
   /* 둘 이상이 간 집은 56곳이고 전부 2명이라 "외 1" 대신 그냥 나열합니다 */
-  const crs = s.cs.map(id => CRE.get(id)).filter(Boolean);
+  const crs = s.cs.map(id => CRE.get(id)).filter(Boolean)
+    .sort((a, b) => (fav.has(b.id) ? 1 : 0) - (fav.has(a.id) ? 1 : 0));
   return `<button class="rcard" onclick="window.__sel('${s.id}')">
     <span class="img">
       ${v ? `<img src="${vdImg(v.id)}" alt="" loading="lazy" decoding="async" width="240" height="135">` : ""}
@@ -290,10 +301,14 @@ function renderDetail(s) {
   const kakaoTo = `https://map.kakao.com/link/to/${encodeURIComponent(s.n)},${s.lat},${s.lng}`;
   $("panel").innerHTML = `
     <div class="det">
-      <div class="det-hero">${hero ? `<img src="${vdImg(hero.id)}" alt="">` : ""}
-        <button class="det-back" onclick="window.__close()">&larr;</button>
-        ${hero ? `<a class="det-play" href="${YT(hero.id)}" target="_blank" rel="noreferrer">▶</a>
-          ${hero.dur ? `<span class="det-dur">${hero.dur}</span>` : ""}` : ""}</div>
+      <div class="det-hero">
+        ${hero ? `<a class="det-open" href="${YT(hero.id)}" target="_blank" rel="noreferrer"
+             aria-label="${esc(hero.t)} 유튜브에서 보기">
+            <img src="${vdImg(hero.id)}" alt="">
+            <span class="det-play">▶</span>
+            ${hero.dur ? `<span class="det-dur">${hero.dur}</span>` : ""}
+          </a>` : ""}
+        <button class="det-back" onclick="window.__close()">&larr;</button></div>
       <div class="det-b">
         <div class="det-title">
           <div class="badges">
