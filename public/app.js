@@ -147,18 +147,26 @@ function drawPins(fit) {
     near.push(s);
   }
 
+  /* 묶는 거리를 화면 안 식당 수에 맞춰 늘립니다.
+     서울을 확대하면 화면에 900곳이 들어와 핀이 100개를 넘고, 그러면
+     지도를 움직일 때마다 그만큼의 DOM 이 따라다녀 체감이 떨어집니다.
+     많을 때는 넓게 묶어 핀을 80개 안쪽으로 유지합니다. */
+  const cpx = near.length > 600 ? CLUSTER_PX * 1.7
+            : near.length > 300 ? CLUSTER_PX * 1.35
+            : CLUSTER_PX;
+
   /* 격자에 담아 묶습니다. 전에는 후보 묶음을 전부 훑어서 n×묶음 수만큼 비교했습니다. */
   const cell = new Map(), groups = [];
-  const key = (x, y) => ((x / CLUSTER_PX) | 0) + "," + ((y / CLUSTER_PX) | 0);
+  const key = (x, y) => ((x / cpx) | 0) + "," + ((y / cpx) | 0);
   for (const s of near) {
     const p = px(s);
     if (s.id === selected) { groups.push({ items: [s], lat: s.lat, lng: s.lng, fixed: true }); continue; }
-    const gx = (p.x / CLUSTER_PX) | 0, gy = (p.y / CLUSTER_PX) | 0;
+    const gx = (p.x / cpx) | 0, gy = (p.y / cpx) | 0;
     let hit = null;
     for (let dx = -1; dx <= 1 && !hit; dx++)
       for (let dy = -1; dy <= 1 && !hit; dy++) {
         const g = cell.get((gx + dx) + "," + (gy + dy));
-        if (g && Math.hypot(g.p.x - p.x, g.p.y - p.y) < CLUSTER_PX) hit = g;
+        if (g && Math.hypot(g.p.x - p.x, g.p.y - p.y) < cpx) hit = g;
       }
     if (hit) {
       const n = hit.items.push(s);

@@ -53,5 +53,15 @@ export async function GET() {
            (SELECT count(*) FROM store_stats WHERE status = 'RATED')::int AS rated,
            (SELECT count(*) FROM store_stats WHERE guide_level IS NOT NULL)::int AS badged`);
 
-  return NextResponse.json({ creators, stores, meta });
+  /* 이 데이터는 수집 파이프라인을 돌릴 때만 바뀝니다. 방문자마다 1,512곳을
+     다시 질의할 이유가 없습니다 — 캐시가 없어서 모두가 3초를 기다렸습니다.
+       s-maxage              10분은 CDN 이 그대로 내보냅니다
+       stale-while-revalidate 그 뒤 1시간은 옛 응답을 바로 주고 뒤에서 갱신합니다
+     데이터를 새로 적재하면 다시 배포되므로 캐시도 함께 비워집니다. */
+  return NextResponse.json({ creators, stores, meta }, {
+    headers: {
+      "Cache-Control": "public, s-maxage=600, stale-while-revalidate=3600",
+      "CDN-Cache-Control": "public, s-maxage=600, stale-while-revalidate=3600",
+    },
+  });
 }
