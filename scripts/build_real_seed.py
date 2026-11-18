@@ -86,8 +86,14 @@ def main():
     print(f"댓글 파일: {cpath.name}")
 
     # 영상마다 연결된 식당 — 2곳 이상이거나 또간집이면 "여러 가게가 나오는 영상"
+    # 같은 가게 중복(data/store_merges.json 의 dup)은 셈에서 뺍니다. id 는 아래에서
+    # 순서대로 s1, s2 … 로 붙으므로, 목록에서 빼지 않고 셈에서만 빼서 id 가 밀리지 않게 합니다.
+    merges = ROOT / "data" / "store_merges.json"
+    dups = {m["dup"] for m in json.load(open(merges, encoding="utf-8"))["merges"]} if merges.exists() else set()
     on_video = collections.defaultdict(set)
-    for s in stores:
+    for i, s in enumerate(stores, 1):
+        if "s%d" % i in dups:
+            continue
         for v in s["vids"]:
             on_video[v["id"]].add(s["n"])
     multi = lambda v: len(on_video[v["id"]]) > 1 or v.get("c") in MULTI_PLACE_CREATORS

@@ -41,7 +41,8 @@ SELECT sv.store_id, c.id, c.body, c.likes, to_char(c.published_at, 'YYYY-MM-DD')
 """
 
 # 영상마다 연결된 식당 — 2곳 이상이면 "여러 가게가 나오는 영상"
-LINKS = "SELECT sv.video_id, s.id, s.name FROM store_videos sv JOIN stores s ON s.id = sv.store_id"
+# 숨긴 가게(중복 합침 등)는 빼고 셉니다 — 두루미×2 처럼 같은 가게가 두 번 있으면 여러 가게 영상이 아닙니다
+LINKS = "SELECT sv.video_id, s.id, s.name FROM store_videos sv JOIN stores s ON s.id = sv.store_id AND NOT s.hidden"
 
 
 def main():

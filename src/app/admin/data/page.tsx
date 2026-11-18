@@ -16,7 +16,7 @@ type Video = { id: string; title: string; published_at: string | null; creator: 
 
 const LVL: Record<number, string> = { 1: "들러볼 곳", 2: "우회해도 갈 곳", 3: "이곳을 위해" };
 const ACT: Record<string, string> = {
-  update: "수정", hide: "가림", restore: "복구", unlink: "영상 연결 해제",
+  update: "수정", hide: "가림", restore: "복구", unlink: "영상 연결 해제", merge: "중복 합침",
 };
 
 export default function DataManage() {

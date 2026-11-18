@@ -156,6 +156,9 @@ python3 scripts/build_real_seed.py
 
 # ⑦ DB 적재
 .venv/bin/python scripts/load_db.py
+
+# ⑧ 같은 가게 중복 등록 숨기기 (data/store_merges.json — 숨김은 재적재해도 유지됩니다)
+.venv/bin/python scripts/merge_stores.py --write
 ```
 
 식당 상세의 대표 댓글(좋았다/아쉬웠다) 규칙은 `scripts/quotes.py` 한 곳에 있습니다.

@@ -50,8 +50,10 @@ export async function GET() {
            (SELECT COALESCE(sum(comments_all), 0) FROM store_stats)::int AS comments,
            (SELECT COALESCE(sum(visits), 0) FROM store_stats)::int       AS visit,
            (SELECT COALESCE(sum(comments_used), 0) FROM store_stats)::int AS used,
-           (SELECT count(*) FROM store_stats WHERE status = 'RATED')::int AS rated,
-           (SELECT count(*) FROM store_stats WHERE guide_level IS NOT NULL)::int AS badged`);
+           (SELECT count(*) FROM store_stats st JOIN stores s ON s.id = st.store_id
+             WHERE st.status = 'RATED' AND NOT s.hidden)::int AS rated,
+           (SELECT count(*) FROM store_stats st JOIN stores s ON s.id = st.store_id
+             WHERE st.guide_level IS NOT NULL AND NOT s.hidden)::int AS badged`);
 
   /* 이 데이터는 수집 파이프라인을 돌릴 때만 바뀝니다. 방문자마다 1,512곳을
      다시 질의할 이유가 없습니다 — 캐시가 없어서 모두가 3초를 기다렸습니다.
