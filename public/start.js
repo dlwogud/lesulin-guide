@@ -27,11 +27,8 @@
   let picked = [];          // 고른 순서대로
   let known = new Set();    // 지금 있는 유튜버 id
 
-  function syncCount(warn) {
-    const el = $("pickCnt");
-    el.textContent = `${picked.length} / ${MAX}`;
-    el.classList.toggle("warn", !!warn);
-    if (warn) setTimeout(() => el.classList.remove("warn"), 900);
+  function syncCount() {
+    $("pickCnt").textContent = `${picked.length} / ${MAX}`;
     for (const b of document.querySelectorAll("#chips [data-id]")) {
       b.setAttribute("aria-pressed", picked.includes(b.dataset.id) ? "true" : "false");
     }
@@ -53,10 +50,12 @@
       b.append(img, name, n);
       b.addEventListener("click", () => {
         const i = picked.indexOf(c.id);
-        if (i >= 0) picked.splice(i, 1);
-        else if (picked.length >= MAX) return syncCount(true);   // 4번째는 받지 않습니다
-        else picked.push(c.id);
-        syncCount(false);
+        if (i >= 0) picked.splice(i, 1);                 // 다시 누르면 해제
+        else {
+          if (picked.length >= MAX) picked.shift();      // 4번째를 고르면 가장 먼저 고른 사람이 빠집니다
+          picked.push(c.id);
+        }
+        syncCount();
       });
       box.append(b);
     }
@@ -144,7 +143,7 @@
       /* 전에 고른 유튜버를 미리 선택 — 지금 있는 id 만, 최대 3명 */
       picked = safeGet().filter(id => known.has(id)).slice(0, MAX);
       renderChips(d.creators);
-      syncCount(false);
+      syncCount();
       loaded = true;
 
       fillExample(d);

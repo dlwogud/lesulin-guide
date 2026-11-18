@@ -422,22 +422,23 @@ function saveFav() {
 function renderFavGrid() {
   $("favGrid").innerHTML = creators.map(c => {
     const n = stores.filter(s => s.cs.includes(c.id)).length, on = fav.has(c.id);
-    const full = !on && fav.size >= FAV_MAX;
-    return `<button class="favcard${on?" on":""}" ${full?"disabled":""}
+    return `<button class="favcard${on?" on":""}"
         onclick="window.__fav('${c.id}')" aria-pressed="${on}">
       <img src="${chImg(c.id)}" alt="">
       <span><b>${esc(c.n)}</b><s>${c.subs ? subsK(c.subs) + " · " : ""}식당 ${n}곳</s></span></button>`;
   }).join("");
-  $("favCnt").textContent = fav.size
-    ? `${fav.size} / ${FAV_MAX} 선택 — 다시 누르면 해제됩니다`
-    : `0 / ${FAV_MAX}`;
+  $("favCnt").textContent = `${fav.size} / ${FAV_MAX}`;
   if ($("favReset")) $("favReset").hidden = !fav.size;
   /* 이미 고른 사람이 있으면 "그냥 둘러보기"가 무슨 뜻인지 헷갈립니다 */
   if ($("favSkip")) $("favSkip").textContent = fav.size ? "안 쓰고 닫기" : "그냥 둘러보기";
 }
 window.__fav = id => {
-  if (fav.has(id)) fav.delete(id);
-  else if (fav.size < FAV_MAX) fav.add(id);
+  if (fav.has(id)) fav.delete(id);                          // 다시 누르면 해제
+  else {
+    /* 4번째를 고르면 가장 먼저 고른 사람이 빠집니다 (Set 은 넣은 순서를 지킵니다) */
+    if (fav.size >= FAV_MAX) fav.delete(fav.values().next().value);
+    fav.add(id);
+  }
   renderFavGrid();
 };
 function openFav() {

@@ -60,12 +60,34 @@ await scenario("1. 데스크톱: 문장·예시·칩 (숫자는 API 값과 일�
   ok(await page.locator("#chips [data-id]").count() === SC.creators.length, "유튜버 칩 수");
 });
 
-await scenario("2. 최대 3명까지만 선택", async page => {
+await scenario("2. 4번째를 고르면 가장 먼저 고른 사람이 빠짐 · 다시 누르면 해제", async page => {
   await openStart(page);
   const chips = page.locator("#chips [data-id]");
+  const id = async i => chips.nth(i).getAttribute("data-id");
   for (let i = 0; i < 4; i++) await chips.nth(i).click();
-  ok((await selected(page)).length === 3, "선택 수");
+  const got = (await selected(page)).sort();
+  const want = [await id(1), await id(2), await id(3)].sort();
+  ok(JSON.stringify(got) === JSON.stringify(want), `선택 ${got} (기대 ${want})`);
   ok((await page.textContent("#pickCnt")).includes("3"), "선택 수 표시");
+  await chips.nth(2).click();                                   // 고른 걸 다시 누르면 해제
+  ok(!(await selected(page)).includes(await id(2)), "다시 눌러도 해제 안 됨");
+  ok((await selected(page)).length === 2, "해제 후 2명");
+});
+
+await scenario("2m. 지도의 고르기 창도 같은 방식", async page => {
+  await page.goto(`${BASE}/map.html?pick=1`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector("#favWrap:not([hidden]) .favcard", { timeout: 20000 });
+  const cards = page.locator("#favGrid .favcard");
+  const ids = [];
+  for (let i = 0; i < 4; i++) {
+    ids.push(await cards.nth(i).locator("b").textContent());
+    await cards.nth(i).click();
+  }
+  const on = await page.$$eval('#favGrid .favcard[aria-pressed="true"] b', els => els.map(e => e.textContent));
+  ok(JSON.stringify(on.sort()) === JSON.stringify(ids.slice(1).sort()), `선택 ${on}`);
+  await page.locator("#favGrid .favcard", { hasText: ids[3] }).click();
+  const after = await page.$$eval('#favGrid .favcard[aria-pressed="true"] b', els => els.map(e => e.textContent));
+  ok(after.length === 2 && !after.includes(ids[3]), `해제 후 ${after}`);
 });
 
 await scenario("3. 고르고 지도로 → 저장됨", async page => {
