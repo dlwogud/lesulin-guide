@@ -18,7 +18,7 @@ import json, math, pathlib, re, sys, collections
 ROOT = pathlib.Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import visit_lexicon as VL
-from quotes import pick_quotes
+from quotes import pick_quotes, MULTI_PLACE_CREATORS
 
 # 조회수·재생시간은 scripts/collect_stats.py 가 받아 둡니다.
 # 예전엔 이 단계를 손으로 돌려서, 시드를 다시 만들 때 조회수가 전부 사라졌습니다.
@@ -85,6 +85,13 @@ def main():
     C = json.load(open(cpath, encoding="utf-8"))
     print(f"댓글 파일: {cpath.name}")
 
+    # 영상마다 연결된 식당 — 2곳 이상이거나 또간집이면 "여러 가게가 나오는 영상"
+    on_video = collections.defaultdict(set)
+    for s in stores:
+        for v in s["vids"]:
+            on_video[v["id"]].add(s["n"])
+    multi = lambda v: len(on_video[v["id"]]) > 1 or v.get("c") in MULTI_PLACE_CREATORS
+
     out, tally = [], collections.Counter()
     for i, s in enumerate(stores, 1):
         s["id"] = "s%d" % i
@@ -93,7 +100,7 @@ def main():
         for v in s["vids"]:
             rec = C.get(v["id"])
             if rec:
-                texts += rec["comments"]
+                texts += [{**c, "_multi": multi(v)} for c in rec["comments"]]
 
         total = len(texts)
         # 운영자 고정 댓글은 가게 소개·협찬 고지라서 방문자 반응이 아닙니다
@@ -130,8 +137,10 @@ def main():
         gripeN = sum(1 for _, a in pairs if any(v < 0 for k, v in a.items() if k != "대기"))
         rec["aspects"] = aspects
         # 대표 댓글 규칙은 scripts/quotes.py 한 곳에 둡니다 (rebuild_quotes.py 와 공유)
-        rec["quotes"] = pick_quotes([{"t": c["t"], "like": c["like"], "at": c["at"], "asp": a}
-                                     for c, a in pairs])
+        sib = sorted(set().union(*(on_video[v["id"]] for v in s["vids"])) - {s["n"]})
+        rec["quotes"] = pick_quotes([{"t": c["t"], "like": c["like"], "at": c["at"], "asp": a,
+                                      "multi": c["_multi"]} for c, a in pairs],
+                                    name=s["n"], siblings=sib)
         rec["negN"] = gripeN
         rec["waitN"] = waitN
         rec["status"] = "RATED"; tally["점수 산출"] += 1
