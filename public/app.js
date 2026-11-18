@@ -654,13 +654,16 @@ function srcLabel(kind) {
   SEED = await loadSeed();
   stores = SEED.stores; creators = SEED.creators; META = SEED.meta;
   CRE = new Map(creators.map(c => [c.id, c]));
-  const asked = loadFav();
+  loadFav();
   wire(); syncFavBtn(); refresh(false);
-  /* 첫 방문에만 묻습니다.
-     ?pick=1 을 붙이면 이미 고른 사람에게도 띄웁니다 —
-     시연에서 "처음 들어온 사용자" 화면을 보여줄 때 씁니다. */
-  const force = new URLSearchParams(location.search).has("pick");
-  if (!asked || force) openFav();
+  /* 유튜버 고르기는 이제 시작 화면(/)이 맡습니다. 지도에서는 자동으로 띄우지 않고,
+     ?pick=1 을 붙였을 때와 왼쪽 "내 유튜버 고르기" 버튼으로만 엽니다. */
+  const params = new URLSearchParams(location.search);
+  if (params.has("pick")) openFav();
+  /* 시작 화면의 "지도에서 보기"(?store=<id>)는 그 식당 상세를 바로 엽니다.
+     없는 id 면 조용히 무시합니다. 지도가 아직 없으면 지도가 준비된 뒤 한 번 더 옮깁니다. */
+  const startStore = stores.some(s => s.id === params.get("store")) ? params.get("store") : null;
+  if (startStore) select(startStore);
   instrument();                              // 사용 기록을 켭니다 (아래 정의)
 
   const key = window.__MAPKEY__ || await mapKey();
@@ -671,7 +674,9 @@ function srcLabel(kind) {
   sc.onerror = () => mapFailed(
     "카카오 지도 SDK를 불러오지 못했습니다.<br>" +
     "카카오 개발자 콘솔 → 앱 설정 → 플랫폼 → Web 에 <code>" + location.origin + "</code> 을 등록했는지 확인하세요.");
-  sc.onload = () => kakao.maps.load(() => { try { initMap(); } catch (e) { mapFailed(String(e)); } });
+  sc.onload = () => kakao.maps.load(() => {
+    try { initMap(); if (startStore) select(startStore); } catch (e) { mapFailed(String(e)); }
+  });
   document.head.appendChild(sc);
 })();
 

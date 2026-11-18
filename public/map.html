@@ -39,7 +39,7 @@ img{display:block;max-width:100%}
 .topbar{flex:none;height:62px;display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
 /* 상단 좌·우 칸의 경계선이 아래 패널과 맞아떨어지게 폭을 고정합니다 */
 .topleft{width:var(--side-w);flex:none;display:flex;align-items:stretch;border-right:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:9px;padding:0 16px;flex:none}
+.brand{display:flex;align-items:center;gap:9px;padding:0 16px;flex:none;text-decoration:none;color:inherit}
 .brand .mark{width:26px;height:26px;border-radius:8px;background:var(--coral);display:grid;place-items:center;color:#fff;font-size:13px}
 .brand b{font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
 .srch{flex:1;display:flex;align-items:center;gap:11px;padding:0 18px;position:relative;min-width:0}
@@ -453,7 +453,7 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 <div id="app">
   <header class="topbar">
     <div class="topleft">
-    <div class="brand"><span class="mark">◆</span><b>르슐랭 가이드</b></div>
+    <a class="brand" href="/" title="처음 화면으로 — 유튜버 바꾸기"><span class="mark">◆</span><b>르슐랭 가이드</b></a>
     <div class="regbtn">
       <button id="regToggle" aria-expanded="false"><span id="regLabel">지역</span>
         <svg width="9" height="6" viewBox="0 0 9 6" fill="none"><path d="M1 1l3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
@@ -596,5 +596,5 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=f8984614"></script>
+<script src="app.js?v=bd7865ce"></script>
 </body></html>

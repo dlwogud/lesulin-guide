@@ -119,6 +119,55 @@ await scenario("7. 모바일 390: 가로 넘침 없음 · 버튼 보임 · ①�
   ok(Math.max(...xs) - Math.min(...xs) <= 2, `세로 배치 아님 x=${xs}`);
 }, { viewport: { width: 390, height: 844 } });
 
+/* ── 지도와 연결 ── */
+const mapReady = page => page.waitForSelector(".rcard", { timeout: 20000 });
+
+await scenario("8. /map.html?store=s126 → 복춘식당 상세가 바로 열림", async page => {
+  await page.goto(`${BASE}/map.html?store=s126`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector(".det .det-title", { timeout: 20000 });
+  ok((await page.textContent(".det .det-title")).includes("복춘식당"), "상세 제목");
+  ok(await page.locator("#favWrap").isHidden(), "유튜버 창이 뜸");
+  /* 지도가 그 식당으로 옮겨 가 선택된 핀이 화면 안에 그려져야 합니다 */
+  await page.waitForSelector(".pinbox.sel", { state: "visible", timeout: 20000 });
+});
+
+await scenario("9. 지도에서 유튜버 창이 자동으로 안 뜸 · ?pick=1 은 뜸", async page => {
+  await page.goto(`${BASE}/map.html`, { waitUntil: "domcontentloaded" });
+  await mapReady(page);
+  ok(await page.locator("#favWrap").isHidden(), "자동으로 뜸");
+  await page.goto(`${BASE}/map.html?pick=1`, { waitUntil: "domcontentloaded" });
+  await mapReady(page);
+  ok(await page.locator("#favWrap").isVisible(), "?pick=1 인데 안 뜸");
+});
+
+await scenario("10. /map.html?store=없는id → 평소처럼 뜸", async page => {
+  await page.goto(`${BASE}/map.html?store=nope`, { waitUntil: "domcontentloaded" });
+  await mapReady(page);
+  ok(await page.locator(".rcard").count() > 0, "목록 없음");
+});
+
+await scenario("11. 지도 로고 → 시작 화면", async page => {
+  await page.goto(`${BASE}/map.html`, { waitUntil: "domcontentloaded" });
+  await mapReady(page);
+  await page.click(".brand");
+  await page.waitForURL(u => new URL(u).pathname === "/", { timeout: 15000 });
+});
+
+await scenario("12. 전체 흐름: 시작 → 2명 → 지도(내 유튜버 표시) → 시작 → 예시 상세 → 길찾기", async page => {
+  await openStart(page);
+  const chips = page.locator("#chips [data-id]");
+  await chips.nth(0).click(); await chips.nth(1).click();
+  await page.click("#go");
+  await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
+  await page.waitForSelector(".pinbox.mine, .kcluster.mine", { timeout: 25000 });
+  await page.click(".brand");
+  await page.waitForSelector("body[data-ready]", { timeout: 15000 });
+  await page.click("#exMap");
+  await page.waitForSelector(".det .det-title", { timeout: 20000 });
+  ok((await page.textContent(".det .det-title")).includes("복춘식당"), "상세 제목");
+  ok((await page.getAttribute(".det a.pri", "href")).startsWith("https://map.kakao.com/link/to/"), "길찾기 링크");
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\nstart e2e OK");
