@@ -359,6 +359,20 @@ await scenario("12. 전체 흐름: 시작 → 2명 → 지도(내 유튜버 표�
   ok((await page.getAttribute(".det a.pri", "href")).startsWith("https://map.kakao.com/link/to/"), "길찾기 링크");
 });
 
+await scenario("18. 지도 화면도 v3 색·글꼴·로고", async page => {
+  await page.goto(`${BASE}/map.html`, { waitUntil: "domcontentloaded" });
+  await mapReady(page);
+  const st = await page.evaluate(() => {
+    const r = getComputedStyle(document.documentElement), m = document.querySelector(".brand .mark");
+    return { coral: r.getPropertyValue("--coral").trim().toUpperCase(), ink: r.getPropertyValue("--ink").trim().toUpperCase(),
+             font: getComputedStyle(document.body).fontFamily, mark: m && getComputedStyle(m).backgroundColor };
+  });
+  ok(st.coral === "#F2622A", `--coral ${st.coral}`);
+  ok(st.ink === "#1F1B18", `--ink ${st.ink}`);
+  ok(/Noto Sans KR/.test(st.font), `글꼴 ${st.font}`);
+  ok(st.mark === "rgb(242, 98, 42)", `로고 ${st.mark}`);
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\nstart e2e OK");

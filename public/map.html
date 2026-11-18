@@ -6,21 +6,22 @@
 <title>르슐랭 가이드 — 카카오맵</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap">
 <style>
 :root{
   --side-w:276px; --panel-w:330px;   /* 드래그로 바뀝니다 (app.js) */
-  --paper:#FFFFFF; --sub:#F6F5F3; --sub2:#EFEEE9; --shell:#F4F2EF;
-  --ink:#15161A; --ink2:#43444B; --muted:#8A8780; --line:#E8E6E1;
-  --coral:#FF5A2B; --coral-soft:#FFE9E0; --coral-ink:#C33C13;
+  /* v3 스타일 가이드와 같은 값 — 시작 화면(index.html)과 한 서비스처럼 보이게 이름은 두고 값만 맞춥니다 */
+  --paper:#FFFFFF; --sub:#F8F6F3; --sub2:#EFECE7; --shell:#F8F6F3;
+  --ink:#1F1B18; --ink2:#6B635C; --muted:#A39B93; --line:#ECE8E3;
+  --coral:#F2622A; --coral-soft:#FEEDE5; --coral-ink:#D9501A;
   --teal:#15BBA2; --teal-soft:#DFF5F0; --teal-ink:#0E6E5F;
-  --good:#17A673; --bad:#DF5B4E;
+  --good:#17806B; --bad:#D9392B;
   --amber:#8A6A1E; --amber-bg:#FBF2DD; --amber-ln:#EBD8A6;
   --yt:#E8402A;
   --sh1:0 1px 3px rgba(30,24,16,.10); --sh2:0 4px 14px rgba(30,24,16,.14);
   --sh3:0 16px 40px -10px rgba(30,24,16,.30);
-  --sans:'Archivo','IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;
-  --mono:'IBM Plex Mono','IBM Plex Sans KR',ui-monospace,monospace;
+  --sans:'Noto Sans KR','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:'IBM Plex Mono','Noto Sans KR',ui-monospace,monospace;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
@@ -40,7 +41,9 @@ img{display:block;max-width:100%}
 /* 상단 좌·우 칸의 경계선이 아래 패널과 맞아떨어지게 폭을 고정합니다 */
 .topleft{width:var(--side-w);flex:none;display:flex;align-items:stretch;border-right:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:9px;padding:0 16px;flex:none;text-decoration:none;color:inherit}
-.brand .mark{width:26px;height:26px;border-radius:8px;background:var(--coral);display:grid;place-items:center;color:#fff;font-size:13px}
+/* 시작 화면과 같은 로고 — 오렌지 사각 + 흰 마름모 */
+.brand .mark{width:28px;height:28px;border-radius:8px;background:var(--coral);display:grid;place-items:center;flex:none}
+.brand .mark::after{content:"";width:10px;height:10px;background:#fff;transform:rotate(45deg);border-radius:2px}
 .brand b{font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
 .srch{flex:1;display:flex;align-items:center;gap:11px;padding:0 18px;position:relative;min-width:0}
 .srch svg{flex:none;color:var(--muted)}
@@ -168,10 +171,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
   filter:drop-shadow(0 3px 6px rgba(30,24,16,.32))}
 .pinbox img{width:34px;height:34px;max-width:none;flex:none;border-radius:50%;
   border:2.5px solid #fff;object-fit:cover;background:#fff}
-.pinbox.sel img{width:46px;height:46px;max-width:none;border-width:3px}
+.pinbox.sel img{width:46px;height:46px;max-width:none;border-width:3px;border-color:var(--coral)}
 .pinbox .tail{width:0;height:0;margin-top:-2px;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #fff}
 /* 내가 고른 유튜버가 간 곳 — 지도에서 바로 눈에 띄게 합니다 */
-.pinbox.mine img{box-shadow:0 0 0 2.5px var(--coral)}
+.pinbox.mine img{border-color:var(--coral)}
 .kcluster.mine{box-shadow:0 0 0 2.5px var(--coral), 0 3px 10px rgba(0,0,0,.25)}
 .pinbox .lv{position:absolute;top:-6px;right:-8px;background:var(--coral);color:#fff;border-radius:999px;
   padding:1px 5px;font-size:8.5px;font-weight:700;border:1.5px solid #fff}
@@ -453,7 +456,7 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 <div id="app">
   <header class="topbar">
     <div class="topleft">
-    <a class="brand" href="/" title="처음 화면으로 — 유튜버 바꾸기"><span class="mark">◆</span><b>르슐랭 가이드</b></a>
+    <a class="brand" href="/" title="처음 화면으로 — 유튜버 바꾸기"><span class="mark" aria-hidden="true"></span><b>르슐랭 가이드</b></a>
     <div class="regbtn">
       <button id="regToggle" aria-expanded="false"><span id="regLabel">지역</span>
         <svg width="9" height="6" viewBox="0 0 9 6" fill="none"><path d="M1 1l3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>

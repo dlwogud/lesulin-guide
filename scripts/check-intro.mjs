@@ -19,6 +19,8 @@ for (let i = 1; i < d.creators.length; i++) assert.ok(d.creators[i - 1].stores >
 assert.equal(d.meta.stores, seed.meta.stores, "식당 수가 지도와 다름");
 assert.equal(d.meta.videos, seed.meta.videos, "영상 수가 지도와 다름");
 assert.equal(d.meta.comments, seed.meta.comments, "댓글 수가 지도와 다름");
+/* 지도 화면 상단 '댓글'은 보이는 식당의 댓글 합입니다 — 숨긴 중복까지 더하면 두 번 셉니다 */
+assert.equal(d.meta.comments, seed.stores.reduce((n, s) => n + s.cTotal, 0), "댓글 수가 지도 화면 상단 합과 다름(숨긴 가게 포함?)");
 
 // 영상 → 그 영상에 연결된 (숨기지 않은) 식당 이름들, 영상 → 유튜버
 const onVideo = new Map(), creatorOf = new Map();
