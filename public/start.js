@@ -45,8 +45,9 @@
   const creatorName = id => (D.creators.find(c => c.id === id) || {}).name || "";
 
   /* ── 1·2번 칸: 4건 이상이면 저절로 흐르게 카드를 한 번 더 붙입니다(복사본은 .dup, 보조기기에서 숨김) ── */
+  const reduceMotion = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
   function fill(port, items, render) {
-    const still = !!sel || items.length < 4;
+    const still = !!sel || items.length < 4 || reduceMotion();     // 동작 줄이기 설정이면 복사본을 붙이지 않습니다
     port.classList.toggle("static", still);
     if (!items.length) { port.innerHTML = '<div class="empty">표시할 식당이 없습니다</div>'; return; }
     const html = items.map(x => render(x, false)).join("");
@@ -56,15 +57,15 @@
 
   const videoCard = (p, dup) => `
     <div class="vcard${dup ? " dup" : ""}" data-store="${esc(p.id)}" role="button" tabindex="${dup ? -1 : 0}"
-         aria-pressed="${sel === p.id}"${dup ? ' aria-hidden="true" inert' : ""}>
-      <a class="thumb vlink" href="${YT(p.video.id)}" target="_blank" rel="noreferrer" aria-label="${esc(p.video.title)} 유튜브에서 보기">
+         aria-pressed="${sel === p.id}"${dup ? ' aria-hidden="true"' : ""}>
+      <a class="thumb vlink"${dup ? ' tabindex="-1"' : ""} href="${YT(p.video.id)}" target="_blank" rel="noreferrer" aria-label="${esc(p.video.title)} 유튜브에서 보기">
         <img src="img/vid/${encodeURIComponent(p.video.id)}.jpg" alt="" loading="lazy"
              onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${encodeURIComponent(p.video.id)}/hqdefault.jpg'">
         ${p.lvl ? `<span class="bd">${LVL[p.lvl] || ""}</span>` : ""}
         <span class="who"><img class="av" src="img/ch/${encodeURIComponent(p.creatorId)}.jpg" alt="">${esc(creatorName(p.creatorId))}</span>
         ${p.video.dur ? `<span class="du">${esc(p.video.dur)}</span>` : ""}
       </a>
-      <span class="vt"><a class="slink" href="${MAP(p.id)}">${esc(p.name)}</a></span>
+      <span class="vt"><a class="slink"${dup ? ' tabindex="-1"' : ""} href="${MAP(p.id)}">${esc(p.name)}</a></span>
       <span class="vm">${[esc(p.region), esc(p.category), `조회 ${views(p.video.views)}`,
           `반응 <b class="p">${nf(p.used)}</b>`, p.neg ? `쓴소리 <b class="n">${nf(p.neg)}</b>` : ""]
           .filter(Boolean).map(x => `<span>${x}</span>`).join("<i>·</i>")}</span>
@@ -74,11 +75,11 @@
     const q = p[kind];
     return `
     <div class="rcard${dup ? " dup" : ""}" data-store="${esc(p.id)}" data-kind="${kind}" role="button" tabindex="${dup ? -1 : 0}"
-         aria-pressed="${sel === p.id}"${dup ? ' aria-hidden="true" inert' : ""}>
+         aria-pressed="${sel === p.id}"${dup ? ' aria-hidden="true"' : ""}>
       <span class="tag ${kind === "good" ? "p" : "n"}">${kind === "good" ? "좋았다는 이야기" : "아쉬웠다는 이야기"}</span>
       <q>"${esc(cut(q.text))}"</q>
       <small>${esc(p.name)} · 유튜브 댓글${q.likes ? ` · 좋아요 ${nf(q.likes)}` : ""}${q.wait ? " · 웨이팅 언급" : ""}
-        · <a class="olink" href="${YT(q.vid)}" target="_blank" rel="noreferrer">원문 ↗</a></small>
+        · <a class="olink"${dup ? ' tabindex="-1"' : ""} href="${YT(q.vid)}" target="_blank" rel="noreferrer">원문 ↗</a></small>
     </div>`;
   };
 
@@ -312,6 +313,8 @@
     } catch {
       /* 예시를 못 불러와도 지도로는 갈 수 있어야 합니다 */
       $("stage").hidden = true;
+      document.querySelector(".picker .hd").hidden = true;    // 칩 없이 "즐겨찾기 0 / 3"만 남지 않게
+      $("chips").hidden = true;
     } finally {
       document.body.dataset.ready = "1";
     }

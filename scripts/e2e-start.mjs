@@ -23,8 +23,8 @@ const visible = ids => {
 
 const browser = await chromium.launch();
 
-async function scenario(name, fn, { viewport = { width: 1440, height: 900 }, init } = {}) {
-  const ctx = await browser.newContext({ viewport });
+async function scenario(name, fn, { viewport = { width: 1440, height: 900 }, init, ctxOpts = {} } = {}) {
+  const ctx = await browser.newContext({ viewport, ...ctxOpts });
   if (init) await ctx.addInitScript(init);
   /* 점검이 실서비스 방문 기록(/api/track)을 오염시키지 않게 서버로 보내지 않습니다.
      요청 자체는 그대로 일어나므로 13번처럼 요청을 확인하는 시나리오는 그대로 동작합니다. */
@@ -189,6 +189,7 @@ await scenario("5a. API 실패 → 세 칸 숨기고 지도로 · 저장해 둔 
   await page.route("**/api/intro", r => r.fulfill({ status: 503, contentType: "application/json", body: "{}" }));
   await openStart(page);
   ok(await page.locator("#st1").isHidden(), "세 칸이 보임");
+  ok(await page.locator("#chips").isHidden() && await page.locator("#pickCnt").isHidden(), "칩 없이 '즐겨찾기 0 / 3'이 보임");
   await page.click("#go");
   await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
   const saved = await page.evaluate(() => localStorage.getItem("lesulin.fav"));
@@ -305,6 +306,54 @@ await scenario("17. 핀을 누르면 그 식당 카드 · '지도에서 보기'�
   ok(c.y >= port.y - 1 && c.y < port.y + port.height, "1번 칸에서 그 카드가 안 보임");
   await page.click("#place a.pri");
   await page.waitForSelector(".det .det-title", { timeout: 20000 });
+});
+
+await scenario("19. 흐르는 칸에서 눈에 보이는 카드는 어디를 눌러도 눌림(복사본 포함)", async page => {
+  await openStart(page);
+  for (const port of ["#listReviews", "#listVideos"]) {
+    const r = await page.locator(port).boundingBox();
+    for (const fy of [0.2, 0.5, 0.8]) {
+      const hit = await page.evaluate(([x, y]) => {
+        const el = document.elementFromPoint(x, y)?.closest(".vcard,.rcard");
+        return el ? { inert: el.inert || !!el.closest("[inert]") } : null;
+      }, [r.x + r.width / 2, r.y + r.height * fy]);
+      ok(hit && !hit.inert, `${port} ${fy * 100}% 지점이 눌리지 않는 자리`);
+    }
+  }
+  const r = await page.locator("#listReviews").boundingBox();
+  await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+  await page.waitForTimeout(300);
+  await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2);
+  ok(await page.locator("#rs").isVisible(), "보이는 댓글 카드를 눌러도 선택이 안 됨");
+});
+
+await scenario("20. 동작 줄이기 설정이면 카드를 두 번 보여 주지 않음", async page => {
+  await openStart(page);
+  const all = await page.locator("#listVideos .vcard").count(), orig = await page.locator("#listVideos .vcard:not(.dup)").count();
+  ok(all === orig, `카드 ${all}개 중 원본 ${orig}개 — 복사본이 보임`);
+}, { ctxOpts: { reducedMotion: "reduce" } });
+
+await scenario("21. 지도 타일이 3번 칸을 꽉 채움", async page => {
+  await openStart(page);
+  await pinsReady(page);
+  await page.waitForTimeout(2500);
+  const r = await page.locator("#introMap").boundingBox();
+  const span = await page.$$eval("#introMap img", (imgs, box) => {
+    const rs = imgs.map(i => i.getBoundingClientRect()).filter(b => b.width > 100);   // 핀 얼굴 말고 지도 타일
+    return { min: Math.min(...rs.map(b => b.left)), max: Math.max(...rs.map(b => b.right)) };
+  }, r);
+  ok(span.min <= r.x + 20 && span.max >= r.x + r.width - 20, `타일 ${Math.round(span.min)}~${Math.round(span.max)} / 칸 ${Math.round(r.x)}~${Math.round(r.x + r.width)}`);
+});
+
+await scenario("22. 묶음 숫자가 원 가운데", async page => {
+  await openStart(page);
+  await pinsReady(page);
+  const off = await page.$eval("#introMap .icluster", b => {
+    const rg = document.createRange(); rg.selectNodeContents(b);
+    const t = rg.getBoundingClientRect(), c = b.getBoundingClientRect();
+    return Math.abs((t.left + t.right) / 2 - (c.left + c.right) / 2);
+  });
+  ok(off <= 2, `숫자가 가운데에서 ${off.toFixed(1)}px 벗어남`);
 });
 
 /* ── 지도와 연결 ── */
