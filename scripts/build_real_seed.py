@@ -18,6 +18,7 @@ import json, math, pathlib, re, sys, collections
 ROOT = pathlib.Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import visit_lexicon as VL
+from quotes import pick_quotes
 
 # 조회수·재생시간은 scripts/collect_stats.py 가 받아 둡니다.
 # 예전엔 이 단계를 손으로 돌려서, 시드를 다시 만들 때 조회수가 전부 사라졌습니다.
@@ -123,15 +124,14 @@ def main():
             rec["status"] = "INSUFFICIENT_DATA"; tally["항목 미검출"] += 1
             out.append(rec); continue
 
-        pos = sorted([c for c, a in pairs if any(v > 0 for v in a.values())], key=lambda c: -c["like"])
-        neg = sorted([c for c, a in pairs if any(v < 0 for v in a.values())], key=lambda c: -c["like"])
         # 대기 부정은 "줄이 길었다"는 뜻이라 가게의 결함이 아니라 인기의 증거입니다.
         # 쓴소리를 셀 때는 빼고, 따로 보여 줍니다.
         waitN = sum(1 for _, a in pairs if a.get("대기", 0) < 0)
         gripeN = sum(1 for _, a in pairs if any(v < 0 for k, v in a.items() if k != "대기"))
         rec["aspects"] = aspects
-        rec["quotes"] = {k: ({"x": v[0]["t"].strip()[:170], "at": v[0]["at"], "like": v[0]["like"]} if v else None)
-                         for k, v in (("pos", pos), ("neg", neg))}
+        # 대표 댓글 규칙은 scripts/quotes.py 한 곳에 둡니다 (rebuild_quotes.py 와 공유)
+        rec["quotes"] = pick_quotes([{"t": c["t"], "like": c["like"], "at": c["at"], "asp": a}
+                                     for c, a in pairs])
         rec["negN"] = gripeN
         rec["waitN"] = waitN
         rec["status"] = "RATED"; tally["점수 산출"] += 1

@@ -158,6 +158,16 @@ python3 scripts/build_real_seed.py
 .venv/bin/python scripts/load_db.py
 ```
 
+식당 상세의 대표 댓글(좋았다/아쉬웠다) 규칙은 `scripts/quotes.py` 한 곳에 있습니다.
+줄 선 이야기만 있는 칭찬은 "아쉬운 점"으로 세지 않고, 진짜 불만이 없으면 그 칸을 비웁니다.
+규칙을 바꾼 뒤 DB 의 대표 댓글만 다시 계산하려면(전체 재적재 없이):
+
+```bash
+.venv/bin/python scripts/test_quotes.py              # 규칙 테스트
+.venv/bin/python scripts/rebuild_quotes.py           # 미리보기
+.venv/bin/python scripts/rebuild_quotes.py --write   # 저장
+```
+
 ## 배포 (Vercel)
 
 ```bash
