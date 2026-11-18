@@ -39,8 +39,10 @@
 ## 구조
 
 ```
-public/map.html · app.js    사용자 화면 (카카오맵 + 자체 클러스터링)
-src/app/api/                seed · polls · classify · track · feedback · admin
+public/index.html · start.js  시작 화면 (/) — 실제 식당 예시 + 유튜버 선택
+public/map.html · app.js    지도 화면 (/map.html) — 카카오맵 + 자체 클러스터링
+src/lib/showcase.ts         시작 화면 예시로 고른 식당·댓글 (숫자는 /api/showcase 가 DB에서)
+src/app/api/                seed · showcase · polls · classify · track · feedback · admin
 src/app/admin/              운영자 화면 (6개 중점 심사 항목)
 src/lib/classify.ts         감성 분류기 (TypeScript 이식본, 실시간 호출용)
 scripts/visit_lexicon.py    감성 분류기 (원본, 배치 처리용)
@@ -107,8 +109,18 @@ done
 ### 4. 띄우기
 
 ```bash
-npm run dev          # http://localhost:3000/map.html
+npm run dev          # 시작 화면 http://localhost:3000  ·  지도 http://localhost:3000/map.html
 ```
+
+화면 점검(실제 브라우저):
+
+```bash
+node scripts/check-showcase.mjs [주소]   # 시작 화면 데이터 API
+node scripts/e2e-start.mjs [주소]        # 시작 화면 → 지도 → 상세 → 길찾기 (12개 시나리오)
+node scripts/probe.mjs [주소]            # 지도 화면 콘솔 오류·영상 클릭
+```
+
+`?store=<식당 id>` 를 붙이면 지도가 그 식당 상세를 바로 엽니다. `?pick=1` 은 유튜버 고르기 창을 띄웁니다.
 
 운영자 화면은 `/login`.
 

@@ -14,7 +14,7 @@ pg.on("console", m => { if (m.type() === "error") errs.push("console: " + m.text
 pg.on("pageerror", e => errs.push("pageerror: " + String(e).slice(0, 200)));
 pg.on("requestfailed", r => errs.push("요청실패: " + r.url().slice(0, 90)));
 
-const URL = process.argv[2] || "https://lesulin-guide.vercel.app/";
+const URL = process.argv[2] || "https://lesulin-guide.vercel.app/map.html";   // / 는 이제 시작 화면입니다
 await pg.goto(URL, { waitUntil: "networkidle", timeout: 60000 });
 await pg.waitForTimeout(2500);
 
