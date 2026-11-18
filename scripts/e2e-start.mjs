@@ -17,6 +17,11 @@ const browser = await chromium.launch();
 async function scenario(name, fn, { viewport = { width: 1440, height: 900 }, init } = {}) {
   const ctx = await browser.newContext({ viewport });
   if (init) await ctx.addInitScript(init);
+  /* 점검이 실서비스 방문 기록(/api/track)을 오염시키지 않게 서버로 보내지 않습니다.
+     요청 자체는 그대로 일어나므로 13번처럼 요청을 확인하는 시나리오는 그대로 동작합니다. */
+  /* 지도는 창을 닫을 때 sendBeacon 으로 기록을 보내는데, 이건 route 로 막히지 않습니다 */
+  await ctx.addInitScript(() => { navigator.sendBeacon = () => true; });
+  await ctx.route("**/api/track", r => r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }));
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", e => errors.push(String(e)));

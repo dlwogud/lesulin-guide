@@ -8,6 +8,10 @@
 import { chromium } from "playwright";
 const b = await chromium.launch();
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+// 점검이 실서비스 방문 기록을 오염시키지 않게 /api/track 은 보내지 않습니다
+/* 지도는 창을 닫을 때 sendBeacon 으로 기록을 보내는데, 이건 route 로 막히지 않습니다 */
+await ctx.addInitScript(() => { navigator.sendBeacon = () => true; });
+await ctx.route("**/api/track", r => r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }));
 const pg = await ctx.newPage();
 const errs = [];
 pg.on("console", m => { if (m.type() === "error") errs.push("console: " + m.text().slice(0, 160)); });
