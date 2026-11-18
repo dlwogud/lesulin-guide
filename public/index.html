@@ -37,13 +37,12 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;paddin
 
 h1{font-size:clamp(26px,3.4vw,38px);line-height:1.25;letter-spacing:-.9px;margin:6px 0 0;font-weight:800}
 h1 em{font-style:normal;color:var(--coral)}
-.lead{color:var(--ink2);font-size:14.5px;margin:12px 0 0}
 
 /* ── 예시: ① 영상 → ② 다녀왔다고 적은 사람들 → ③ 지도 ── */
 #ex{margin-top:30px}
 .story{display:grid;grid-template-columns:minmax(0,1.05fr) auto minmax(0,1.35fr) auto minmax(0,.8fr);gap:16px;
-  align-items:start;padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:18px}
-.arrow{align-self:center;color:var(--coral);font-size:22px;font-weight:800;padding-top:28px}
+  align-items:center;padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:18px}
+.arrow{align-self:center;color:var(--coral);font-size:22px;font-weight:800}
 .step{font-size:12px;font-weight:700;color:var(--coral-ink);margin-bottom:9px}
 .thumb{position:relative;display:block;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#222}
 .thumb img{width:100%;height:100%;object-fit:cover}
@@ -55,7 +54,6 @@ h1 em{font-style:normal;color:var(--coral)}
 .vm img{width:16px;height:16px;border-radius:50%}
 .count{display:flex;align-items:baseline;gap:9px;margin-bottom:10px;flex-wrap:wrap}
 .count b{font-size:30px;font-weight:800;letter-spacing:-.6px;color:var(--coral)}
-.count span{font-size:12.5px;color:var(--ink2)}
 .qs{display:flex;flex-direction:column;gap:9px}
 .q{background:var(--sub);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6}
 .q .tag{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:1px 7px;margin-bottom:6px}
@@ -111,7 +109,6 @@ h1 em{font-style:normal;color:var(--coral)}
   </header>
 
   <h1 id="hero">좋아하는 유튜버가 간 식당,<br><em>다녀왔다고 적은 사람들</em>은 뭐라고 했을까?</h1>
-  <p class="lead" id="lead">유튜버들의 영상과, 그 영상에 "다녀왔다"고 적은 댓글을 함께 봅니다.</p>
 
   <section id="ex" aria-label="실제 식당 예시">
     <div class="story">
@@ -126,7 +123,7 @@ h1 em{font-style:normal;color:var(--coral)}
       <div class="arrow" aria-hidden="true">→</div>
       <div id="st2">
         <div class="step">② 다녀왔다고 적은 사람들은</div>
-        <div class="count" id="exCount"><b id="exVisits"></b><span id="exCountNote"></span></div>
+        <div class="count" id="exCount"><b id="exVisits"></b></div>
         <div class="qs">
           <div class="q g" id="exGood"><span class="tag">좋았다는 이야기</span><p id="exGoodText"></p>
             <span class="meta" id="exGoodMeta"></span></div>
@@ -159,6 +156,6 @@ h1 em{font-style:normal;color:var(--coral)}
     <span id="pickCnt" aria-live="polite">0 / 3</span>
   </div>
 </div>
-<script src="start.js?v=3" defer></script>
+<script src="start.js?v=4" defer></script>
 </body>
 </html>

@@ -78,7 +78,6 @@
     }
 
     $("exVisits").textContent = `${nf(store.visits)}건`;
-    $("exCountNote").textContent = `수집한 댓글 ${nf(store.commentsAll)}건 중, 다녀온 경험을 적은 댓글`;
 
     const quote = (box, textEl, metaEl, q, extra) => {
       if (!q) { $(box).hidden = true; return; }
@@ -148,10 +147,6 @@
       syncCount(false);
       loaded = true;
 
-      if (d.meta) {
-        $("lead").textContent =
-          `유튜버 ${nf(d.meta.creators)}명의 영상 ${nf(d.meta.videos)}편과, 그 영상에 "다녀왔다"고 적은 댓글을 함께 봅니다.`;
-      }
       fillExample(d);
     } catch {
       /* 예시를 못 불러와도 지도로는 갈 수 있어야 합니다 */
