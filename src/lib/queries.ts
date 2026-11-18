@@ -69,24 +69,3 @@ export async function adminSummary() {
              WHERE NOT handled)                     AS feedback_open`);
   return r;
 }
-
-/** 사람 검수 vs 분류기 — 그 자리에서 정밀도·재현율을 냅니다. */
-export async function accuracy() {
-  const [r] = await q<Record<string, string>>(`
-    WITH j AS (
-      SELECT a.is_visit AS pred, r.is_visit AS gold
-        FROM admin_reviews r
-        JOIN comment_analysis a ON a.comment_id = r.comment_id
-       WHERE r.is_visit IS NOT NULL AND NOT r.vague
-    )
-    SELECT count(*)                                              AS n,
-           count(*) FILTER (WHERE pred AND gold)                  AS tp,
-           count(*) FILTER (WHERE pred AND NOT gold)              AS fp,
-           count(*) FILTER (WHERE NOT pred AND gold)              AS fn
-      FROM j`);
-  const tp = +r.tp, fp = +r.fp, fn = +r.fn;
-  const p = tp + fp ? tp / (tp + fp) : null;
-  const rc = tp + fn ? tp / (tp + fn) : null;
-  return { n: +r.n, tp, fp, fn, precision: p, recall: rc,
-           f1: p && rc ? (2 * p * rc) / (p + rc) : null };
-}

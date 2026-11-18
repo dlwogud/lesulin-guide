@@ -8,6 +8,7 @@ type Item = {
   video_title: string; creator: string; store_name: string | null;
 };
 type Acc = { n: number; tp: number; fp: number; fn: number;
+             reviewedVisit: number; reviewedNon: number;
              precision: number | null; recall: number | null; f1: number | null };
 
 const pct = (v: number | null) => v === null ? "—" : (v * 100).toFixed(1) + "%";
@@ -25,6 +26,7 @@ export default function Review() {
     const r = await fetch(`/api/admin/review${f === "all" ? "" : `?only=${f}`}`);
     const d = await r.json();
     setItems(d.items ?? []); setI(0); setMine({});
+    if (d.accuracy) setAcc(d.accuracy);          // 들어오자마자 지금까지의 수치를 보여 줍니다
   }, []);
 
   useEffect(() => { load(only); }, [only, load]);
@@ -79,7 +81,8 @@ export default function Review() {
         </div>
         <div className="ml-auto flex gap-4 tabular-nums">
           {[["정밀도", pct(acc?.precision ?? null)], ["재현율", pct(acc?.recall ?? null)],
-            ["F1", pct(acc?.f1 ?? null)], ["검수", `${acc?.n ?? 0}건`],
+            ["F1", pct(acc?.f1 ?? null)],
+            ["방문 쪽", `${acc?.reviewedVisit ?? 0}건`], ["비방문 쪽", `${acc?.reviewedNon ?? 0}건`],
             ["이번 세션", `${done}건`]].map(([k, v]) => (
             <div key={k} className="text-center">
               <div className="text-[14px] font-semibold">{v}</div>

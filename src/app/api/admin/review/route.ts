@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
   const only = req.nextUrl.searchParams.get("only");
   const rows = await reviewQueue(me.id, 20,
     only === "visit" || only === "nonvisit" ? only : undefined);
-  return NextResponse.json({ items: rows });
+  const { accuracy } = await import("@/lib/admin");
+  return NextResponse.json({ items: rows, accuracy: await accuracy() });
 }
 
 export async function POST(req: NextRequest) {

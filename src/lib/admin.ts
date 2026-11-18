@@ -1,3 +1,4 @@
+import { stratified } from "@/lib/accuracy";
 import { q } from "./db";
 
 export async function usage() {
@@ -21,28 +22,23 @@ export async function usage() {
 }
 
 /** 분류기 vs 사람 검수. 하드코딩하지 않고 그 자리에서 셉니다. */
+/** 사람 검수 vs 분류기. 방문/비방문 쪽을 따로 뽑은 표본을 전체 크기로 보정합니다(src/lib/accuracy.ts). */
 export async function accuracy() {
   const [v] = await q<Record<string, string>>(`
     WITH j AS (
       SELECT a.is_visit AS pred, r.is_visit AS gold
         FROM admin_reviews r JOIN comment_analysis a ON a.comment_id = r.comment_id
        WHERE r.is_visit IS NOT NULL AND NOT r.vague)
-    SELECT count(*)::int AS n,
-           count(*) FILTER (WHERE pred AND gold)::int     AS tp,
-           count(*) FILTER (WHERE pred AND NOT gold)::int AS fp,
-           count(*) FILTER (WHERE NOT pred AND gold)::int AS fn,
-           count(*) FILTER (WHERE NOT pred AND NOT gold)::int AS tn
+    SELECT count(*) FILTER (WHERE pred AND gold)::int         AS tp,
+           count(*) FILTER (WHERE pred AND NOT gold)::int     AS fp,
+           count(*) FILTER (WHERE NOT pred AND gold)::int     AS fn,
+           count(*) FILTER (WHERE NOT pred AND NOT gold)::int AS tn,
+           (SELECT count(*) FROM comment_analysis WHERE is_visit)::int     AS pop_v,
+           (SELECT count(*) FROM comment_analysis WHERE NOT is_visit)::int AS pop_n
       FROM j`);
-  const tp = +v.tp, fp = +v.fp, fn = +v.fn;
-  const p = tp + fp ? tp / (tp + fp) : null;
-  const r = tp + fn ? tp / (tp + fn) : null;
-  return {
-    n: +v.n, tp, fp, fn, tn: +v.tn,
-    precision: p, recall: r,
-    f1: p !== null && r !== null && p + r > 0 ? (2 * p * r) / (p + r) : null,
-  };
+  return stratified({ tpV: +v.tp, fpV: +v.fp, fnN: +v.fn, tnN: +v.tn,
+                      popVisit: +v.pop_v, popNon: +v.pop_n });
 }
-
 export async function pipeline() {
   return q(`SELECT id, step, model, started_at, finished_at, ok, quota_used, counts, message
               FROM pipeline_runs ORDER BY id DESC LIMIT 20`);
@@ -67,7 +63,9 @@ export async function reviewQueue(adminId: number, limit = 20, only?: "visit" | 
      WHERE NOT c.is_owner ${filter}
        AND NOT EXISTS (SELECT 1 FROM admin_reviews r
                         WHERE r.comment_id = c.id AND r.reviewer_id = $1)
-     ORDER BY c.likes DESC, c.id
+     -- 고정된 무작위 순서. 좋아요 순으로 뽑으면 "인기 댓글에서의 정확도"가 됩니다.
+     -- 해시라서 다시 불러도, 다른 사람이 해도 같은 순서로 나옵니다.
+     ORDER BY md5(c.id::text)
      LIMIT ${limit}`, [adminId]);
 }
 
