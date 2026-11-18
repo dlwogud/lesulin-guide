@@ -93,6 +93,7 @@ await scenario("1b. 화면 구성: 헤더 문구 한 줄 · 머리글·구분선
   ok(await page.$eval("nav", e => getComputedStyle(e).borderBottomWidth) === "0px", "상단 구분선이 남음");
   ok(await page.locator(".ch").count() === 0, "칸 머리글이 남음");
   ok(await page.locator("#go").count() === 0, "'내 유튜버 맛집 지도 열기'가 남음");
+  ok(!(await page.locator(".hero").textContent()).includes("방문 후기 ×"), "'유튜버 × 방문 후기 × 지도'가 남음");
   const [pk, st] = [await page.locator(".picker").boundingBox(), await page.locator("#stage").boundingBox()];
   ok(pk.y + pk.height <= st.y, "고르기가 세 칸 위에 있지 않음");
   ok(await page.$eval(".picker", e => getComputedStyle(e).backgroundColor) === "rgba(0, 0, 0, 0)", "고르기 배경이 남음");
