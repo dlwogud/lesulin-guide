@@ -25,6 +25,10 @@ assert.equal(d.good.id, 291815);
 assert.ok(d.good.text.includes("아구탕"), "좋았다는 이야기 본문");
 assert.equal(d.bad.id, 291672);
 assert.ok(d.bad.text.includes("재료소진"), "아쉬웠다는 이야기 본문");
+/* 날짜가 시간대 변환으로 하루 밀리지 않아야 합니다 (DB 값 그대로) */
+assert.equal(d.good.at, "2022-08-19", "좋았다는 이야기 날짜");
+assert.equal(d.bad.at, "2022-08-21", "아쉬웠다는 이야기 날짜");
+assert.equal(d.video.at, "2022-08-19", "영상 날짜");
 
 assert.equal(d.creators.length, 10);
 assert.ok(d.creators.every(c => c.stores > 0), "유튜버마다 식당 수");

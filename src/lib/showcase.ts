@@ -31,7 +31,8 @@ export type Showcase = {
   meta: { creators: number; videos: number; stores: number };
 };
 
-const ymd = (d: unknown) => (d instanceof Date ? d.toISOString().slice(0, 10) : String(d ?? "").slice(0, 10));
+/* 날짜는 SQL 에서 문자열로 받습니다. pg 가 DATE 를 로컬 자정 Date 로 바꾼 뒤
+   toISOString() 을 하면 KST 에서 하루 앞당겨집니다(실제로 08-19 가 08-18 로 나왔습니다). */
 
 export async function loadShowcase(): Promise<Showcase> {
   const [stores, videos, comments, creators, meta] = await Promise.all([
@@ -41,12 +42,12 @@ export async function loadShowcase(): Promise<Showcase> {
               st.visits, st.comments_all, st.waits
          FROM stores s JOIN store_stats st ON st.store_id = s.id
         WHERE s.id = $1 AND NOT s.hidden`, [SHOWCASE.store]),
-    q<{ id: string; title: string; views: number; published_at: Date; creator_id: string; name: string }>(
-      `SELECT v.id, v.title, v.views, v.published_at, v.creator_id, c.name
+    q<{ id: string; title: string; views: number; at: string; creator_id: string; name: string }>(
+      `SELECT v.id, v.title, v.views, to_char(v.published_at, 'YYYY-MM-DD') AS at, v.creator_id, c.name
          FROM videos v JOIN creators c ON c.id = v.creator_id
         WHERE v.id = $1`, [SHOWCASE.video]),
-    q<{ id: number; body: string; likes: number; published_at: Date }>(
-      `SELECT id, body, likes, published_at FROM comments WHERE id = ANY($1::bigint[])`,
+    q<{ id: number; body: string; likes: number; at: string }>(
+      `SELECT id, body, likes, to_char(published_at, 'YYYY-MM-DD') AS at FROM comments WHERE id = ANY($1::bigint[])`,
       [[SHOWCASE.good, SHOWCASE.bad]]),
     q<{ id: string; name: string; stores: number }>(
       `SELECT c.id, c.name, count(DISTINCT s.id)::int AS stores
@@ -65,7 +66,7 @@ export async function loadShowcase(): Promise<Showcase> {
   const s = stores[0], v = videos[0];
   const quote = (id: number): Quote | null => {
     const c = comments.find(r => Number(r.id) === id);
-    return c ? { id: Number(c.id), text: c.body, likes: Number(c.likes), at: ymd(c.published_at) } : null;
+    return c ? { id: Number(c.id), text: c.body, likes: Number(c.likes), at: c.at } : null;
   };
 
   return {
@@ -75,7 +76,7 @@ export async function loadShowcase(): Promise<Showcase> {
       visits: Number(s.visits), commentsAll: Number(s.comments_all), waits: Number(s.waits),
     } : null,
     video: v ? {
-      id: v.id, title: v.title, views: Number(v.views), at: ymd(v.published_at),
+      id: v.id, title: v.title, views: Number(v.views), at: v.at,
       creatorId: v.creator_id, creatorName: v.name,
     } : null,
     good: quote(SHOWCASE.good),
