@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 const BASE = (process.argv[2] || "http://localhost:3000").replace(/\/$/, "");
 const res = await fetch(`${BASE}/api/intro`);
 assert.equal(res.status, 200, `HTTP ${res.status}`);
-assert.match(res.headers.get("cache-control") || "", /s-maxage=600/, "CDN 캐시 헤더");
+assert.match(res.headers.get("cache-control") || "", /s-maxage=3600.*stale-while-revalidate=604800/, "CDN 캐시 헤더 (첫 방문자가 4~5초 기다리지 않게 길게)");
 const d = await res.json();
 const seed = await (await fetch(`${BASE}/api/seed`)).json();
 

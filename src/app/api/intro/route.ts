@@ -8,6 +8,8 @@ export async function GET() {
     return NextResponse.json({ error: "DB에 연결할 수 없습니다." }, { status: 503 });
   }
   const data = await loadIntro();
-  const cache = "public, s-maxage=600, stale-while-revalidate=3600";   // /api/seed 와 같음
+  /* 댓글 전체를 훑어 처음 계산은 4~5초 걸립니다. 데이터는 수집 파이프라인을 돌릴 때만 바뀌므로
+     길게 둬서 심사위원 같은 첫 방문자가 기다리지 않게 합니다(만료 뒤에도 일주일은 옛 응답을 바로 주고 뒤에서 갱신). */
+  const cache = "public, s-maxage=3600, stale-while-revalidate=604800";
   return NextResponse.json(data, { headers: { "Cache-Control": cache, "CDN-Cache-Control": cache } });
 }

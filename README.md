@@ -39,10 +39,12 @@
 ## 구조
 
 ```
-public/index.html · start.js  시작 화면 (/) — 실제 식당 예시 + 유튜버 선택
+public/index.html · start.js  시작 화면 (/) — v3: 유튜버별 영상·방문 댓글·카카오맵 + 유튜버 선택
 public/map.html · app.js    지도 화면 (/map.html) — 카카오맵 + 자체 클러스터링
-src/lib/showcase.ts         시작 화면 예시로 고른 식당·댓글 (숫자는 /api/showcase 가 DB에서)
-src/app/api/                seed · showcase · polls · classify · track · feedback · admin
+src/lib/intro.ts            시작 화면 유튜버별 예시 식당 (/api/intro) — 한 가게 영상·가게 이름·방문 말 등으로 거른 댓글만
+src/lib/showcase.ts         사람이 원문을 확인한 복춘식당 예시 (성시경 맨 앞)
+data/intro_exclude.json     자동 기준은 통과했지만 사람이 읽고 뺀 식당
+src/app/api/                seed · intro · showcase · polls · classify · track · feedback · admin
 src/app/admin/              운영자 화면 (6개 중점 심사 항목)
 src/lib/classify.ts         감성 분류기 (TypeScript 이식본, 실시간 호출용)
 scripts/visit_lexicon.py    감성 분류기 (원본, 배치 처리용)
@@ -115,8 +117,9 @@ npm run dev          # 시작 화면 http://localhost:3000  ·  지도 http://lo
 화면 점검(실제 브라우저):
 
 ```bash
-node scripts/check-showcase.mjs [주소]   # 시작 화면 데이터 API
-node scripts/e2e-start.mjs [주소]        # 시작 화면 → 지도 → 상세 → 길찾기 (12개 시나리오)
+node scripts/check-intro.mjs [주소]      # 시작 화면 예시 식당 API (댓글 출처·거르기 기준)
+node scripts/check-showcase.mjs [주소]   # 복춘식당 예시 API
+node scripts/e2e-start.mjs [주소]        # 시작 화면 → 지도 → 상세 → 길찾기 (25개 시나리오)
 node scripts/probe.mjs [주소]            # 지도 화면 콘솔 오류·영상 클릭
 ```
 
