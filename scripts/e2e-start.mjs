@@ -233,6 +233,80 @@ await scenario("7. 모바일 390: 가로 넘침 없음 · 지도 버튼 보임 �
   ok(Math.max(...xs) - Math.min(...xs) <= 2, `세로 배치 아님 x=${xs}`);
 }, { viewport: { width: 390, height: 844 } });
 
+/* ── 3번 칸 카카오맵 ── */
+/* 가까운 핀은 묶음(.icluster, data-stores="a,b")으로 합쳐집니다 — 핀과 묶음 속 식당을 함께 셉니다 */
+const pinsReady = page => page.waitForSelector("#introMap .ipin, #introMap .icluster", { timeout: 25000 });
+const pinIds = page => page.$$eval("#introMap .ipin, #introMap .icluster",
+  els => [...new Set(els.flatMap(e => (e.dataset.store || e.dataset.stores).split(",")))]);
+
+await scenario("14. 지도 핀 수 = 3번 칸 개수 (보이는 식당과 같은 것)", async page => {
+  await openStart(page);
+  await pinsReady(page);
+  const pins = (await pinIds(page)).sort();
+  const cards = (await shownStores(page)).sort();
+  ok(pins.length === await num(page, "#cntPlaces"), `핀 ${pins.length}개`);
+  ok(JSON.stringify(pins) === JSON.stringify(cards), `핀 ${pins} ≠ 카드 ${cards}`);
+});
+
+await scenario("15. 유튜버를 연달아 바꿔도 지난 핀이 남지 않음", async page => {
+  await openStart(page);
+  await pinsReady(page);
+  const chips = page.locator("#chips [data-id]");
+  for (const i of [3, 4, 5, 4]) await chips.nth(i).click();
+  await page.waitForTimeout(800);
+  const pins = (await pinIds(page)).sort(), cards = (await shownStores(page)).sort();
+  ok(JSON.stringify(pins) === JSON.stringify(cards), `핀 ${pins} ≠ 카드 ${cards}`);
+});
+
+await scenario("14b. 가까운 핀은 묶음 · 누르면 확대돼 펼쳐짐", async page => {
+  await openStart(page);
+  await pinsReady(page);
+  const cl = page.locator("#introMap .icluster").first();
+  ok(await cl.count() === 1, "기본 보기에 묶음이 없음(서울 식당이 겹쳐야 정상)");
+  const n = (await cl.getAttribute("data-stores")).split(",").length;
+  ok(Number((await cl.textContent()).trim()) === n, "묶음 숫자 ≠ 묶인 식당 수");
+  const members = (await cl.getAttribute("data-stores")).split(",");
+  await cl.click();
+  await page.waitForTimeout(1200);
+  /* 확대되면 화면 밖 핀은 카카오가 문서에서 빼므로 전체 개수가 아니라 묶였던 식당이 나뉘었는지 봅니다 */
+  const groups = await page.$$eval("#introMap .ipin, #introMap .icluster",
+    (els, ids) => els.filter(e => (e.dataset.store || e.dataset.stores).split(",").some(x => ids.includes(x))).length, members);
+  ok(groups > 1, `눌러도 안 펼쳐짐 (묶였던 ${members} 가 ${groups}덩어리)`);
+});
+
+await scenario("16. 카카오 지도를 못 불러오면 식당 이름 목록 · 나머지는 정상", async page => {
+  await page.route("**/dapi.kakao.com/**", r => r.abort());
+  await openStart(page);
+  await page.waitForSelector("#introMapList a", { timeout: 20000 });
+  ok(await page.locator("#introMapList a").count() === await num(page, "#cntPlaces"), "목록 수");
+  ok((await shownStores(page)).length > 0, "영상 카드가 없음");
+  ok((await page.getAttribute("#introMapList a", "href")).startsWith("/map.html?store="), "목록 링크");
+});
+
+await scenario("17. 핀을 누르면 그 식당 카드 · '지도에서 보기'로 상세", async page => {
+  await openStart(page);
+  await pinsReady(page);
+  /* 묶음만 있으면 눌러서 펼칩니다 — 눌릴 때마다 확대돼 결국 낱개 핀이 나와야 합니다 */
+  for (let i = 0; i < 6 && !(await page.locator("#introMap .ipin").count()); i++) {
+    await page.locator("#introMap .icluster").first().click();
+    await page.waitForTimeout(900);
+  }
+  const pin = page.locator("#introMap .ipin").first();
+  const sid = await pin.getAttribute("data-store");
+  await pin.click();
+  await page.waitForSelector("#place:not([hidden])", { timeout: 5000 });
+  ok(await page.getAttribute("#place a.pri", "href") === `/map.html?store=${sid}`, "지도에서 보기 링크");
+  ok((await page.getAttribute("#place a.route", "href")).startsWith("https://map.kakao.com/link/to/"), "길찾기 링크");
+  const stores = await page.$$eval("#listReviews .rcard:not(.dup)", els => els.map(e => e.dataset.store));
+  ok(stores.every(s => s === sid), "댓글이 그 식당으로 안 좁혀짐");
+  const card = page.locator(`#listVideos .vcard[data-store="${sid}"]:not(.dup)`);
+  ok(await card.getAttribute("aria-pressed") === "true", "1번 칸 카드가 선택 표시 안 됨");
+  const [c, port] = [await card.boundingBox(), await page.locator("#listVideos").boundingBox()];
+  ok(c.y >= port.y - 1 && c.y < port.y + port.height, "1번 칸에서 그 카드가 안 보임");
+  await page.click("#place a.pri");
+  await page.waitForSelector(".det .det-title", { timeout: 20000 });
+});
+
 /* ── 지도와 연결 ── */
 const mapReady = page => page.waitForSelector(".rcard", { timeout: 20000 });
 

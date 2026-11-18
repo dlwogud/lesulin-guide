@@ -96,6 +96,11 @@
     $("bigNum").textContent = nf(places.reduce((n, p) => n + p.used, 0));
     $("bigWrap").hidden = false;
     if (window.LesulinIntroMap) window.LesulinIntroMap.show(places, sel);
+    /* 지도에서 고른 식당이 1번 칸 아래쪽에 있으면 그 카드가 보이게 옮깁니다(칸 안에서만 스크롤) */
+    if (sel) {
+      const port = $("listVideos"), card = port.querySelector(`.vcard[data-store="${CSS.escape(sel)}"]:not(.dup)`);
+      if (card) port.scrollTop = Math.max(0, card.offsetTop - 12);
+    }
   }
 
   function syncChips() {
@@ -143,6 +148,120 @@
     const card = e.target.closest && e.target.closest(".vcard,.rcard");
     if (card && (e.key === "Enter" || e.key === " ") && !e.target.closest("a")) { e.preventDefault(); choose(card.dataset.store); }
   });
+
+  /* ── 3번 칸 카카오맵 ──
+     키는 지도 화면과 같은 /api/mapkey 에서 받습니다(도메인 등록됨). 못 불러오면 식당 이름 목록만 둡니다.
+     칸이 바뀔 때마다 핀을 전부 지우고 다시 그려서 지난 선택의 핀이 남지 않게 합니다. */
+  const KAKAO_TO = p => `https://map.kakao.com/link/to/${encodeURIComponent(p.name)},${p.lat},${p.lng}`;
+  window.LesulinIntroMap = (() => {
+    let map = null, pins = [], last = null, failed = false;
+
+    function list(places) {
+      $("introMapList").innerHTML = places.length
+        ? places.map(p => `<a href="${MAP(p.id)}">${esc(p.name)}<small>${esc(p.region)}</small></a>`).join("")
+        : '<div class="empty">표시할 식당이 없습니다</div>';
+    }
+    function popup(places, selId) {
+      const p = selId && places.find(x => x.id === selId);
+      const box = $("place");
+      if (!p) { box.hidden = true; box.innerHTML = ""; return; }
+      box.innerHTML = `<button class="x" id="px" aria-label="닫기">×</button><h3>${esc(p.name)}</h3>
+        <p>${esc(p.region)} · ${esc(p.category)} · 반응 ${nf(p.used)}</p>
+        <div class="row"><a class="btn pri" href="${MAP(p.id)}">지도에서 보기</a>
+          <a class="btn route" href="${KAKAO_TO(p)}" target="_blank" rel="noreferrer">길찾기</a>
+          <a class="btn" href="${YT(p.video.id)}" target="_blank" rel="noreferrer">영상</a></div>`;
+      box.hidden = false;
+      $("px").addEventListener("click", () => choose(p.id));      // 같은 식당을 다시 고르면 풀립니다
+    }
+    /* 화면에서 44px 안에 겹치는 핀은 묶음 하나로(지도 화면의 묶음과 같은 방식).
+       지도가 움직이거나 확대될 때마다(idle) 다시 묶습니다. */
+    function regroup() {
+      if (!map || !last) return;
+      pins.forEach(o => o.setMap(null)); pins = [];
+      const proj = map.getProjection(), groups = [];
+      for (const p of last.places) {
+        const ll = new kakao.maps.LatLng(p.lat, p.lng), pt = proj.containerPointFromCoords(ll);
+        const g = groups.find(g => Math.hypot(g.x - pt.x, g.y - pt.y) < 44);
+        if (g) g.items.push(p); else groups.push({ x: pt.x, y: pt.y, items: [p] });
+      }
+      for (const g of groups) {
+        const el = document.createElement("button");
+        el.type = "button";
+        let pos;
+        if (g.items.length === 1) {
+          const p = g.items[0];
+          pos = new kakao.maps.LatLng(p.lat, p.lng);
+          el.className = "ipin" + (p.id === last.selId ? " sel" : "");
+          el.dataset.store = p.id; el.setAttribute("aria-label", p.name);
+          el.innerHTML = `<img src="img/ch/${encodeURIComponent(p.creatorId)}.jpg" alt="">`;
+          el.addEventListener("click", e => { e.stopPropagation(); choose(p.id); });
+        } else {
+          const lat = g.items.reduce((n, p) => n + p.lat, 0) / g.items.length;
+          const lng = g.items.reduce((n, p) => n + p.lng, 0) / g.items.length;
+          pos = new kakao.maps.LatLng(lat, lng);
+          el.className = "icluster" + (g.items.some(p => p.id === last.selId) ? " sel" : "");
+          el.dataset.stores = g.items.map(p => p.id).join(",");
+          el.textContent = String(g.items.length);
+          el.setAttribute("aria-label", `${g.items.length}곳 묶음, 확대`);
+          el.addEventListener("click", e => {
+            e.stopPropagation();
+            const b = new kakao.maps.LatLngBounds();
+            g.items.forEach(p => b.extend(new kakao.maps.LatLng(p.lat, p.lng)));
+            const lv = map.getLevel();
+            map.setBounds(b, 60, 60, 60, 60);
+            if (map.getLevel() >= lv) map.setLevel(Math.max(1, lv - 2), { anchor: pos });   // 한 점에 몰려 있어도 확대
+          });
+        }
+        const ov = new kakao.maps.CustomOverlay({ position: pos, content: el, clickable: true, zIndex: el.classList.contains("sel") ? 5 : 2 });
+        ov.setMap(map); pins.push(ov);
+      }
+    }
+    function draw(places, selId) {
+      if (!places.length) { pins.forEach(o => o.setMap(null)); pins = []; return; }
+      const p = selId && places.find(x => x.id === selId);
+      if (p) { map.setLevel(Math.min(map.getLevel(), 5)); map.panTo(new kakao.maps.LatLng(p.lat, p.lng)); }
+      else if (places.length === 1) { map.setLevel(6); map.setCenter(new kakao.maps.LatLng(places[0].lat, places[0].lng)); }
+      else {
+        const bounds = new kakao.maps.LatLngBounds();
+        places.forEach(x => bounds.extend(new kakao.maps.LatLng(x.lat, x.lng)));
+        map.setBounds(bounds, 50, 50, 50, 50);
+      }
+      regroup();
+    }
+    function show(places, selId) {
+      last = { places, selId };
+      popup(places, selId);
+      if (failed) list(places);
+      else if (map) draw(places, selId);
+    }
+    function fail() {
+      failed = true;
+      $("zoom").hidden = true; $("introMapList").hidden = false;
+      if (last) list(last.places);
+    }
+    (async function init() {
+      try {
+        const { key } = await (await fetch("/api/mapkey")).json();
+        if (!key) throw new Error("지도 키 없음");
+        await new Promise((ok, no) => {
+          const sc = document.createElement("script");
+          sc.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&autoload=false`;
+          sc.onload = ok; sc.onerror = no;
+          document.head.append(sc);
+          setTimeout(() => no(new Error("지도 시간 초과")), 10000);
+        });
+        await new Promise(ok => kakao.maps.load(ok));
+        map = new kakao.maps.Map($("introMap"), { center: new kakao.maps.LatLng(36.4, 127.9), level: 13 });
+        $("iZin").onclick = () => map.setLevel(map.getLevel() - 1);
+        $("iZout").onclick = () => map.setLevel(map.getLevel() + 1);
+        $("zoom").hidden = false;
+        new ResizeObserver(() => map.relayout()).observe($("introMap"));
+        kakao.maps.event.addListener(map, "idle", regroup);
+        if (last) draw(last.places, last.selId);
+      } catch { fail(); }
+    })();
+    return { show };
+  })();
 
   /* 데이터가 오기 전이나 불러오기에 실패했을 때 저장하면 전에 골라 둔 유튜버가 [] 로 지워집니다 */
   const savePicks = () => { if (loaded) safeSet(picked); };
