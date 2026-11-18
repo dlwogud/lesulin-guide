@@ -1,6 +1,7 @@
 /* 시작 화면(/) → 지도 흐름을 실제 브라우저로 확인합니다.
  *
  *   node scripts/e2e-start.mjs [기준 주소]     기본값: http://localhost:3000
+ *   ONLY="^1b|^7b" node scripts/e2e-start.mjs   이름이 맞는 시나리오만
  *
  * 하나라도 실패하면 exit 1. 화면 숫자는 /api/intro 를 직접 받아 비교합니다(테스트에도 숫자를 적지 않습니다).
  * 1·2번 칸은 4건 이상이면 저절로 흐르도록 카드를 한 번 더 붙입니다 — 그 복사본은 .dup 이라 셀 때 뺍니다.
@@ -23,7 +24,10 @@ const visible = ids => {
 
 const browser = await chromium.launch();
 
+/* ONLY="^1b|^7b" 처럼 주면 이름이 맞는 시나리오만 돌립니다(전체는 10분 남짓) */
+const ONLY = process.env.ONLY ? new RegExp(process.env.ONLY) : null;
 async function scenario(name, fn, { viewport = { width: 1440, height: 900 }, init, ctxOpts = {} } = {}) {
+  if (ONLY && !ONLY.test(name)) return;
   const ctx = await browser.newContext({ viewport, ...ctxOpts });
   if (init) await ctx.addInitScript(init);
   /* 점검이 실서비스 방문 기록(/api/track)을 오염시키지 않게 서버로 보내지 않습니다.
@@ -69,17 +73,39 @@ await scenario("1. 데스크톱: 제목·숫자·세 칸·칩 (숫자는 API 값
   const want = visible(DEFAULT);
   const got = await shownStores(page);
   ok(JSON.stringify(got) === JSON.stringify(want.map(p => p.id)), `영상 카드 ${got} ≠ ${want.map(p => p.id)}`);
-  ok(await num(page, "#cntVideos") === want.length, "1번 칸 개수");
-  ok(await num(page, "#cntPlaces") === want.length, "3번 칸 개수");
+
   const revs = want.reduce((n, p) => n + (p.good ? 1 : 0) + (p.bad ? 1 : 0), 0);
   ok(await page.locator("#listReviews .rcard:not(.dup)").count() === revs, "댓글 카드 수");
-  ok(await num(page, "#cntReviews") === revs, "2번 칸 개수");
+
   ok(await num(page, "#bigNum") === want.reduce((n, p) => n + p.used, 0), "큰 숫자");
   ok(await page.locator("#chips [data-id]").count() === IN.creators.length, "유튜버 칩 수");
   const rev = await page.textContent("#listReviews");
   ok(rev.includes("아구탕") && rev.includes("재료소진"), "복춘식당 고정 댓글");
   ok(/^https:\/\/www\.youtube\.com\/watch\?v=/.test(await page.getAttribute("#listVideos .vcard:not(.dup) a.vlink", "href")), "영상 링크");
 });
+
+await scenario("1b. 화면 구성: 헤더 문구 한 줄 · 머리글·구분선·지도 열기 버튼 없음 · 고르기가 세 칸 위", async page => {
+  await openStart(page);
+  const tag = page.locator("nav #tagline");
+  ok((await tag.textContent()).trim() === "좋아하는 유튜버가 방문한 맛집의 반응을 알아보세요!", "헤더 문구");
+  const lh = await tag.evaluate(e => parseFloat(getComputedStyle(e).lineHeight) || 20);
+  ok((await tag.boundingBox()).height <= lh * 1.3, "헤더 문구가 줄바꿈됨");
+  ok(await page.$eval("nav", e => getComputedStyle(e).borderBottomWidth) === "0px", "상단 구분선이 남음");
+  ok(await page.locator(".ch").count() === 0, "칸 머리글이 남음");
+  ok(await page.locator("#go").count() === 0, "'내 유튜버 맛집 지도 열기'가 남음");
+  const [pk, st] = [await page.locator(".picker").boundingBox(), await page.locator("#stage").boundingBox()];
+  ok(pk.y + pk.height <= st.y, "고르기가 세 칸 위에 있지 않음");
+  ok(await page.$eval(".picker", e => getComputedStyle(e).backgroundColor) === "rgba(0, 0, 0, 0)", "고르기 배경이 남음");
+});
+
+await scenario("7b. 모바일에서도 헤더 문구 한 줄 · 넘침 없음", async page => {
+  await openStart(page);
+  const tag = page.locator("#tagline");
+  ok(await tag.isVisible(), "모바일에서 문구가 안 보임");
+  const lh = await tag.evaluate(e => parseFloat(getComputedStyle(e).lineHeight) || 20);
+  ok((await tag.boundingBox()).height <= lh * 1.3, "줄바꿈됨");
+  ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 390, "가로 넘침");
+}, { viewport: { width: 390, height: 844 } });
 
 await scenario("2. 4번째를 고르면 가장 먼저 고른 사람이 빠짐 · 다시 누르면 해제", async page => {
   await openStart(page);
@@ -102,7 +128,7 @@ await scenario("2b. 유튜버를 고르면 세 칸이 그 유튜버 식당으로
   const want = visible([c.id]).map(p => p.id);
   const got = await shownStores(page);
   ok(JSON.stringify(got) === JSON.stringify(want), `${c.name}: ${got} ≠ ${want}`);
-  ok(await num(page, "#cntPlaces") === want.length, "3번 칸 개수");
+
 });
 
 await scenario("2c. 고른 유튜버의 식당이 0곳이면 빈 상태 · 큰 숫자 0", async page => {
@@ -128,8 +154,8 @@ await scenario("2s. 카드를 누르면 그 식당만 · 전체 보기로 되돌
   const stores = await page.$$eval("#listReviews .rcard:not(.dup)", els => els.map(e => e.dataset.store));
   ok(stores.length > 0 && stores.every(s => s === sid), `댓글이 그 식당만이 아님 ${stores}`);
   await page.click("#rs");
-  ok(await page.locator("#listReviews .rcard:not(.dup)").count() === await num(page, "#cntReviews"), "전체 보기로 안 돌아옴");
-  ok(await page.locator("#rs").count() === 0, "전체 보기 버튼이 남음");
+  ok(await page.locator("#listReviews .rcard:not(.dup)").count() > 1, "전체 보기로 안 돌아옴");
+  ok(await page.locator("#rs").isHidden(), "전체 보기 버튼이 남음");
 });
 
 await scenario("2m. 지도의 고르기 창도 같은 방식", async page => {
@@ -153,7 +179,7 @@ await scenario("3. 고르고 지도로 → 저장됨", async page => {
   const chips = page.locator("#chips [data-id]");
   const ids = [await chips.nth(0).getAttribute("data-id"), await chips.nth(1).getAttribute("data-id")];
   await chips.nth(0).click(); await chips.nth(1).click();
-  await page.click("#go");
+  await page.click("#toMap");
   await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
   const saved = JSON.parse(await page.evaluate(() => localStorage.getItem("lesulin.fav")));
   ok(JSON.stringify([...saved].sort()) === JSON.stringify([...ids].sort()), `저장값 ${saved}`);
@@ -190,7 +216,7 @@ await scenario("5a. API 실패 → 세 칸 숨기고 지도로 · 저장해 둔 
   await openStart(page);
   ok(await page.locator("#st1").isHidden(), "세 칸이 보임");
   ok(await page.locator("#chips").isHidden() && await page.locator("#pickCnt").isHidden(), "칩 없이 '즐겨찾기 0 / 3'이 보임");
-  await page.click("#go");
+  await page.click("#toMap");
   await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
   const saved = await page.evaluate(() => localStorage.getItem("lesulin.fav"));
   ok(saved === JSON.stringify(SAVED), `저장값이 바뀜: ${saved}`);
@@ -199,7 +225,7 @@ await scenario("5a. API 실패 → 세 칸 숨기고 지도로 · 저장해 둔 
 await scenario("5c. 데이터가 오기 전에 버튼을 눌러도 저장해 둔 유튜버는 그대로", async page => {
   await page.route("**/api/intro", async r => { await new Promise(res => setTimeout(res, 4000)); await r.continue(); });
   await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
-  await page.click("#go");
+  await page.click("#toMap");
   await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
   const saved = await page.evaluate(() => localStorage.getItem("lesulin.fav"));
   ok(saved === JSON.stringify(SAVED), `저장값이 바뀜: ${saved}`);
@@ -218,7 +244,7 @@ await scenario("6. localStorage 차단(시크릿 창) → 그래도 동작", asy
   await openStart(page);
   ok(await page.locator("#hero").isVisible(), "문장");
   ok(errors.length === 0, `시작 화면 오류: ${errors}`);
-  await page.click("#go");
+  await page.click("#toMap");
   await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
   errors.length = 0;   // 지도 쪽은 이 테스트 범위 밖
 }, { init: () => Object.defineProperty(window, "localStorage", { get() { throw new Error("blocked"); } }) });
@@ -245,7 +271,7 @@ await scenario("14. 지도 핀 수 = 3번 칸 개수 (보이는 식당과 같은
   await pinsReady(page);
   const pins = (await pinIds(page)).sort();
   const cards = (await shownStores(page)).sort();
-  ok(pins.length === await num(page, "#cntPlaces"), `핀 ${pins.length}개`);
+  ok(pins.length === (await shownStores(page)).length, `핀 ${pins.length}개`);
   ok(JSON.stringify(pins) === JSON.stringify(cards), `핀 ${pins} ≠ 카드 ${cards}`);
 });
 
@@ -279,7 +305,7 @@ await scenario("16. 카카오 지도를 못 불러오면 식당 이름 목록 ·
   await page.route("**/dapi.kakao.com/**", r => r.abort());
   await openStart(page);
   await page.waitForSelector("#introMapList a", { timeout: 20000 });
-  ok(await page.locator("#introMapList a").count() === await num(page, "#cntPlaces"), "목록 수");
+  ok(await page.locator("#introMapList a").count() === (await shownStores(page)).length, "목록 수");
   ok((await shownStores(page)).length > 0, "영상 카드가 없음");
   ok((await page.getAttribute("#introMapList a", "href")).startsWith("/map.html?store="), "목록 링크");
 });
@@ -311,15 +337,23 @@ await scenario("17. 핀을 누르면 그 식당 카드 · '지도에서 보기'�
 await scenario("19. 흐르는 칸에서 눈에 보이는 카드는 어디를 눌러도 눌림(복사본 포함)", async page => {
   await openStart(page);
   for (const port of ["#listReviews", "#listVideos"]) {
+    /* 고르기가 위로 올라가 세 칸이 첫 화면 아래까지 내려갑니다 — 칸이 화면에 다 보이게 한 뒤 잽니다 */
+    await page.locator(port).evaluate(e => e.scrollIntoView({ block: "center" }));
+    await page.waitForTimeout(200);
     const r = await page.locator(port).boundingBox();
     for (const fy of [0.2, 0.5, 0.8]) {
+      /* 카드 사이 12px 틈에 떨어질 수 있어 위아래로 조금씩 옮겨 가며 봅니다 */
       const hit = await page.evaluate(([x, y]) => {
-        const el = document.elementFromPoint(x, y)?.closest(".vcard,.rcard");
-        return el ? { inert: el.inert || !!el.closest("[inert]") } : null;
+        for (const d of [0, 8, -8, 16, -16]) {
+          const el = document.elementFromPoint(x, y + d)?.closest(".vcard,.rcard");
+          if (el) return { inert: el.inert || !!el.closest("[inert]") };
+        }
+        return null;
       }, [r.x + r.width / 2, r.y + r.height * fy]);
       ok(hit && !hit.inert, `${port} ${fy * 100}% 지점이 눌리지 않는 자리`);
     }
   }
+  await page.locator("#listReviews").evaluate(e => e.scrollIntoView({ block: "center" }));
   const r = await page.locator("#listReviews").boundingBox();
   await page.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
   await page.waitForTimeout(300);
@@ -343,6 +377,12 @@ await scenario("21. 지도 타일이 3번 칸을 꽉 채움", async page => {
     return { min: Math.min(...rs.map(b => b.left)), max: Math.max(...rs.map(b => b.right)) };
   }, r);
   ok(span.min <= r.x + 20 && span.max >= r.x + r.width - 20, `타일 ${Math.round(span.min)}~${Math.round(span.max)} / 칸 ${Math.round(r.x)}~${Math.round(r.x + r.width)}`);
+  /* 위치만 보면 놓쳤던 문제: 칸 일부만 확대 배율 타일이고 나머지는 낮은 배율 타일이 흐릿하게 남음 */
+  const levels = await page.$$eval("#introMap img", (imgs, box) => [...new Set(imgs
+    .filter(i => /\/tile\//.test(i.src)).map(i => [i, i.getBoundingClientRect()])
+    .filter(([, b]) => b.width > 100 && b.left < box.x + box.width && b.right > box.x)
+    .map(([i]) => (i.src.match(/latest\/(\d+)\//) || [])[1]))], r);
+  ok(levels.length === 1, `칸 안 타일 배율이 섞임: ${levels}`);
 });
 
 await scenario("22. 묶음 숫자가 원 가운데", async page => {
@@ -394,7 +434,7 @@ await scenario("12. 전체 흐름: 시작 → 2명 → 지도(내 유튜버 표�
   await openStart(page);
   const chips = page.locator("#chips [data-id]");
   await chips.nth(0).click(); await chips.nth(1).click();
-  await page.click("#go");
+  await page.click("#toMap");
   await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
   await page.waitForSelector(".pinbox.mine, .kcluster.mine", { timeout: 25000 });
   await page.click(".brand");

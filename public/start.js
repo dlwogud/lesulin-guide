@@ -91,9 +91,7 @@
 
     fill($("listVideos"), places, videoCard);
     fill($("listReviews"), reviews, reviewCard);
-    $("cntVideos").textContent = `${places.length}편`;
-    $("cntReviews").innerHTML = (sel ? '<button class="reset" id="rs">전체 보기</button>' : "") + `<span>${reviews.length}건</span>`;
-    $("cntPlaces").textContent = `${places.length}곳`;
+    $("selbar").hidden = !sel;
     $("bigNum").textContent = nf(places.reduce((n, p) => n + p.used, 0));
     $("bigWrap").hidden = false;
     if (window.LesulinIntroMap) window.LesulinIntroMap.show(places, sel);
@@ -258,6 +256,13 @@
         $("zoom").hidden = false;
         new ResizeObserver(() => map.relayout()).observe($("introMap"));
         kakao.maps.event.addListener(map, "idle", regroup);
+        /* 만들자마자 setBounds 로 옮기면 처음 타일 로딩이 끊겨, 칸 오른쪽에 낮은 배율 타일이
+           흐릿하게 남았습니다. 첫 타일이 다 깔린 뒤에 식당 위치로 옮깁니다. */
+        await new Promise(ok => {
+          const done = () => { kakao.maps.event.removeListener(map, "tilesloaded", done); ok(); };
+          kakao.maps.event.addListener(map, "tilesloaded", done);
+          setTimeout(ok, 3000);
+        });
         if (last) draw(last.places, last.selId);
       } catch { fail(); }
     })();
@@ -267,8 +272,7 @@
   /* 데이터가 오기 전이나 불러오기에 실패했을 때 저장하면 전에 골라 둔 유튜버가 [] 로 지워집니다 */
   const savePicks = () => { if (loaded) safeSet(picked); };
   window.LesulinIntroSave = savePicks;
-  $("go").addEventListener("click", () => { savePicks(); location.href = "/map.html"; });
-  /* 링크로 나가도(상단 "맛집 지도 보러가기", 식당 이름, 지도 핀) 방금 고른 것을 남깁니다 */
+  /* 지도로 나가는 링크(상단 "맛집 지도 보러가기", 식당 이름, 지도 카드)를 누르면 방금 고른 것을 남깁니다 */
   document.addEventListener("click", e => {
     const a = e.target.closest('a[href^="/map.html"]');
     if (a) savePicks();

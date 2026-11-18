@@ -42,7 +42,11 @@ button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;paddin
 .wrap{max-width:1200px;margin:0 auto}
 
 /* ── 상단 바 ── */
-nav{display:flex;align-items:center;gap:20px;padding-block:18px;border-bottom:1px solid var(--line)}
+nav{display:flex;align-items:center;gap:8px 20px;padding-block:18px;flex-wrap:wrap}
+/* 헤더 한 줄 문구 — 작지만 눈에 띄게, 줄바꿈 없이 */
+#tagline{margin:0;font-size:13px;font-weight:700;color:var(--orange-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+@media(max-width:1100px){#tagline{order:3;flex-basis:100%}}
+@media(max-width:760px){#tagline{font-size:12.5px}}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:-.02em;text-decoration:none}
 .mark{width:34px;height:34px;border-radius:10px;background:var(--orange);display:grid;place-items:center;flex:none}
 .mark::after{content:"";width:12px;height:12px;background:#fff;transform:rotate(45deg);border-radius:2px}
@@ -72,12 +76,10 @@ h1 em{font-style:normal;color:var(--orange)}
 .stage{border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);background:var(--bg);padding:22px;
   display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:22px}
 .col{min-width:0;position:relative}
-.ch{display:flex;align-items:center;gap:9px;margin-bottom:14px}
-.ch .no{width:22px;height:22px;border-radius:7px;background:var(--orange);color:var(--on-orange);font-family:var(--mono);
-  font-weight:600;font-size:12px;display:grid;place-items:center;flex:none}
-.ch h2{margin:0;font-size:15px;font-weight:700;letter-spacing:-.02em}
-.ch .n{margin-left:auto;font-size:12px;color:var(--ink-3);display:flex;gap:10px;align-items:center;font-family:var(--mono)}
-.reset{font:500 12px var(--font);color:var(--orange-text);text-decoration:underline;text-underline-offset:3px}
+/* 식당 하나를 골랐을 때만 2번 칸 오른쪽 위에 — 칸 머리글을 없앴으니 여기서 되돌립니다 */
+.selbar{position:absolute;top:10px;right:10px;z-index:3}
+.reset{font:700 12px var(--font);color:var(--orange-text);background:var(--bg);border:1.5px solid var(--orange);
+  padding:5px 12px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .port{height:470px;overflow:hidden;position:relative;border-radius:18px;background:var(--bg-2);
   -webkit-mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent)}
 .port.static{overflow-y:auto;-webkit-mask-image:none;mask-image:none;scrollbar-width:thin}
@@ -99,8 +101,6 @@ h1 em{font-style:normal;color:var(--orange)}
 .thumb>*:not(img){z-index:1}
 .thumb .who{white-space:nowrap}
 .bd{position:absolute;top:9px;left:9px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--orange);color:#fff}
-.thumb .tt{position:absolute;left:12px;right:12px;top:38%;font-size:19px;font-weight:900;letter-spacing:-.04em;line-height:1.15;
-  text-shadow:0 2px 10px rgba(0,0,0,.4)}
 .thumb .who{position:absolute;left:9px;bottom:9px;display:flex;align-items:center;gap:6px;background:rgba(20,14,10,.55);
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:3px 10px 3px 4px;border-radius:99px;font-size:12px;font-weight:500}
 .av{width:20px;height:20px;border-radius:50%;object-fit:cover;background:var(--bg);flex:none}
@@ -149,7 +149,7 @@ h1 em{font-style:normal;color:var(--orange)}
 @media(max-width:900px){.stage{grid-template-columns:1fr;padding:16px}.port,.mapbox{height:390px}}
 
 /* ── 유튜버 고르기 ── */
-.picker{margin-top:28px;background:var(--bg-2);border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.picker{margin:0 0 22px;display:flex;flex-direction:column;gap:14px}
 .picker .hd{display:flex;gap:10px 14px;align-items:baseline;flex-wrap:wrap}
 .picker h2{margin:0;font-size:20px;font-weight:900;letter-spacing:-.04em}
 .picker .hd .c{margin-left:auto;font-family:var(--mono);font-weight:600;font-size:13px;color:var(--ink)}
@@ -167,6 +167,7 @@ h1 em{font-style:normal;color:var(--orange)}
 <div class="wrap">
   <nav>
     <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>르슐랭 가이드</a>
+    <p id="tagline">좋아하는 유튜버가 방문한 맛집의 반응을 알아보세요!</p>
     <div class="st" id="stats" hidden>
       <div><b id="statStores"></b><span>식당</span></div>
       <div><b id="statVideos"></b><span>영상</span></div>
@@ -183,17 +184,20 @@ h1 em{font-style:normal;color:var(--orange)}
     <div class="big" id="bigWrap" hidden><b id="bigNum"></b><span>건의 방문 후기</span></div>
   </section>
 
+  <section class="picker" aria-labelledby="pickTitle">
+    <div class="hd"><h2 id="pickTitle">내 유튜버를 고르세요</h2><span class="c" id="pickCnt">즐겨찾기 0 / 3</span></div>
+    <div class="chips" id="chips"></div>
+  </section>
+
   <section class="stage" id="stage">
     <div class="col" id="st1">
-      <div class="ch"><span class="no">1</span><h2>영상에서 봤다</h2><span class="n" id="cntVideos"></span></div>
       <div class="port" id="listVideos"></div>
     </div>
     <div class="col" id="st2">
-      <div class="ch"><span class="no">2</span><h2>다녀왔다고 적은 사람들</h2><span class="n" id="cntReviews"></span></div>
+      <div class="selbar" id="selbar" hidden><button class="reset" id="rs">전체 보기</button></div>
       <div class="port r" id="listReviews"></div>
     </div>
     <div class="col" id="st3">
-      <div class="ch"><span class="no">3</span><h2>지도에서 찾는다</h2><span class="n" id="cntPlaces"></span></div>
       <div class="mapbox">
         <div id="introMap" aria-label="맛집 지도"></div>
         <div class="zoom" id="zoom" hidden><button id="iZin" aria-label="확대">+</button><button id="iZout" aria-label="축소">−</button></div>
@@ -203,12 +207,7 @@ h1 em{font-style:normal;color:var(--orange)}
     </div>
   </section>
 
-  <section class="picker" aria-labelledby="pickTitle">
-    <div class="hd"><h2 id="pickTitle">내 유튜버를 고르세요</h2><span class="c" id="pickCnt">즐겨찾기 0 / 3</span></div>
-    <div class="chips" id="chips"></div>
-    <div><button class="cta" id="go">내 유튜버 맛집 지도 열기 →</button></div>
-  </section>
 </div>
-<script src="start.js?v=11" defer></script>
+<script src="start.js?v=13" defer></script>
 </body>
 </html>
