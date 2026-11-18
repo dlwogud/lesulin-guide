@@ -102,13 +102,37 @@
     $("exRoute").href = `https://map.kakao.com/link/to/${encodeURIComponent(store.name)},${store.lat},${store.lng}`;
   }
 
-  function go(ids) {
-    safeSet(ids);
-    location.href = "/map.html";
-  }
+  /* 칩을 실제로 보여준 뒤에만 선택을 저장합니다. 데이터가 오기 전이나
+     불러오기에 실패했을 때 저장하면, 전에 골라 둔 유튜버가 [] 로 지워집니다. */
+  let loaded = false;
+  const savePicks = () => { if (loaded) safeSet(picked); };
 
-  $("go").addEventListener("click", () => go(picked));
-  $("skip").addEventListener("click", () => go([]));
+  $("go").addEventListener("click", () => { savePicks(); location.href = "/map.html"; });
+  $("skip").addEventListener("click", () => { safeSet([]); location.href = "/map.html"; });
+  /* 링크로 나가도(예시의 "지도에서 보기", "지도로 바로 가기") 방금 고른 것을 남깁니다 */
+  for (const id of ["exMap", "toMap"]) $(id).addEventListener("click", savePicks);
+
+  /* 방문 기록 — 지도(app.js)와 같은 키·형식으로 /api/track 에 보냅니다.
+     시작 화면만 보고 나간 사람도 방문자·재방문 집계에 들어가야 합니다. */
+  function newId() {
+    return (crypto.randomUUID?.() || String(Math.random()).slice(2) + Date.now())
+      .replace(/[^A-Za-z0-9_-]/g, "").slice(0, 32);
+  }
+  function keepId(key, fallback) {
+    try {
+      let v = localStorage.getItem(key);
+      if (!v) { v = newId(); localStorage.setItem(key, v); }
+      return v;
+    } catch { return fallback; }
+  }
+  const sid = keepId("lesulin.sid", "anon" + String(Date.now()).slice(-10));
+  const vid = keepId("lesulin.vid", sid);
+  try {
+    fetch("/api/track", {
+      method: "POST", headers: { "content-type": "application/json" }, keepalive: true,
+      body: JSON.stringify({ hits: [{ event: "view", path: "/", session: sid, visitor: vid }] }),
+    }).catch(() => {});
+  } catch { /* 기록 실패는 화면에 영향을 주지 않습니다 */ }
 
   (async function boot() {
     try {
@@ -122,6 +146,7 @@
       picked = safeGet().filter(id => known.has(id)).slice(0, MAX);
       renderChips(d.creators);
       syncCount(false);
+      loaded = true;
 
       if (d.meta) {
         $("lead").textContent =

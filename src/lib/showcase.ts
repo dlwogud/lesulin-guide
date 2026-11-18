@@ -47,8 +47,12 @@ export async function loadShowcase(): Promise<Showcase> {
          FROM videos v JOIN creators c ON c.id = v.creator_id
         WHERE v.id = $1`, [SHOWCASE.video]),
     q<{ id: number; body: string; likes: number; at: string }>(
-      `SELECT id, body, likes, to_char(published_at, 'YYYY-MM-DD') AS at FROM comments WHERE id = ANY($1::bigint[])`,
-      [[SHOWCASE.good, SHOWCASE.bad]]),
+      /* 댓글 번호는 DB 를 다시 적재하면 바뀔 수 있습니다(bigserial). 그때 엉뚱한 식당의
+         댓글이 예시로 나오지 않게, 이 영상의 댓글이고 채널 주인 댓글이 아닐 때만 씁니다.
+         맞지 않으면 null 이 되고, 화면은 그 블록만 숨깁니다. */
+      `SELECT id, body, likes, to_char(published_at, 'YYYY-MM-DD') AS at FROM comments
+        WHERE id = ANY($1::bigint[]) AND video_id = $2 AND NOT is_owner`,
+      [[SHOWCASE.good, SHOWCASE.bad], SHOWCASE.video]),
     q<{ id: string; name: string; stores: number }>(
       `SELECT c.id, c.name, count(DISTINCT s.id)::int AS stores
          FROM creators c

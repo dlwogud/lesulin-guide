@@ -80,12 +80,52 @@ await scenario("4. 저장값 미리 선택 (없는 id 제외, 최대 3)", async 
   ok(JSON.stringify(got) === JSON.stringify(["c1", "c2", "c4"]), `미리 선택 ${got}`);
 }, { init: () => localStorage.setItem("lesulin.fav", JSON.stringify(["c1", "zz9", "c2", "c4", "c5"])) });
 
-await scenario("5a. API 실패 → 예시만 숨기고 지도로 갈 수 있음", async page => {
+await scenario("3b. 고른 뒤 예시의 '지도에서 보기'로 나가도 선택이 저장됨", async page => {
+  await openStart(page);
+  const chips = page.locator("#chips [data-id]");
+  const ids = [await chips.nth(2).getAttribute("data-id"), await chips.nth(3).getAttribute("data-id")];
+  await chips.nth(2).click(); await chips.nth(3).click();
+  await page.click("#exMap");
+  await page.waitForURL(/\/map\.html\?store=/, { timeout: 15000 });
+  const saved = JSON.parse(await page.evaluate(() => localStorage.getItem("lesulin.fav")));
+  ok(JSON.stringify([...saved].sort()) === JSON.stringify([...ids].sort()), `저장값 ${saved}`);
+});
+
+const SAVED = ["c1", "c2"];
+const keepSaved = () => {
+  /* 처음 한 번만 심습니다 — 지도 페이지로 넘어간 뒤 다시 덮어쓰면 검사가 무의미합니다 */
+  if (!sessionStorage.getItem("seeded")) {
+    localStorage.setItem("lesulin.fav", JSON.stringify(["c1", "c2"]));
+    sessionStorage.setItem("seeded", "1");
+  }
+};
+
+await scenario("5a. API 실패 → 예시만 숨기고 지도로 · 저장해 둔 유튜버는 그대로", async page => {
   await page.route("**/api/showcase", r => r.fulfill({ status: 503, contentType: "application/json", body: "{}" }));
   await openStart(page);
   ok(await page.locator("#ex").isHidden(), "예시 카드가 보임");
   await page.click("#go");
   await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
+  const saved = await page.evaluate(() => localStorage.getItem("lesulin.fav"));
+  ok(saved === JSON.stringify(SAVED), `저장값이 바뀜: ${saved}`);
+}, { init: keepSaved });
+
+await scenario("5c. 데이터가 오기 전에 버튼을 눌러도 저장해 둔 유튜버는 그대로", async page => {
+  await page.route("**/api/showcase", async r => { await new Promise(res => setTimeout(res, 4000)); await r.continue(); });
+  await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
+  await page.click("#go");
+  await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
+  const saved = await page.evaluate(() => localStorage.getItem("lesulin.fav"));
+  ok(saved === JSON.stringify(SAVED), `저장값이 바뀜: ${saved}`);
+}, { init: keepSaved });
+
+await scenario("13. 시작 화면도 방문 기록(view, path=/)을 남김", async page => {
+  const req = page.waitForRequest(r => r.url().endsWith("/api/track") && r.method() === "POST"
+    && /"event":"view"/.test(r.postData() || "") && /"path":"\/"/.test(r.postData() || ""), { timeout: 15000 });
+  await openStart(page);
+  const body = JSON.parse((await req).postData());
+  const hit = body.hits.find(h => h.event === "view");
+  ok(/^[A-Za-z0-9_-]{8,64}$/.test(hit.visitor) && /^[A-Za-z0-9_-]{8,64}$/.test(hit.session), "id 형식");
 });
 
 await scenario("5b. 고정 댓글 하나가 없으면 그 블록만 숨김", async page => {
