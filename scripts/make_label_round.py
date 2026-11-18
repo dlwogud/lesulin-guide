@@ -3,7 +3,8 @@
     .venv/bin/python scripts/make_label_round.py labeling/round2 --n 50
 
 1차(labeling/)와 같은 형식이고, 판단하기 쉽게 식당·영상 칸을 붙였습니다.
-한 사람이 한 번에 보도록 파일 하나로 만들고, 이름은 넣지 않습니다.
+이름은 넣지 않습니다. --parts 로 번호 순서대로 나눠 여러 파일로 만들 수 있습니다
+(두 쪽은 이미 섞여 있어 어느 파일에도 양쪽이 같이 들어갑니다).
 
 - 분류기가 "다녀왔다"로 본 댓글 N건 + 아니라고 본 댓글 N건. 비방문 쪽이 전체의 95%라
   무작위로만 뽑으면 방문 쪽이 거의 안 걸립니다. 채점에서 전체 크기로 보정합니다
@@ -49,6 +50,7 @@ def main():
     ap.add_argument("--n", type=int, default=50, help="쪽마다 몇 건")
     ap.add_argument("--seed", default="round2")
     ap.add_argument("--sheet", default="라벨링_2차.csv", help="만들 시트 파일 이름")
+    ap.add_argument("--parts", type=int, default=1, help="번호 순서대로 몇 개 파일로 나눌지")
     args = ap.parse_args()
     out = ROOT / args.out
     if out.exists() and any(out.glob("라벨링_*.csv")):
@@ -81,7 +83,13 @@ def main():
             for it in part:
                 w.writerow(sheet(it))
 
-    write(out / args.sheet, items)
+    size = -(-len(items) // args.parts)                    # 올림
+    stem = args.sheet.removesuffix(".csv")
+    sheets = []
+    for k in range(args.parts):
+        name = args.sheet if args.parts == 1 else f"{stem}_{k + 1}.csv"
+        write(out / name, items[k * size:(k + 1) * size])
+        sheets.append(name)
     json.dump(items, open(out / "_answer_key.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     json.dump({"pop_visit": pop_v, "pop_non": pop_n, "n_per_stratum": args.n, "seed": args.seed,
                "created": datetime.date.today().isoformat()},
@@ -90,7 +98,8 @@ def main():
     guide = (FIRST / "라벨링_지침.md").read_text(encoding="utf-8")
     for old, new in [
         ("본인 이름 파일(`라벨링_○○○.csv`)을 엑셀이나 구글시트로 열어서 채워주세요. **34건 내외, 약 30분**입니다.",
-         f"`{args.sheet}`를 엑셀이나 구글시트로 열어서 채워주세요. **{len(items)}건, 약 1시간**입니다. "
+         " · ".join(f"`{n}`" for n in sheets) + "를 엑셀이나 구글시트로 열어서 채워주세요. "
+         f"**파일마다 {size}건, 약 {max(15, size * 36 // 60)}분**입니다. "
          "`식당`·`영상` 칸을 보고 어느 가게 얘기인지 판단하면 됩니다."),
         ("- **본인 판단으로만** 채우세요. 다른 사람 시트를 보거나 상의하지 마세요. 그러면 측정이 무의미해집니다.",
          "- **본인 판단으로만** 채우세요. 다른 사람과 상의하면 측정이 무의미해집니다."),
@@ -103,7 +112,7 @@ def main():
                           "**다른 가게에 다녀온 얘기면 `X`**입니다.")
     (out / "라벨링_지침.md").write_text(guide, encoding="utf-8")
 
-    print(f"{args.out}/{args.sheet}: {len(items)}건 (방문 쪽 {args.n} · 비방문 쪽 {args.n})")
+    print(f"{args.out}: {len(items)}건 (방문 쪽 {args.n} · 비방문 쪽 {args.n}) → " + ", ".join(sheets))
     print(f"전체 댓글: 방문 {pop_v:,} · 비방문 {pop_n:,}")
 
 
