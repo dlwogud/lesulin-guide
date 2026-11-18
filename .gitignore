@@ -21,3 +21,6 @@ data/golden.json
 public/img/vid
 .env*
 .superpowers/
+
+# 사람 라벨링 시트 — 팀원 이름이 들어 있어 올리지 않습니다
+labeling/round*/

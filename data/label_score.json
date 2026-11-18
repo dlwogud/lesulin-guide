@@ -1,6 +1,7 @@
 {
  "labeled": 196,
  "total": 200,
+ "visit_stratified": null,
  "visit": {
   "precision": 0.7124183006535948,
   "recall": 0.9478260869565217,
