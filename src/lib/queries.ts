@@ -48,7 +48,25 @@ export async function storeDetail(id: string) {
     SELECT v.id, v.title, v.published_at, v.views, v.duration, v.creator_id
       FROM store_videos sv JOIN videos v ON v.id = sv.video_id
      WHERE sv.store_id = $1 ORDER BY v.published_at DESC`, [id]);
-  return { ...s, videos };
+  return { ...s, videos, ai: await storeAi(id).catch(() => null) };
+}
+
+/** AI(혼합 판정 + 근거 요약)를 적용한 식당만 값이 있습니다. 나머지는 null — 규칙 결과만 있다는 뜻입니다. */
+export async function storeAi(id: string) {
+  const [v] = await q<{ n: number; routed: number; rule_visit: number; final_visit: number; at: string | null; route_version: string | null; prompt_version: string | null }>(`
+    SELECT count(*)::int AS n, count(*) FILTER (WHERE routed)::int AS routed,
+           count(*) FILTER (WHERE rule_visit)::int AS rule_visit, count(*) FILTER (WHERE final_visit)::int AS final_visit,
+           max(updated_at) AS at, max(route_version) AS route_version, max(prompt_version) AS prompt_version
+      FROM ai_visit WHERE store_id = $1`, [id]);
+  if (!v || !v.n) return null;
+  const [s] = await q<{ status: string; lines: { kind: string; text: string; commentIds: number[] }[]; n_evidence: number; model: string | null;
+                        prompt_version: string | null; created_at: string; reviewed_at: string | null }>(`
+    SELECT status, lines, n_evidence, model, prompt_version, created_at, reviewed_at FROM ai_summaries WHERE store_id = $1`, [id]);
+  const ids = [...new Set((s?.lines ?? []).flatMap((l) => l.commentIds))];
+  const ev = ids.length ? await q<{ id: number; body: string; likes: number; published_at: string }>(`
+    SELECT id::int, body, likes, to_char(published_at AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD') AS published_at
+      FROM comments WHERE id = ANY($1)`, [ids]) : [];
+  return { visit: v, summary: s ?? null, evidence: Object.fromEntries(ev.map((e) => [e.id, { x: e.body, like: e.likes, at: e.published_at }])) };
 }
 
 /** 관리자 화면 머리에 올리는 숫자. 하드코딩하지 않고 그 자리에서 셉니다. */

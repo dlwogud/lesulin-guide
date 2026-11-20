@@ -8,8 +8,8 @@ export async function GET() {
   if (!(await dbReady())) return NextResponse.json({ error: "DB 연결 실패" }, { status: 503 });
   const [daily, calls] = await Promise.all([
     q(`SELECT * FROM ai_daily ORDER BY day DESC LIMIT 14`),
-    q(`SELECT id, at, endpoint, ms, chars, n, ok, error, caller
-         FROM ai_calls ORDER BY id DESC LIMIT 20`),
+    q(`SELECT id, at, endpoint, model, ms, chars, n, ok, error, caller, input_tokens, output_tokens, cost_usd
+         FROM ai_calls ORDER BY id DESC LIMIT 30`),
   ]);
   return NextResponse.json({ daily, calls });
 }

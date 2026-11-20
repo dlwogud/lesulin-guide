@@ -21,6 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ["/admin", "사용 현황"],
     ["/admin/data", "데이터 관리"],
     ["/admin/review", "AI 결과 검수"],
+    ["/admin/compare", "AI 비교(규칙·LLM)"],
     ["/admin/feedback", "피드백·신고"],
     ["/admin/ai", "AI 실시간·운영 로그"],
   ] as const;

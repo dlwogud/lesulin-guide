@@ -324,6 +324,19 @@ function renderDetail(s) {
        <p class="note">아직 점수를 내지 않았습니다. 댓글 ${nfm(s.cTotal)}개 중 방문 경험을 밝힌 것이 ${s.cVisit}개라
        ${s.cVisit >= 5 ? "항목이 잡히지 않았습니다" : "최소 근거(5개)에 못 미칩니다"}. 근거가 모자라면 비워 둡니다.</p></div>`;
 
+  /* 근거 요약 — 혼합 판정(규칙 + LLM)을 적용한 식당만. 줄을 누르면 근거 댓글 원문이 펼쳐집니다. */
+  const ai = s.ai, sm = ai && ai.summary;
+  const KIND = { good: "좋았다는 점", bad: "아쉬웠다는 점", tip: "가기 전에" };
+  const aiBlk = !ai ? "" : `
+    <div class="blk aisum"><p class="blk-t">방문 후기 요약 <span class="aitag">AI</span></p>
+      ${sm && sm.status === "ok" ? sm.lines.map((l, i) => `<details class="ail ${l.kind}">
+          <summary><span class="k">${KIND[l.kind] || ""}</span>${esc(l.text)}<span class="n">근거 ${l.commentIds.length}</span></summary>
+          ${l.commentIds.map(id => ai.evidence[id] ? `<div class="quote">${esc(ai.evidence[id].x)}
+            <span class="qm"><span>유튜브 댓글</span><span>${dateK(ai.evidence[id].at)}</span>${ai.evidence[id].like ? `<span>좋아요 ${nfm(ai.evidence[id].like)}</span>` : ""}</span></div>` : "").join("")}
+        </details>`).join("")
+        : `<p class="note">분석할 방문 언급 댓글이 부족함</p>`}
+      <p class="aimeta">댓글 ${nfm(ai.visit.n)}개 판정 · 방문 언급 ${nfm(ai.visit.final_visit)}개 (규칙 ${nfm(ai.visit.rule_visit)} → 규칙+LLM 확인) · LLM 확인 ${nfm(ai.visit.routed)}개${sm && sm.model ? ` · ${esc(sm.model)}` : ""}</p>
+    </div>`;
   const kakaoTo = `https://map.kakao.com/link/to/${encodeURIComponent(s.n)},${s.lat},${s.lng}`;
   $("panel").innerHTML = `
     <div class="det">
@@ -345,6 +358,7 @@ function renderDetail(s) {
           </div>
           <h3>${esc(s.n)}</h3><p class="addr">${esc(s.addr || shortRegion(s.r))}</p>
         </div>
+        ${aiBlk}
         <div class="blk"><p class="blk-t">소개한 영상 ${s.vids.length}편</p>${vids}</div>
         <div class="blk"><p class="blk-t">수집된 댓글</p>
           <dl class="kv">
@@ -376,6 +390,7 @@ async function loadQuotes(s) {
     if (!r.ok) { s.quotes = null; return; }
     const d = await r.json();
     s.quotes = d.quotes ?? null;
+    s.ai = d.ai ?? null;               // AI 적용 식당만 값이 있음
     if (selected === s.id) renderDetail(s);        // 열려 있으면 다시 그립니다
   } catch { s.quotes = null; }
   finally { quoteWait.delete(s.id); }
