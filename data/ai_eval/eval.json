@@ -1,0 +1,1040 @@
+{
+ "set": "eval",
+ "n": 90,
+ "human_visit": 42,
+ "sample": "2차 층화 표본 — 규칙 판정 기준 방문 쪽 47 / 비방문 쪽 43 (모집단 12445 / 260322)",
+ "versions": {
+  "rule": "rule:visit_lexicon@v2",
+  "llm": "claude-opus-5-5",
+  "prompt": "visit-v2",
+  "route": "route-v1"
+ },
+ "run_at": "2026-11-20T05:42:34.970Z",
+ "methods": {
+  "rule": {
+   "tp": 40,
+   "fp": 7,
+   "fn": 2,
+   "tn": 41,
+   "P": 0.851063829787234,
+   "R": 0.9523809523809523,
+   "F": 0.898876404494382,
+   "weighted": {
+    "P": 0.8510638297872339,
+    "R": 0.46659593054862963,
+    "F": 0.6027396928546044
+   },
+   "llm_ratio": 0,
+   "usage": {
+    "calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0,
+    "llm_ms_sum": 0,
+    "llm_ms_avg": 0
+   },
+   "time_ms": 1
+  },
+  "llm": {
+   "tp": 34,
+   "fp": 1,
+   "fn": 8,
+   "tn": 47,
+   "P": 0.9714285714285714,
+   "R": 0.8095238095238095,
+   "F": 0.8831168831168832,
+   "weighted": {
+    "P": 0.7727067213908331,
+    "R": 0.906680813890274,
+    "F": 0.8343498380579023
+   },
+   "llm_ratio": 1,
+   "usage": {
+    "calls": 90,
+    "input_tokens": 109197,
+    "output_tokens": 6246,
+    "cost_usd": 0.5617,
+    "llm_ms_sum": 175850,
+    "llm_ms_avg": 1954
+   },
+   "unsure": 3,
+   "errors": 0,
+   "unsure_as": "아니오로 셈"
+  },
+  "hybrid": {
+   "tp": 39,
+   "fp": 3,
+   "fn": 3,
+   "tn": 45,
+   "P": 0.9285714285714286,
+   "R": 0.9285714285714286,
+   "F": 0.9285714285714286,
+   "weighted": {
+    "P": 0.9530249137185872,
+    "R": 0.7099681687468833,
+    "F": 0.8137344164532815
+   },
+   "llm_ratio": 0.2,
+   "usage": {
+    "calls": 18,
+    "input_tokens": 23237,
+    "output_tokens": 1419,
+    "cost_usd": 0.1213,
+    "llm_ms_sum": 35564,
+    "llm_ms_avg": 1976
+   },
+   "rule_fallback": 1
+  }
+ },
+ "llm_wall_ms": 44780,
+ "evidence_not_in_comment": 0,
+ "rows": [
+  {
+   "id": "R001",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R002",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R003",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R004",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R005",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R007",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R008",
+   "human": true,
+   "rule": true,
+   "llm": "unsure",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R009",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R010",
+   "human": false,
+   "rule": false,
+   "llm": "unsure",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R011",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R012",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R013",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R014",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R015",
+   "human": true,
+   "rule": true,
+   "llm": "unsure",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "동네·지역"
+   ],
+   "source": "rule-fallback"
+  },
+  {
+   "id": "R016",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R017",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R018",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R019",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R020",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R021",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R022",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "동네·지역",
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R023",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R024",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R025",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R026",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R027",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R028",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R029",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R030",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R031",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R032",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R033",
+   "human": false,
+   "rule": false,
+   "llm": "yes",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R034",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R035",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R036",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R037",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R038",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R039",
+   "human": true,
+   "rule": false,
+   "llm": "yes",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R040",
+   "human": true,
+   "rule": false,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "반복 방문"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R041",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R042",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R043",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R044",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R045",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R046",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R047",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R048",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R049",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R050",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R051",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R052",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R053",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R054",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R055",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R056",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R057",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R058",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R059",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R062",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R063",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R064",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R065",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R067",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R068",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R069",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R070",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R071",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "못 먹음",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R072",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R073",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R074",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R075",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R076",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R077",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R078",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R079",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "동네·지역"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R080",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R081",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R082",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R086",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R087",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R088",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R089",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R091",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R092",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "R093",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R095",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R096",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R097",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R098",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "R099",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  }
+ ]
+}
