@@ -14,7 +14,8 @@ import { route, hybridFinal, ROUTE_VERSION } from "../../src/lib/hybrid.ts";
 import { judgeVisit, summarizeStore, VISIT_PROMPT_VERSION, SUMMARY_PROMPT_VERSION, LLM_MODEL } from "../../src/lib/llm.ts";
 
 const DRY = process.argv.includes("--dry"), SUMMARY_ONLY = process.argv.includes("--summary-only");
-const STORES: string[] = JSON.parse(readFileSync("data/ai_stores.json", "utf8")).stores;
+const ONLY = process.argv.find((a) => a.startsWith("--only="))?.slice(7).split(",");
+const STORES: string[] = (JSON.parse(readFileSync("data/ai_stores.json", "utf8")).stores as string[]).filter((s) => !ONLY || ONLY.includes(s));
 const MAX_EVIDENCE = 40;     // 요약에 넘기는 방문 댓글 수 상한 (좋아요 많은 순)
 const MIN_EVIDENCE = 3;      // 이보다 적으면 요약하지 않고 "부족"으로 둡니다
 
