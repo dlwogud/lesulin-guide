@@ -1,0 +1,2351 @@
+{
+ "set": "dev",
+ "n": 196,
+ "human_visit": 115,
+ "sample": "1차 표본 — 규칙 개선·분기 조건·프롬프트 작성에 사용 (독립 평가 아님)",
+ "versions": {
+  "rule": "rule:visit_lexicon@v2",
+  "llm": "claude-opus-5-5",
+  "prompt": "visit-v2",
+  "route": "route-v1"
+ },
+ "run_at": "2026-11-20T05:41:29.830Z",
+ "methods": {
+  "rule": {
+   "tp": 109,
+   "fp": 44,
+   "fn": 6,
+   "tn": 37,
+   "P": 0.7124183006535948,
+   "R": 0.9478260869565217,
+   "F": 0.8134328358208955,
+   "weighted": null,
+   "llm_ratio": 0,
+   "usage": {
+    "calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": 0,
+    "llm_ms_sum": 0,
+    "llm_ms_avg": 0
+   },
+   "time_ms": 1.62
+  },
+  "llm": {
+   "tp": 98,
+   "fp": 2,
+   "fn": 17,
+   "tn": 79,
+   "P": 0.98,
+   "R": 0.8521739130434782,
+   "F": 0.9116279069767441,
+   "weighted": null,
+   "llm_ratio": 1,
+   "usage": {
+    "calls": 196,
+    "input_tokens": 253689,
+    "output_tokens": 16357,
+    "cost_usd": 1.3419,
+    "llm_ms_sum": 410533,
+    "llm_ms_avg": 2095
+   },
+   "unsure": 2,
+   "errors": 0,
+   "unsure_as": "아니오로 셈"
+  },
+  "hybrid": {
+   "tp": 105,
+   "fp": 10,
+   "fn": 10,
+   "tn": 71,
+   "P": 0.9130434782608695,
+   "R": 0.9130434782608695,
+   "F": 0.9130434782608695,
+   "weighted": null,
+   "llm_ratio": 0.5969387755102041,
+   "usage": {
+    "calls": 117,
+    "input_tokens": 157763,
+    "output_tokens": 9759,
+    "cost_usd": 0.8262,
+    "llm_ms_sum": 244684,
+    "llm_ms_avg": 2091
+   },
+   "rule_fallback": 2
+  }
+ },
+ "llm_wall_ms": 103252,
+ "evidence_not_in_comment": 0,
+ "rows": [
+  {
+   "id": "L001",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L002",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L003",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L004",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L005",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L006",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L007",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L008",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L009",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L010",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L011",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L012",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L013",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L014",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L015",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L016",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L017",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L018",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "동네·지역",
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L019",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L020",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "못 먹음",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L021",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L022",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L023",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L024",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L025",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L026",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L027",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L028",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L029",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L030",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L031",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "동네·지역"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L032",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L033",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L034",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L035",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L036",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L037",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L038",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "못 먹음"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L039",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L040",
+   "human": false,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L041",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L042",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "못 먹음"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L044",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "동네·지역"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L045",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L046",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L047",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L048",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "반복 방문"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L049",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L050",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L051",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "반복 방문"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L052",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L053",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L054",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L055",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L056",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L057",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L058",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L059",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L060",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L061",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L062",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L063",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L064",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L065",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L066",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "동네·지역",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L067",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "못 먹음",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L068",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L069",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L070",
+   "human": true,
+   "rule": false,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "경험 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L071",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L072",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L073",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L074",
+   "human": true,
+   "rule": false,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "경험 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L075",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L076",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L077",
+   "human": false,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L078",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L079",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "반복 방문"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L080",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "못 먹음"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L081",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "먹어 본 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L082",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L083",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L084",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "먹어 본 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L086",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L087",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "먹어 본 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L088",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L089",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L090",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L091",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L092",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L093",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L094",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L095",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L096",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L097",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L098",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L099",
+   "human": true,
+   "rule": false,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "경험 말투",
+    "반복 방문"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L100",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L101",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "못 먹음",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L102",
+   "human": false,
+   "rule": true,
+   "llm": "unsure",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "자기 끼니"
+   ],
+   "source": "rule-fallback"
+  },
+  {
+   "id": "L103",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L104",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L105",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L107",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L108",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L109",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L110",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L111",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L112",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L113",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L114",
+   "human": true,
+   "rule": false,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "반복 방문",
+    "먹어 본 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L115",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L116",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "먹어 본 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L117",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L118",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L119",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L120",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L121",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L122",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게",
+    "못 먹음",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L123",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L124",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L125",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "못 먹음"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L126",
+   "human": true,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L127",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L128",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L129",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L130",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "동네·지역",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L131",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L133",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L134",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L135",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L136",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L137",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L138",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L139",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L140",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L141",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L142",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L143",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L144",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L145",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L146",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L147",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L148",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L149",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "자기 끼니"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L150",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L151",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L152",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L153",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "반복 방문"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L154",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L155",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L156",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L157",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L158",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L159",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L160",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "못 먹음",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L161",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L162",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L163",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L164",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L165",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L166",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L167",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L168",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L169",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L170",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L171",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L172",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L173",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L174",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "못 먹음",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L175",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L176",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "반복 방문",
+    "먹어 본 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L177",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L178",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L179",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L180",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L181",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L182",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L183",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L184",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L185",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "다른 가게",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L186",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L187",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L188",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L189",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "경험 말투",
+    "반복 방문",
+    "먹어 본 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L190",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L191",
+   "human": false,
+   "rule": true,
+   "llm": "unsure",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "다른 가게"
+   ],
+   "source": "rule-fallback"
+  },
+  {
+   "id": "L192",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L193",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "동네·지역",
+    "못 먹음"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L194",
+   "human": true,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "경험 말투",
+    "먹어 본 말투"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L195",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L196",
+   "human": false,
+   "rule": false,
+   "llm": "no",
+   "hybrid": false,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L197",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": false,
+   "why": [],
+   "source": "rule"
+  },
+  {
+   "id": "L198",
+   "human": false,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L199",
+   "human": true,
+   "rule": true,
+   "llm": "yes",
+   "hybrid": true,
+   "routed": true,
+   "why": [
+    "앞으로의 계획",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  },
+  {
+   "id": "L200",
+   "human": true,
+   "rule": true,
+   "llm": "no",
+   "hybrid": false,
+   "routed": true,
+   "why": [
+    "동네·지역",
+    "자기 끼니",
+    "긴 댓글"
+   ],
+   "source": "llm"
+  }
+ ]
+}
