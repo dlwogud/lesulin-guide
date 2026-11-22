@@ -4,6 +4,8 @@
 <!-- 로컬 개발용. 카카오는 Referer로 도메인을 검사하는데, 아직 등록이 반영되지 않아
      Referer를 보내지 않는 방식으로 우회합니다. 도메인 등록이 확인되면 이 줄을 지우세요. -->
 <title>르슐랭 가이드 — 카카오맵</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/img/brand/apple-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap">
@@ -42,8 +44,7 @@ img{display:block;max-width:100%}
 .topleft{width:var(--side-w);flex:none;display:flex;align-items:stretch;border-right:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:9px;padding:0 16px;flex:none;text-decoration:none;color:inherit}
 /* 시작 화면과 같은 로고 — 오렌지 사각 + 흰 마름모 */
-.brand .mark{width:28px;height:28px;border-radius:8px;background:var(--coral);display:grid;place-items:center;flex:none}
-.brand .mark::after{content:"";width:10px;height:10px;background:#fff;transform:rotate(45deg);border-radius:2px}
+.brand .mark{width:28px;height:28px;border-radius:8px;flex:none;display:block}
 .brand b{font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
 .srch{flex:1;display:flex;align-items:center;gap:11px;padding:0 18px;position:relative;min-width:0}
 .srch svg{flex:none;color:var(--muted)}
@@ -176,8 +177,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
 /* 내가 고른 유튜버가 간 곳 — 지도에서 바로 눈에 띄게 합니다 */
 .pinbox.mine img{border-color:var(--coral)}
 .kcluster.mine{box-shadow:0 0 0 2.5px var(--coral), 0 3px 10px rgba(0,0,0,.25)}
-.pinbox .lv{position:absolute;top:-6px;right:-8px;background:var(--coral);color:#fff;border-radius:999px;
-  padding:1px 5px;font-size:8.5px;font-weight:700;border:1.5px solid #fff}
+.pinbox img.lv,.pinbox.sel img.lv,.pinbox.mine img.lv{position:absolute;top:-11px;right:-11px;width:21px;height:auto;max-width:none;border:0;border-radius:0;box-shadow:none;background:none;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(30,24,16,.35))}
 .pinbox .nm{margin-top:2px;background:rgba(255,255,255,.95);border-radius:5px;padding:1px 6px;
   font-size:9.5px;font-weight:600;white-space:nowrap;box-shadow:0 1px 3px rgba(30,24,16,.18)}
 .kcluster{position:relative;border-radius:50%;cursor:pointer;border:2.5px solid #fff;overflow:hidden;
@@ -389,7 +389,8 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 .favedit{font-size:11px;color:var(--coral-ink);text-decoration:underline;background:none;border:0;cursor:pointer;font-family:inherit}
 .favedit.favoff{color:var(--muted)}
 .favedit[hidden]{display:none!important}
-.lvchip{position:absolute;left:9px;top:9px;background:var(--coral);color:#fff;border-radius:7px;padding:3px 8px;font-size:10px;font-weight:700}
+.lvchip{position:absolute;left:9px;top:9px;background:var(--coral);color:#fff;border-radius:7px;padding:3px 8px 3px 5px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px}
+.lvb{width:20px;height:auto;flex:none;display:block}
 .rk{position:absolute;right:9px;top:9px;width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,.93);
   color:#15161A;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:600}
 .rmeta h5{margin:0;font-size:14px;font-weight:650}
@@ -415,7 +416,7 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 .det-title .addr{font-size:11.5px;color:var(--muted);line-height:1.5}
 .badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
 .bdg{padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600}
-.bdg.c{background:var(--coral-soft);color:var(--coral-ink)}
+.bdg.c{background:var(--coral-soft);color:var(--coral-ink);display:inline-flex;align-items:center;gap:4px}
 .bdg.t{background:var(--teal-soft);color:var(--teal-ink)}
 .bdg.n{background:var(--sub2);color:var(--muted);font-weight:500}
 .bdg.w{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
@@ -466,7 +467,7 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 <div id="app">
   <header class="topbar">
     <div class="topleft">
-    <a class="brand" href="/" title="처음 화면으로 — 유튜버 바꾸기"><span class="mark" aria-hidden="true"></span><b>르슐랭 가이드</b></a>
+    <a class="brand" href="/" title="처음 화면으로 — 유튜버 바꾸기"><img class="mark" src="/img/brand/logo-64.png" alt="" width="28" height="28"><b>르슐랭 가이드</b></a>
     <div class="regbtn">
       <button id="regToggle" aria-expanded="false"><span id="regLabel">지역</span>
         <svg width="9" height="6" viewBox="0 0 9 6" fill="none"><path d="M1 1l3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
@@ -609,5 +610,5 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=ai1"></script>
+<script src="app.js?v=brand1"></script>
 </body></html>

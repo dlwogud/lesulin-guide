@@ -455,12 +455,13 @@ await scenario("18. 지도 화면도 v3 색·글꼴·로고", async page => {
   const st = await page.evaluate(() => {
     const r = getComputedStyle(document.documentElement), m = document.querySelector(".brand .mark");
     return { coral: r.getPropertyValue("--coral").trim().toUpperCase(), ink: r.getPropertyValue("--ink").trim().toUpperCase(),
-             font: getComputedStyle(document.body).fontFamily, mark: m && getComputedStyle(m).backgroundColor };
+             font: getComputedStyle(document.body).fontFamily,
+             mark: m && m.complete && m.naturalWidth > 0 ? m.getAttribute("src") : null };
   });
   ok(st.coral === "#F2622A", `--coral ${st.coral}`);
   ok(st.ink === "#1F1B18", `--ink ${st.ink}`);
   ok(/Noto Sans KR/.test(st.font), `글꼴 ${st.font}`);
-  ok(st.mark === "rgb(242, 98, 42)", `로고 ${st.mark}`);
+  ok(st.mark === "/img/brand/logo-64.png", `로고 ${st.mark}`);
 });
 
 await browser.close();

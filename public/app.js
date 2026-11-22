@@ -218,7 +218,7 @@ function drawPins(fit) {
       const s = g.items[0], on = s.id === selected, cr = CRE.get(faceOf(s));
       box.className = "pinbox" + (on ? " sel" : "") + (isMine(s) ? " mine" : "");
       box.innerHTML = `<img src="${chImg(cr.id)}" alt="${esc(cr.n)}">
-        ${s.lvl ? `<span class="lv">${"◆".repeat(s.lvl)}</span>` : ""}
+        ${s.lvl ? `<img class="lv" src="/img/brand/badge-${s.lvl}.png" alt="${LVL[s.lvl]}">` : ""}
         <span class="tail"></span>
         ${on ? `<span class="nm">${esc(s.n)}</span>` : ""}`;
       box.onclick = e => { e.stopPropagation(); select(s.id); };
@@ -248,7 +248,7 @@ function cardHTML(s, i) {
   return `<button class="rcard" onclick="window.__sel('${s.id}')">
     <span class="img">
       ${v ? `<img src="${vdImg(v.id)}" alt="" loading="lazy" decoding="async" width="240" height="135">` : ""}
-      ${s.lvl ? `<span class="lvchip">${"◆".repeat(s.lvl)} ${LVL[s.lvl]}</span>` : `<span class="rk">${i + 1}</span>`}
+      ${s.lvl ? `<span class="lvchip"><img class="lvb" src="/img/brand/badge-${s.lvl}.png" alt="">${LVL[s.lvl]}</span>` : `<span class="rk">${i + 1}</span>`}
       <span class="ytstack">
         <span class="faces">${crs.map(c =>
           `<img src="${chImg(c.id)}" alt="${esc(c.n)}" width="18" height="18">`).join("")}</span>
@@ -351,7 +351,7 @@ function renderDetail(s) {
       <div class="det-b">
         <div class="det-title">
           <div class="badges">
-            ${s.lvl ? `<span class="bdg c">${"◆".repeat(s.lvl)} ${LVL[s.lvl]}</span>` : ""}
+            ${s.lvl ? `<span class="bdg c"><img class="lvb" src="/img/brand/badge-${s.lvl}.png" alt="">${LVL[s.lvl]}</span>` : ""}
             ${rated(s) ? `<span class="bdg t">방문 반응 ${s.cUsed}</span>` : `<span class="bdg n">근거 부족</span>`}
             ${s.waitN >= 3 ? `<span class="bdg w">줄 서는 집</span>` : ""}
             ${s.cat ? `<span class="bdg n">${esc(s.cat)}</span>` : ""}
@@ -1126,7 +1126,7 @@ const FB_KINDS = [
   ["wrong_place", "위치가 틀려요", "지도에 찍힌 자리가 실제 가게와 다릅니다"],
   ["closed", "문을 닫았어요", "폐업·휴업·이전했습니다"],
   ["wrong_video", "영상이 이 가게가 아니에요", "다른 가게 영상이 붙어 있습니다"],
-  ["wrong_score", "반응 수나 배지가 이상해요", "숫자나 ◆ 표시가 안 맞습니다"],
+  ["wrong_score", "반응 수나 배지가 이상해요", "숫자나 배지가 안 맞습니다"],
   ["other", "그 밖에", "직접 적겠습니다"],
 ];
 let fbStore = null, fbKind = null;

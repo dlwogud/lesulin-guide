@@ -30,7 +30,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-dvh" style={{ background: "var(--surface-2)" }}>
       <header className="flex items-center gap-4 px-5 h-14"
               style={{ background: "var(--surface)", borderBottom: "1px solid var(--line)" }}>
-        <b className="text-sm">르슐랭 운영</b>
+        <b className="text-sm flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/img/brand/logo-64.png" alt="" width={24} height={24} style={{ borderRadius: 6 }} />
+          르슐랭 운영
+        </b>
         <nav className="flex gap-1">
           {tabs.map(([href, label]) => (
             <Link key={href} href={href} className="text-xs px-3 py-1.5 rounded-lg hover:underline"

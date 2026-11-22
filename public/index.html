@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>르슐랭 가이드</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/img/brand/apple-icon.png">
 <meta name="description" content="좋아하는 유튜버가 간 식당, 다녀왔다고 적은 사람들은 뭐라고 했을까?">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,8 +50,7 @@ nav{display:flex;align-items:center;gap:8px 20px;padding-block:18px;flex-wrap:wr
 @media(max-width:1100px){#tagline{order:3;flex-basis:100%}}
 @media(max-width:760px){#tagline{font-size:12.5px}}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:-.02em;text-decoration:none}
-.mark{width:34px;height:34px;border-radius:10px;background:var(--orange);display:grid;place-items:center;flex:none}
-.mark::after{content:"";width:12px;height:12px;background:#fff;transform:rotate(45deg);border-radius:2px}
+.mark{width:34px;height:34px;border-radius:10px;flex:none;display:block}
 nav .st{margin-left:auto;display:flex;gap:26px}
 nav .st div{text-align:center;line-height:1.2}
 nav .st b{display:block;font-family:var(--mono);font-weight:600;font-size:16px}
@@ -98,7 +99,8 @@ h1 em{font-style:normal;color:var(--orange)}
 .thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.05) 35%,rgba(0,0,0,.55))}
 .thumb>*:not(img){z-index:1}
 .thumb .who{white-space:nowrap}
-.bd{position:absolute;top:9px;left:9px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--orange);color:#fff}
+.bd{position:absolute;top:9px;left:9px;font-size:11px;font-weight:700;padding:3px 9px 3px 6px;border-radius:7px;background:var(--orange);color:#fff;display:flex;align-items:center;gap:4px}
+.bd img{width:20px;height:auto;display:block}
 .thumb .who{position:absolute;left:9px;bottom:9px;display:flex;align-items:center;gap:6px;background:rgba(20,14,10,.55);
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:3px 10px 3px 4px;border-radius:99px;font-size:12px;font-weight:500}
 .av{width:20px;height:20px;border-radius:50%;object-fit:cover;background:var(--bg);flex:none}
@@ -164,7 +166,7 @@ h1 em{font-style:normal;color:var(--orange)}
 <body>
 <div class="wrap">
   <nav>
-    <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>르슐랭 가이드</a>
+    <a class="brand" href="/"><img class="mark" src="/img/brand/logo-128.png" alt="" width="34" height="34">르슐랭 가이드</a>
     <p id="tagline">좋아하는 유튜버가 방문한 맛집의 반응을 알아보세요!</p>
     <div class="st" id="stats" hidden>
       <div><b id="statStores"></b><span>식당</span></div>
@@ -205,6 +207,6 @@ h1 em{font-style:normal;color:var(--orange)}
   </section>
 
 </div>
-<script src="start.js?v=13" defer></script>
+<script src="start.js?v=14" defer></script>
 </body>
 </html>
