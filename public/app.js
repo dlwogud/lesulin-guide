@@ -6,7 +6,7 @@
 const $ = id => document.getElementById(id);
 let SEED, stores, creators, CRE, META;
 let q = "", picked = new Set(), region = null, cat = null, selected = null;
-let onlyRated = false, onlyWait = false, minViews = 0, minEv = 0, sort = "ev";
+let onlyRated = false, onlyWait = false, minViews = 0, minEv = 0, sort = "score";   // 기본: 점수 높은 순(별 3개 → 2개 → 1개)
 let fav = new Set();            // 내가 고른 유튜버(최대 10명) — 숨기지 않고 위로 올립니다
 let kmap = null, lastPinch = 0;
 /* 핀·묶음 오버레이를 키로 보관해 다시 씁니다 (키: 묶인 식당 id 들) */
@@ -283,8 +283,8 @@ function renderResults() {
   $("panel").innerHTML = `
     <div class="panel-h"><b>${nfm(listCache.length)}<i>곳</i></b>
       <select id="sort">
-        <option value="ev">방문 반응 많은 순</option>
         <option value="score">점수 높은 순</option>
+        <option value="ev">방문 반응 많은 순</option>
         <option value="neg">쓴소리 많은 순</option>
         <option value="wait">줄 서는 집 순</option>
         <option value="views">조회수 많은 순</option>
