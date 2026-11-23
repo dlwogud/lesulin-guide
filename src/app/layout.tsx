@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "르슐랭 가이드",
   description: "좋아하는 유튜버가 다녀간 식당을 지도에서 찾고, 원본 영상과 방문자 반응을 확인하세요.",
+  icons: { icon: [{ url: "/lesulin-icon-32.png", sizes: "32x32" }, { url: "/lesulin-icon-192.png", sizes: "192x192" }], shortcut: "/lesulin-favicon.ico", apple: "/img/brand/apple-icon.png?v=3" },
 };
 export const viewport: Viewport = {
   width: "device-width", initialScale: 1, maximumScale: 1, themeColor: "#FFFFFF",
