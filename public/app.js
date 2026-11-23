@@ -7,7 +7,7 @@ const $ = id => document.getElementById(id);
 let SEED, stores, creators, CRE, META;
 let q = "", picked = new Set(), region = null, cat = null, selected = null;
 let onlyRated = false, onlyWait = false, minViews = 0, minEv = 0, sort = "ev";
-let fav = new Set();            // 내가 고른 유튜버(최대 3명) — 숨기지 않고 위로 올립니다
+let fav = new Set();            // 내가 고른 유튜버(최대 10명) — 숨기지 않고 위로 올립니다
 let kmap = null, lastPinch = 0;
 /* 핀·묶음 오버레이를 키로 보관해 다시 씁니다 (키: 묶인 식당 id 들) */
 const pinPool = new Map();
@@ -55,11 +55,11 @@ function filteredRaw() {
     if (picked.size && !s.cs.some(c => picked.has(c))) return false;
     /* region 은 시군구("부산광역시 해운대구") 또는 시·도("부산광역시") */
     if (region && s.r !== region && sido(s.r) !== region) return false;
-    if (cat && s.cat !== cat) return false;
+    if (cat && catGroup(s) !== cat) return false;
     if (minEv && (s.cUsed || 0) < minEv) return false;
     if (minViews && Math.max(0, ...s.vids.map(v => v.vw || 0)) < minViews) return false;
     if (t) {
-      const hay = (s.n + " " + s.addr + " " + s.r + " " + shortRegion(s.r) + " " + s.cat + " "
+      const hay = (s.n + " " + s.addr + " " + s.r + " " + shortRegion(s.r) + " " + s.cat + " " + (catGroup(s) || "") + " "
         + s.cs.map(i => CRE.get(i).n).join(" ") + " " + s.vids.map(v => v.t).join(" ")).toLowerCase();
       /* 띄어 쓴 낱말은 순서와 상관없이 모두 들어 있으면 됩니다 ("해운대 국밥") */
       if (!t.split(/\s+/).every(w => hay.includes(w))) return false;
@@ -416,7 +416,7 @@ function renderChips() {
 }
 /* ══ 선호 유튜버 고르기 ══ */
 const FAV_KEY = "lesulin.fav";
-const FAV_MAX = 3;
+const FAV_MAX = 10;
 
 function loadFav() {
   try {
@@ -500,7 +500,7 @@ function renderCres() {
         : (creOpen && creators.length > CRE_SHOWN
             ? `<button class="ytmore" onclick="window.__creMore()" aria-expanded="true">접기</button>`
             : ""));
-  $("creHint").textContent = picked.size ? `${picked.size}개 선택` : `${creators.length}개 채널`;
+  $("creHint").textContent = picked.size ? `${picked.size}개 선택` : "";
 }
 function renderFeed() {
   const vs = [];
@@ -514,13 +514,37 @@ function renderFeed() {
     <span class="ft"><b class="t2">${esc(v.t)}</b><span>${views(v.vw)} · ${dateK(v.at)}</span></span></button>`).join("")
     || `<p class="empty" style="padding:18px 0">표시할 영상이 없습니다</p>`;
 }
+/* 업종 — 카카오 분류(164종, 가게 이름이 섞인 것도 있음)를 13가지로 묶습니다.
+   위에서부터 먼저 맞는 것 하나. 술집·카페·마트처럼 맞는 게 없으면 업종을 고르지 않았을 때만 보입니다. */
+const CAT_GROUPS = [
+  ["패스트푸드", /햄버거|버거|패스트푸드|핫도그|토스트|샌드위치|도시락|와플|도넛/],
+  ["찜·탕", /찜|탕|국밥|해장국|곰탕|설렁탕|찌개|전골|샤브|추어|순댓국|아구/],
+  ["치킨", /치킨|닭강정|통닭/],
+  ["중식", /중국|중식|반점|양꼬치|마라/],
+  ["일식", /일식|일본|초밥|스시|이자카야|우동|라멘|쿠우쿠우|꼬치/],
+  ["한식", /한식|국수|칼국수|냉면|비빔밥|쌈밥|한정식|기사식당|닭요리|백반|만두|낙지|주꾸미|오징어/],
+  ["분식", /분식|떡볶이|순대|김밥|간식/],
+  ["돈까스·회", /돈까스|돈가스|^회$|생선회|참치회|횟집|사조회|복어|수산|굴,전복|조개|해물,생선|게,대게|장어|해산물/],
+  ["피자", /피자/],
+  ["고기", /고기|육류|구이|갈비|삼겹|정육|곱창|막창|오리|불고기|두루치기|돼지|닭갈비/],
+  ["양식", /양식|이탈리안|스테이크|프랑스|스페인|멕시칸|파스타|브라질|샐러드/],
+  ["아시안", /태국|베트남|인도음식|아시아|동남아|쌀국수/],
+  ["족발·보쌈", /족발|보쌈/],
+];
+/* 판정 순서 — 화면 순서와 다릅니다. "족발,보쌈"이 다른 묶음에 먼저 걸리지 않게, 겹치는 말이 있는 것부터 봅니다 */
+const CAT_ORDER = ["족발·보쌈", "피자", "치킨", "패스트푸드", "돈까스·회", "찜·탕", "중식", "일식", "아시안", "양식", "고기", "분식", "한식"];
+const CAT_RE = new Map(CAT_GROUPS);
+function catGroup(s) {
+  if (s._grp !== undefined) return s._grp;
+  const c = s.cat || "";
+  return (s._grp = (c && CAT_ORDER.find(g => CAT_RE.get(g).test(c))) || null);
+}
 function renderCats() {
   const m = new Map();
-  for (const s of stores) if (s.cat) m.set(s.cat, (m.get(s.cat)||0) + 1);
-  const cs = [...m].sort((a,b) => b[1]-a[1]).slice(0, 12);
-  $("catHint").textContent = `${m.size}종`;
-  $("cats").innerHTML = cs.map(([c,n]) => `<button class="chip${cat===c?" on":""}"
-    onclick="window.__cat('${c}')">${esc(c)}<span class="c">${n}</span></button>`).join("");
+  for (const s of stores) { const g = catGroup(s); if (g) m.set(g, (m.get(g) || 0) + 1); }
+  $("catHint").textContent = "";
+  $("cats").innerHTML = CAT_GROUPS.filter(([g]) => m.get(g)).map(([g]) => `<button class="chip${cat===g?" on":""}"
+    onclick="window.__cat('${g}')">${esc(g)}<span class="c">${m.get(g)}</span></button>`).join("");
 }
 function renderHist() {
   const buckets = new Array(22).fill(0);

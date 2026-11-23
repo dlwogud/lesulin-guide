@@ -6,7 +6,7 @@
  * 3번 칸 카카오맵은 window.LesulinIntroMap(아래) 이 맡습니다. */
 (function () {
   const FAV_KEY = "lesulin.fav";
-  const MAX = 3;
+  const MAX = 10;
   const $ = id => document.getElementById(id);
 
   /* 시크릿 창 등에서는 localStorage 접근 자체가 예외를 던집니다 */
@@ -98,8 +98,6 @@
     fill($("listReviews"), reviews, reviewCard,
          places.length ? "이 유튜버 영상에서 고른 방문 후기가 아직 없습니다" : "표시할 식당이 없습니다");
     $("selbar").hidden = !sel;
-    $("bigNum").textContent = nf(places.reduce((n, p) => n + p.used, 0));
-    $("bigWrap").hidden = false;
     if (window.LesulinIntroMap) window.LesulinIntroMap.show(places, sel);
     /* 지도에서 고른 식당이 1번 칸 아래쪽에 있으면 그 카드가 보이게 옮깁니다(칸 안에서만 스크롤) */
     if (sel) {
@@ -109,7 +107,7 @@
   }
 
   function syncChips() {
-    $("pickCnt").textContent = `즐겨찾기 ${picked.length} / ${MAX}`;
+    if ($("pickCnt")) $("pickCnt").textContent = `즐겨찾기 ${picked.length} / ${MAX}`;
     for (const b of document.querySelectorAll("#chips [data-id]")) {
       b.setAttribute("aria-pressed", picked.includes(b.dataset.id) ? "true" : "false");
     }
@@ -130,7 +128,7 @@
         const i = picked.indexOf(c.id);
         if (i >= 0) picked.splice(i, 1);                 // 다시 누르면 해제
         else {
-          if (picked.length >= MAX) picked.shift();      // 4번째를 고르면 가장 먼저 고른 사람이 빠집니다
+          if (picked.length >= MAX) picked.shift();      // 11번째를 고르면 가장 먼저 고른 사람이 빠집니다
           picked.push(c.id);
         }
         sel = null;

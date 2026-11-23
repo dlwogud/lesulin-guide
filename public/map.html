@@ -42,7 +42,7 @@ img{display:block;max-width:100%}
 
 #app{display:flex;flex-direction:column;height:100dvh;background:var(--paper)}
 /* 상단 좌·우 칸의 경계선이 아래 패널과 맞아떨어지게 폭을 고정합니다 */
-.topleft{flex:none;height:62px;display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.topleft{flex:none;height:62px;display:flex;align-items:stretch;justify-content:center;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:9px;padding:0 16px;flex:none;text-decoration:none;color:inherit}
 /* 시작 화면과 같은 로고 — 오렌지 사각 + 흰 마름모 */
 .brand .mark{width:28px;height:28px;border-radius:8px;flex:none;display:block}
@@ -140,7 +140,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
 .sw::after{content:"";position:absolute;left:3px;top:3px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:var(--sh1)}
 .sw[aria-pressed=true]{background:var(--coral)}
 .sw[aria-pressed=true]::after{transform:translateX(15px)}
-.catrow{display:flex;flex-wrap:wrap;gap:5px}
+/* 업종 — 한 줄로 두고 옆으로 넘겨 봅니다 */
+.catrow{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.catrow .chip{flex:none;white-space:nowrap}
 
 /* 카카오맵 */
 .mapwrap{flex:1;min-width:0;position:relative;background:var(--sub2)}
@@ -513,6 +515,10 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
     </div>
       <aside class="side">
       <div class="sgrp">
+        <p class="sect-t"><b>업종</b><span id="catHint"></span></p>
+        <div class="catrow" id="cats"></div>
+      </div>
+      <div class="sgrp">
       <p class="sect-t"><b>유튜버</b>
           <span class="favbtns"><button class="favedit" id="favEdit">내 유튜버 고르기</button><button class="favedit favoff" id="favClear" hidden>해제</button></span>
           <span id="creHint"></span></p>
@@ -542,10 +548,6 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
           <button class="tog" id="onlyWait" aria-pressed="false">줄 서는 집<i></i></button>
           <button class="tog" id="onlyRated" aria-pressed="false">반응 있는 곳<i></i></button>
         </div>
-      </div>
-      <div class="sgrp">
-        <p class="sect-t"><b>업종</b><span id="catHint"></span></p>
-        <div class="catrow" id="cats"></div>
       </div>
       </aside>
     </div>
@@ -630,12 +632,12 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
     <div class="favbox" role="dialog" aria-modal="true" aria-labelledby="favTitle">
       <header>
         <h2 id="favTitle">좋아하는 유튜버를 고르세요</h2>
-        <p>최대 3명까지 고를 수 있습니다. 고른 채널이 간 식당을 지도와 목록에서 먼저 보여줍니다.
+        <p>최대 10명까지 고를 수 있습니다. 고른 채널이 간 식당을 지도와 목록에서 먼저 보여줍니다.
            다른 채널도 그대로 보입니다 — 숨기지 않습니다.</p>
       </header>
       <div class="favgrid" id="favGrid"></div>
       <footer>
-        <span id="favCnt">0 / 3</span>
+        <span id="favCnt">0 / 10</span>
         <button class="skip" id="favReset" hidden>모두 해제</button>
         <button class="skip" id="favSkip">그냥 둘러보기</button>
         <button class="go" id="favGo">이대로 보기</button>
@@ -647,5 +649,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=layout3"></script>
+<script src="app.js?v=cat1"></script>
 </body></html>

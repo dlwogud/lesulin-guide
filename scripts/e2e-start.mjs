@@ -67,7 +67,7 @@ console.log(`시작 화면 e2e — ${BASE}`);
 
 await scenario("1. 데스크톱: 제목·숫자·세 칸·칩 (숫자는 API 값과 일치)", async page => {
   await openStart(page);
-  ok((await page.textContent("#hero")).includes("다녀온 사람들은 뭐라고 했을까"), "핵심 문장");
+  ok((await page.textContent("#hero")).includes("직접 다녀온 사람들의 반응은"), "핵심 문장");
   ok(await page.locator("#kmap").count() === 0, "지도 화면 요소가 섞임");
   ok((await page.textContent("#statStores")).includes(nf(IN.meta.stores)), "식당 수");
   ok((await page.textContent("#statVideos")).includes(nf(IN.meta.videos)), "영상 수");
@@ -79,7 +79,7 @@ await scenario("1. 데스크톱: 제목·숫자·세 칸·칩 (숫자는 API 값
   const revs = want.reduce((n, p) => n + (p.good ? 1 : 0) + (p.bad ? 1 : 0), 0);
   ok(await page.locator("#listReviews .rcard:not(.dup)").count() === revs, "댓글 카드 수");
 
-  ok(await num(page, "#bigNum") === want.reduce((n, p) => n + p.used, 0), "큰 숫자");
+  ok(await page.locator("#bigNum, #pickCnt").count() === 0, "'다녀왔다는 댓글 N건'·'즐겨찾기 0 / 3'이 남음");
   ok(await page.locator("#chips [data-id]").count() === IN.creators.length, "유튜버 칩 수");
   const rev = await page.textContent("#listReviews");
   ok(rev.includes("아구탕") && rev.includes("재료소진"), "복춘식당 고정 댓글");
@@ -108,18 +108,16 @@ await scenario("7b. 모바일에서도 제목·리본·지도 버튼이 보이�
   ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 390, "가로 넘침");
 }, { viewport: { width: 390, height: 844 } });
 
-await scenario("2. 4번째를 고르면 가장 먼저 고른 사람이 빠짐 · 다시 누르면 해제", async page => {
+await scenario("2. 최대 10명까지 고름 · 다시 누르면 해제", async page => {
   await openStart(page);
   const chips = page.locator("#chips [data-id]");
+  const n = Math.min(10, await chips.count());
   const id = async i => chips.nth(i).getAttribute("data-id");
-  for (let i = 0; i < 4; i++) await chips.nth(i).click();
-  const got = (await selected(page)).sort();
-  const want = [await id(1), await id(2), await id(3)].sort();
-  ok(JSON.stringify(got) === JSON.stringify(want), `선택 ${got} (기대 ${want})`);
-  ok((await page.textContent("#pickCnt")).includes("3"), "선택 수 표시");
+  for (let i = 0; i < n; i++) await chips.nth(i).click();
+  ok((await selected(page)).length === n, `${n}명을 고르지 못함 (${(await selected(page)).length})`);
   await chips.nth(2).click();                                   // 고른 걸 다시 누르면 해제
   ok(!(await selected(page)).includes(await id(2)), "다시 눌러도 해제 안 됨");
-  ok((await selected(page)).length === 2, "해제 후 2명");
+  ok((await selected(page)).length === n - 1, `해제 후 ${n - 1}명`);
 });
 
 await scenario("2b. 유튜버를 골라도 두 칸은 그대로(고정)", async page => {
@@ -153,10 +151,10 @@ await scenario("2m. 지도의 고르기 창도 같은 방식", async page => {
     await cards.nth(i).click();
   }
   const on = await page.$$eval('#favGrid .favcard[aria-pressed="true"] b', els => els.map(e => e.textContent));
-  ok(JSON.stringify(on.sort()) === JSON.stringify(ids.slice(1).sort()), `선택 ${on}`);
+  ok(JSON.stringify(on.sort()) === JSON.stringify([...ids].sort()), `선택 ${on} (최대 10명이라 4명 모두 선택돼야 함)`);
   await page.locator("#favGrid .favcard", { hasText: ids[3] }).click();
   const after = await page.$$eval('#favGrid .favcard[aria-pressed="true"] b', els => els.map(e => e.textContent));
-  ok(after.length === 2 && !after.includes(ids[3]), `해제 후 ${after}`);
+  ok(after.length === 3 && !after.includes(ids[3]), `해제 후 ${after}`);
 });
 
 await scenario("3. 고르고 지도로 → 저장됨", async page => {
@@ -170,10 +168,10 @@ await scenario("3. 고르고 지도로 → 저장됨", async page => {
   ok(JSON.stringify([...saved].sort()) === JSON.stringify([...ids].sort()), `저장값 ${saved}`);
 });
 
-await scenario("4. 저장값 미리 선택 (없는 id 제외, 최대 3)", async page => {
+await scenario("4. 저장값 미리 선택 (없는 id 제외, 최대 10)", async page => {
   await openStart(page);
   const got = (await selected(page)).sort();
-  ok(JSON.stringify(got) === JSON.stringify(["c1", "c2", "c4"]), `미리 선택 ${got}`);
+  ok(JSON.stringify(got) === JSON.stringify(["c1", "c2", "c4", "c5"]), `미리 선택 ${got}`);
 }, { init: () => localStorage.setItem("lesulin.fav", JSON.stringify(["c1", "zz9", "c2", "c4", "c5"])) });
 
 await scenario("3b. 고른 뒤 식당 이름 링크로 나가도 선택이 저장됨", async page => {
@@ -200,7 +198,7 @@ await scenario("5a. API 실패 → 세 칸 숨기고 지도로 · 저장해 둔 
   await page.route("**/api/intro", r => r.fulfill({ status: 503, contentType: "application/json", body: "{}" }));
   await openStart(page);
   ok(await page.locator("#st1").isHidden(), "세 칸이 보임");
-  ok(await page.locator("#chips").isHidden() && await page.locator("#pickCnt").isHidden(), "칩 없이 '즐겨찾기 0 / 3'이 보임");
+  ok(await page.locator("#chips").isHidden() && await page.locator(".picker .hd").isHidden(), "칩 없이 '내 유튜버를 고르세요'만 남음");
   await page.click("#toMap");
   await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
   const saved = await page.evaluate(() => localStorage.getItem("lesulin.fav"));

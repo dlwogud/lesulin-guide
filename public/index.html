@@ -46,12 +46,12 @@ button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;paddin
 
 /* ── 상단 ── */
 nav{display:flex;align-items:center;gap:10px 28px;padding-block:20px 26px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:11px;text-decoration:none;font-family:var(--display);font-size:21px;letter-spacing:-.01em}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;font-family:"Jua",var(--display);font-size:22px;letter-spacing:-.01em}
 .mark{width:38px;height:38px;border-radius:10px;flex:none}
 .st{margin-left:auto;display:flex;gap:20px;font-size:13px;color:var(--ink-2)}
 .st b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;margin-right:3px}
 .cta{display:inline-block;background:var(--orange);color:#fff;padding:12px 22px;font-size:15px;font-weight:700;
-  border-radius:999px;white-space:nowrap;text-decoration:none}
+  border-radius:12px;white-space:nowrap;text-decoration:none}
 .cta:hover{background:#E35200}
 #stats[hidden]+.cta{margin-left:auto}
 @media(max-width:760px){.st{display:none}.cta{margin-left:auto;padding:10px 16px;font-size:14px}}
@@ -65,9 +65,12 @@ nav{display:flex;align-items:center;gap:10px 28px;padding-block:20px 26px;flex-w
   animation:drop .7s cubic-bezier(.2,.9,.3,1.25) .15s both}
 @keyframes drop{from{transform:translateY(-70%);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.ribbon{animation:none}}
-h1{font-family:"Jua",var(--display);font-weight:400;font-size:clamp(36px,6.4vw,80px);line-height:1.18;letter-spacing:-.01em;
-  margin:0;max-width:13em;text-wrap:balance;padding-right:76px}
-.picker{margin-top:clamp(28px,4vw,44px);padding-top:22px;border-top:1px solid var(--cover-line)}
+/* 제목은 창을 줄여도 늘 두 줄 그대로 — 줄마다 한 줄로 묶고, 글자 크기가 창 폭을 따라 줄어듭니다 */
+h1{font-family:"Jua",var(--display);font-weight:400;font-size:clamp(20px,6vw,80px);line-height:1.22;letter-spacing:-.01em;
+  margin:0;padding-right:76px}
+h1 .ln{display:block;white-space:nowrap}
+@media(max-width:420px){h1{font-size:5.3vw}}
+.picker{margin-top:clamp(28px,4vw,44px)}
 .picker .hd{display:flex;align-items:baseline;gap:8px 16px;flex-wrap:wrap;margin-bottom:14px}
 .picker h2{margin:0;font-size:16px;font-weight:700}
 .picker .c{font-size:13px;color:var(--on-cover-2);font-variant-numeric:tabular-nums}
@@ -182,12 +185,11 @@ h1{font-family:"Jua",var(--display);font-weight:400;font-size:clamp(36px,6.4vw,8
 
   <header class="cover cv-line">
     <img class="ribbon" src="/img/brand/badge-3.png" alt="" width="66" height="70">
-    <h1 id="hero">좋아하는 유튜버가 간 식당, 다녀온 사람들은 뭐라고 했을까?</h1>
+    <h1 id="hero"><span class="ln">좋아하는 유튜버가 간 식당,</span><span class="ln">직접 다녀온 사람들의 반응은?</span></h1>
     <section class="picker" aria-labelledby="pickTitle">
-      <div class="hd"><h2 id="pickTitle">내 유튜버를 고르세요</h2><span class="c" id="pickCnt">즐겨찾기 0 / 3</span></div>
+      <div class="hd"><h2 id="pickTitle">내 유튜버를 고르세요</h2></div>
       <div class="chips" id="chips"></div>
     </section>
-    <p class="big" id="bigWrap" hidden>아래 식당에 다녀왔다는 댓글 <b id="bigNum"></b>건</p>
   </header>
 
   <section class="stage" id="stage">
@@ -211,6 +213,6 @@ h1{font-family:"Jua",var(--display);font-weight:400;font-size:clamp(36px,6.4vw,8
     </div>
   </section>
 </div>
-<script src="/start.js?v=17" defer></script>
+<script src="/start.js?v=18" defer></script>
 </body>
 </html>
