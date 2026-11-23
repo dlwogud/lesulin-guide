@@ -557,7 +557,13 @@ function renderHist() {
   $("vwHist").innerHTML = buckets.map((b,i) =>
     `<i class="${i >= onFrom ? "on" : ""}" style="height:${Math.max(2, Math.round(b/mx*22))}px"></i>`).join("");
 }
-window.__cre = id => { picked.has(id) ? picked.delete(id) : picked.add(id); selected = null; refresh(true); };
+/* 왼쪽 유튜버 목록은 최대 3명까지 — 4번째를 누르면 가장 먼저 고른 사람이 빠집니다 */
+const PICK_MAX = 3;
+window.__cre = id => {
+  if (picked.has(id)) picked.delete(id);
+  else { if (picked.size >= PICK_MAX) picked.delete(picked.values().next().value); picked.add(id); }
+  selected = null; refresh(true);
+};
 window.__reg = r => { region = r; selected = null; refresh(true); };   // 아래 기록 배선이 감쌉니다
 window.__cat = c => { cat = cat === c ? null : c; selected = null; refresh(true); };
 /* 업종 줄 — 스크롤 막대 없이 마우스 휠이나 끌어서 옆으로 넘깁니다. 끌다가 손을 뗀 건 누른 걸로 치지 않습니다 */
@@ -726,7 +732,7 @@ function srcLabel(kind) {
   CRE = new Map(creators.map(c => [c.id, c]));
   loadFav();
   /* 시작 화면에서 고른 유튜버(?yt=c1,c2)는 왼쪽 목록에서 골라 둔 채로 엽니다 */
-  for (const id of (new URLSearchParams(location.search).get("yt") || "").split(",")) if (CRE.has(id)) picked.add(id);
+  for (const id of (new URLSearchParams(location.search).get("yt") || "").split(",")) if (CRE.has(id) && picked.size < 3) picked.add(id);
   wire(); syncFavBtn(); refresh(false);
   /* 유튜버 고르기는 이제 시작 화면(/)이 맡습니다. 지도에서는 자동으로 띄우지 않고,
      ?pick=1 을 붙였을 때와 왼쪽 "내 유튜버 고르기" 버튼으로만 엽니다. */
