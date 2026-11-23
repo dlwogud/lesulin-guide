@@ -22,6 +22,7 @@ const vdImg = id => `img/vid/${id}.jpg`;
 const YT = id => "https://www.youtube.com/watch?v=" + id;
 const topVid = s => s.vids[0];
 const rated = s => s.status === "RATED";
+const sido = r => r.split(" ")[0];          // "부산광역시 해운대구" → "부산광역시"
 const stem = s => s.replace(/(특별자치도|특별자치시|특별시|광역시|도)$/, "");
 const shortRegion = r => {
   const [a, ...b] = r.split(" ");
@@ -52,14 +53,16 @@ function filteredRaw() {
     if (onlyRated && !rated(s)) return false;
     if (onlyWait && !(s.waitN >= 3)) return false;
     if (picked.size && !s.cs.some(c => picked.has(c))) return false;
-    if (region && s.r !== region) return false;
+    /* region 은 시군구("부산광역시 해운대구") 또는 시·도("부산광역시") */
+    if (region && s.r !== region && sido(s.r) !== region) return false;
     if (cat && s.cat !== cat) return false;
     if (minEv && (s.cUsed || 0) < minEv) return false;
     if (minViews && Math.max(0, ...s.vids.map(v => v.vw || 0)) < minViews) return false;
     if (t) {
-      const hay = s.n + " " + s.addr + " " + s.r + " " + s.cat + " "
-        + s.cs.map(i => CRE.get(i).n).join(" ") + " " + s.vids.map(v => v.t).join(" ");
-      if (!hay.toLowerCase().includes(t)) return false;
+      const hay = (s.n + " " + s.addr + " " + s.r + " " + shortRegion(s.r) + " " + s.cat + " "
+        + s.cs.map(i => CRE.get(i).n).join(" ") + " " + s.vids.map(v => v.t).join(" ")).toLowerCase();
+      /* 띄어 쓴 낱말은 순서와 상관없이 모두 들어 있으면 됩니다 ("해운대 국밥") */
+      if (!t.split(/\s+/).every(w => hay.includes(w))) return false;
     }
     return true;
   });
@@ -547,9 +550,10 @@ window.__cat = c => { cat = cat === c ? null : c; selected = null; refresh(true)
 function refresh(fit) {
   renderChips(); renderCres(); renderFeed(); renderCats(); renderHist();
   const list = filtered();
-  $("tbStores").textContent = nfm(list.length);
-  $("tbVids").textContent = nfm(new Set(list.flatMap(s => s.vids.map(v => v.id))).size);
-  $("tbCmt").textContent = nfm(list.reduce((a,s) => a + s.cTotal, 0));
+  /* 상단 숫자 칸은 없앴습니다 — 칸이 다시 생기면 그대로 채웁니다 */
+  if ($("tbStores")) $("tbStores").textContent = nfm(list.length);
+  if ($("tbVids")) $("tbVids").textContent = nfm(new Set(list.flatMap(s => s.vids.map(v => v.id))).size);
+  if ($("tbCmt")) $("tbCmt").textContent = nfm(list.reduce((a,s) => a + s.cTotal, 0));
   $("vwLab").textContent = minViews ? views(minViews) + " 이상" : "전체";
   $("evLab").textContent = minEv ? minEv + "건 이상" : "전체";
   if (selected && list.some(s => s.id === selected)) renderDetail(stores.find(s => s.id === selected));
@@ -565,8 +569,14 @@ function suggest() {
   const t = q.trim().toLowerCase();
   if (!t) { $("ac").hidden = true; return; }
   const cs = creators.filter(c => (c.n + c.h).toLowerCase().includes(t)).slice(0, 4);
-  const rm = new Map(); for (const s of stores) rm.set(s.r, (rm.get(s.r)||0) + 1);
-  const rs = [...rm].filter(([r]) => (r + shortRegion(r)).toLowerCase().includes(t)).slice(0, 5);
+  /* 시·도 이름만 쳐도("부산") 그 지역 전체로 갈 수 있게 시·도를 시군구보다 먼저 보여 줍니다 */
+  const rm = new Map(), dm = new Map();
+  for (const s of stores) { rm.set(s.r, (rm.get(s.r)||0) + 1); dm.set(sido(s.r), (dm.get(sido(s.r))||0) + 1); }
+  const hit = r => (r + " " + shortRegion(r)).toLowerCase().includes(t);
+  const ds = [...dm].filter(([d]) => hit(d)).sort((a,b) => b[1]-a[1]).slice(0, 2)
+    .map(([d,n]) => [d, n, shortRegion(d) + " 전체"]);
+  const rs = [...ds, ...[...rm].filter(([r]) => r.includes(" ") && hit(r)).sort((a,b) => b[1]-a[1])
+    .slice(0, 5 - ds.length).map(([r,n]) => [r, n, shortRegion(r)])];
   const ss = filtered().slice(0, 6);
   if (!cs.length && !rs.length && !ss.length) {
     $("ac").innerHTML = `<p class="empty">검색 결과가 없습니다</p>`; $("ac").hidden = false; return;
@@ -576,8 +586,8 @@ function suggest() {
     grp("유튜버", cs.map(c => `<button onclick="window.__pick('c','${c.id}')">
       <img src="${chImg(c.id)}" style="width:20px;height:20px;border-radius:50%"><span class="m">${esc(c.n)}</span>
       <span class="s">${stores.filter(s => s.cs.includes(c.id)).length}곳</span></button>`)) +
-    grp("지역", rs.map(([r,n]) => `<button onclick="window.__pick('r','${r}')">
-      <span class="m">${esc(shortRegion(r))}</span><span class="s">${n}곳</span></button>`)) +
+    grp("지역", rs.map(([r,n,label]) => `<button onclick="window.__pick('r','${r}')">
+      <span class="m">${esc(label)}</span><span class="s">${n}곳</span></button>`)) +
     grp("식당", ss.map(s => `<button onclick="window.__pick('s','${s.id}')">
       <span class="m t1">${esc(s.n)}</span><span class="s">${esc(shortRegion(s.r))}</span></button>`));
   $("ac").hidden = false;
@@ -594,6 +604,19 @@ function wire() {
   $("q").addEventListener("input", e => {
     q = e.target.value; $("clr").hidden = !q;
     clearTimeout(acTimer); acTimer = setTimeout(() => { suggest(); refresh(false); }, 150);
+  });
+  /* Enter: 자동완성 첫 항목을 고릅니다. 항목이 없으면 지금 걸러진 식당으로 지도를 맞춥니다.
+     한글 입력 중 Enter(조합 확정)는 한 번 더 들어오므로 그건 건너뜁니다. */
+  $("q").addEventListener("keydown", e => {
+    if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return;
+    e.preventDefault();
+    clearTimeout(acTimer);
+    q = $("q").value;
+    if (!q.trim()) return;
+    suggest();
+    const first = $("ac").querySelector("button");
+    if (first) first.click();
+    else { $("ac").hidden = true; selected = null; refresh(true); }
   });
   $("clr").onclick = () => { q = ""; $("q").value = ""; $("clr").hidden = true; $("ac").hidden = true; refresh(true); };
   document.addEventListener("pointerdown", e => { if (!e.target.closest(".srch")) $("ac").hidden = true; });
@@ -773,8 +796,9 @@ async function pullPolls(notify) {
     head = d.head;
     preps = new Map();
     for (const x of d.replies) {
-      if (!preps.has(x.poll_id)) preps.set(x.poll_id, []);
-      preps.get(x.poll_id).push(x);
+      const k = +x.poll_id;              // DB 가 bigint 를 문자열로 줍니다 — 숫자로 맞춰야 아래에서 찾습니다
+      if (!preps.has(k)) preps.set(k, []);
+      preps.get(k).push(x);
     }
     if (notify) for (const p of fresh.slice(0, 2)) toast(p);
     paintBell(); renderHot();
@@ -790,7 +814,7 @@ function renderHot() {
   if ($("hotHint")) $("hotHint").textContent = `오늘 ${polls.length}건`;
   if (!top.length) {
     el.innerHTML = `<p class="hotempty">아직 오늘 올라온 투표가 없습니다.<br>
-      오른쪽 위 <b>투표</b>에서 첫 글을 올려 보세요.</p>`;
+      지도 위 <b>투표</b> 버튼에서 첫 글을 올려 보세요.</p>`;
     return;
   }
   el.innerHTML = top.map((p, i) => `<button class="hotrow" onclick="window.__hot(${p.id})">
@@ -818,7 +842,7 @@ function renderPolls() {
     return `<article class="pitem${isNew ? " hot" : ""}" id="p${p.id}">
       <div class="ph">
         ${pollSort === "hot" && i < 3 ? `<span class="rk">${i + 1}</span>` : ""}
-        <span>${esc(p.nickname || "익명")}</span><span>·</span><span>${ago(p.created_at)}</span>
+        <span class="au">${p.mine ? "내 글" : esc(p.nickname || "익명")}</span><span>·</span><span>${ago(p.created_at)}</span>
         ${p.store_name ? `<span class="st">📍 ${esc(p.store_name)}</span>`
           : p.place ? `<span>· ${esc(shortRegion(p.place))}</span>` : ""}
       </div>
@@ -830,8 +854,8 @@ function renderPolls() {
           onclick="window.__vote(${p.id},-1,'poll')">👎 ${p.downs}</button>
         <button class="rbtn" onclick="window.__reply(${p.id})">답글 ${p.replies || ""}</button>
       </div>
-      ${rs.length ? `<div class="plist">${rs.map(r => `<div class="prep">
-          <span class="who">${esc(r.nickname || "익명")}</span>
+      ${rs.length ? `<div class="plist"><span class="pl-h">답글 ${rs.length}개</span>${rs.map(r => `<div class="prep">
+          <span class="who">${r.mine ? "나" : esc(r.nickname || "익명")}</span>
           <span>${esc(r.body)}${r.store_name ? ` <b>📍${esc(r.store_name)}</b>` : ""}</span>
           <button class="vbtn rv${r.my_vote === 1 ? " on" : ""}"
             onclick="window.__vote(${r.id},1,'reply')">♥ ${r.ups}</button>
