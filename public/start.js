@@ -33,14 +33,18 @@
   let sel = null;           // 카드·핀으로 고른 식당 하나
   let loaded = false;       // 칩을 실제로 보여 준 뒤에만 선택을 저장합니다
 
-  /* 고른 유튜버가 없으면 성시경(사람이 확인한 복춘식당) + 식당 많은 앞 2명 */
-  const shownCreators = () => picked.length ? picked
-    : ["c1", ...D.creators.map(c => c.id).filter(id => id !== "c1").slice(0, 2)];
-  /* 같은 식당이 두 유튜버에 걸려 있으면 한 번만 */
+  /* 두 칸(영상 · 다녀온 사람들 이야기)은 유튜버 고르기와 상관없이 고정합니다(11/23 결정).
+     들어올 때 한 번, 댓글이 있는 예시 식당을 무작위로 섞어 정하고 그대로 둡니다.
+     영상과 댓글은 같은 식당·같은 유튜버 것끼리 짝이 맞습니다(src/lib/intro.ts).
+     유튜버 칩은 지도로 넘어갈 때 쓸 즐겨찾기만 정합니다. */
+  let FIXED = null;
   function shownPlaces() {
-    const ids = shownCreators(), seen = new Set(), out = [];
-    for (const p of D.places) if (ids.includes(p.creatorId) && !seen.has(p.id)) { seen.add(p.id); out.push(p); }
-    return out;
+    if (!FIXED) {
+      const seen = new Set();
+      FIXED = D.places.filter(p => p.good && !seen.has(p.id) && seen.add(p.id));
+      for (let i = FIXED.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [FIXED[i], FIXED[j]] = [FIXED[j], FIXED[i]]; }
+    }
+    return FIXED;
   }
   const creatorName = id => (D.creators.find(c => c.id === id) || {}).name || "";
 

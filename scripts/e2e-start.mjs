@@ -15,7 +15,9 @@ const ok = (cond, msg) => { if (!cond) throw new Error(msg); };
 const nf = n => Number(n).toLocaleString("ko-KR");
 
 /* 화면과 같은 규칙: 고른 유튜버(없으면 c1 + 식당 많은 앞 2명)의 식당, 같은 식당은 한 번만 */
-const DEFAULT = ["c1", ...IN.creators.map(c => c.id).filter(id => id !== "c1").slice(0, 2)];
+/* 두 칸은 유튜버 고르기와 상관없이 고정 — 댓글 있는 예시 식당 전부(같은 식당은 한 번), 순서는 무작위 */
+const FIXED = (() => { const seen = new Set(); return IN.places.filter(p => p.good && !seen.has(p.id) && seen.add(p.id)); })();
+const sorted = a => [...a].sort();
 const visible = ids => {
   const seen = new Set(), out = [];
   for (const p of IN.places) if (ids.includes(p.creatorId) && !seen.has(p.id)) { seen.add(p.id); out.push(p); }
@@ -70,9 +72,9 @@ await scenario("1. 데스크톱: 제목·숫자·세 칸·칩 (숫자는 API 값
   ok((await page.textContent("#statStores")).includes(nf(IN.meta.stores)), "식당 수");
   ok((await page.textContent("#statVideos")).includes(nf(IN.meta.videos)), "영상 수");
   ok((await page.textContent("#statComments")).includes(nf(IN.meta.comments)), "댓글 수");
-  const want = visible(DEFAULT);
+  const want = FIXED;
   const got = await shownStores(page);
-  ok(JSON.stringify(got) === JSON.stringify(want.map(p => p.id)), `영상 카드 ${got} ≠ ${want.map(p => p.id)}`);
+  ok(JSON.stringify(sorted(got)) === JSON.stringify(sorted(want.map(p => p.id))), `영상 카드 ${got} ≠ ${want.map(p => p.id)}`);
 
   const revs = want.reduce((n, p) => n + (p.good ? 1 : 0) + (p.bad ? 1 : 0), 0);
   ok(await page.locator("#listReviews .rcard:not(.dup)").count() === revs, "댓글 카드 수");
@@ -120,27 +122,11 @@ await scenario("2. 4번째를 고르면 가장 먼저 고른 사람이 빠짐 ·
   ok((await selected(page)).length === 2, "해제 후 2명");
 });
 
-await scenario("2b. 유튜버를 고르면 세 칸이 그 유튜버 식당으로", async page => {
+await scenario("2b. 유튜버를 골라도 두 칸은 그대로(고정)", async page => {
   await openStart(page);
-  const c = IN.creators.find(x => x.id !== "c1" && IN.places.some(p => p.creatorId === x.id));
-  await page.click(`#chips [data-id="${c.id}"]`);
-  const want = visible([c.id]).map(p => p.id);
-  const got = await shownStores(page);
-  ok(JSON.stringify(got) === JSON.stringify(want), `${c.name}: ${got} ≠ ${want}`);
-
-});
-
-await scenario("2c. 고른 유튜버의 식당이 0곳이면 빈 상태 · 큰 숫자 0", async page => {
-  await page.route("**/api/intro", async r => {
-    const res = await r.fetch(); const d = await res.json();
-    d.places = d.places.filter(p => p.creatorId !== "c4");
-    await r.fulfill({ response: res, json: d });
-  });
-  await openStart(page);
-  await page.click('#chips [data-id="c4"]');
-  ok((await shownStores(page)).length === 0, "카드가 남음");
-  ok(await num(page, "#bigNum") === 0, "큰 숫자");
-  ok(await page.locator("#st1 .empty").isVisible(), "빈 상태가 안 보임");
+  const before = await shownStores(page);
+  for (const c of IN.creators.slice(0, 3)) await page.click(`#chips [data-id="${c.id}"]`);
+  ok(JSON.stringify(await shownStores(page)) === JSON.stringify(before), "칩을 눌렀더니 영상 칸이 바뀜");
 });
 
 await scenario("2s. 카드를 누르면 그 식당만 · 전체 보기로 되돌림", async page => {
