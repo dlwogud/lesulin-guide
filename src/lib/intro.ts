@@ -10,6 +10,10 @@ import excludeList from "../../data/intro_exclude.json";
  * 112건을 읽어 보니 39%가 다른 가게 얘기였습니다. 좋았다는 이야기가 이 기준을 통과한
  * 식당만 고르고, 아쉬웠다는 이야기는 통과할 때만 보여 줍니다.
  *
+ * 카드 옆 댓글은 그 카드 유튜버의 영상에 달린 것만 씁니다. 같은 식당이라도 다른 유튜버 영상
+ * 댓글을 붙이면 "또간집 카드 옆에 쯔양 얘기"가 나옵니다(11/23 발견). 자기 영상에서 쓸 댓글이
+ * 없는 유튜버(또간집 등)는 댓글 없이 영상 카드만 보여 줍니다.
+ *
  * 성시경(c1)은 사람이 원문을 확인한 복춘식당(src/lib/showcase.ts)을 맨 앞에 둡니다.
  * 숫자는 전부 DB 에서 읽습니다. */
 
@@ -99,7 +103,7 @@ type Row = {
   used: number; neg: number; waits: number; lvl: number | null;
   v_id: string; v_title: string; v_views: number; v_dur: string | null; v_at: string;
 };
-type Cand = { store_id: string; text: string; likes: number; at: string; vid: string;
+type Cand = { store_id: string; cid: string; text: string; likes: number; at: string; vid: string;
               wait: boolean; praise: number; gripes: number };
 
 /* scripts/quotes.py 의 자기소개 인사("안녕하세요 ○○입니다") — 가게·출연자 댓글 */
@@ -154,7 +158,7 @@ export async function loadIntro(): Promise<Intro> {
      좋았다 = 칭찬 있고 대기 뺀 불만 없음, 아쉬웠다 = 대기 뺀 불만이 칭찬보다 적지 않음 — quotes.py 와 같은 정의 */
   const ids = [...new Set(rows.map(r => r.id))];
   const cands = await q<Cand>(`
-    SELECT sv.store_id, left(trim(c.body), 170) AS text, c.likes, to_char(c.published_at, 'YYYY-MM-DD') AS at,
+    SELECT sv.store_id, v.creator_id AS cid, left(trim(c.body), 170) AS text, c.likes, to_char(c.published_at, 'YYYY-MM-DD') AS at,
            c.video_id AS vid,
            bool_or(a.aspect = '대기') AS wait,
            count(*) FILTER (WHERE a.polarity > 0)::int AS praise,
@@ -165,17 +169,20 @@ export async function loadIntro(): Promise<Intro> {
       JOIN comment_aspects a ON a.comment_id = c.id
       JOIN videos v ON v.id = c.video_id AND v.creator_id <> '${MULTI_PLACE_CREATOR}'
      WHERE sv.store_id = ANY($1) AND c.video_id IN (${SINGLE})
-     GROUP BY sv.store_id, c.id
+     GROUP BY sv.store_id, v.creator_id, c.id
      ORDER BY c.likes DESC, c.id`, [ids]);
+  /* 식당 + 유튜버 단위로 모읍니다 — 카드의 유튜버 영상 댓글만 그 카드 옆에 나갑니다 */
+  const key = (store: string, creator: string) => `${store}|${creator}`;
   const byStore = new Map<string, Cand[]>();
   for (const c of cands) {
     if (SELF_INTRO.test(c.text)) continue;
-    const list = byStore.get(c.store_id) ?? [];
-    list.push(c); byStore.set(c.store_id, list);
+    const k = key(c.store_id, c.cid);
+    const list = byStore.get(k) ?? [];
+    list.push(c); byStore.set(k, list);
   }
   const asQuote = (c: Cand): IQuote => ({ text: c.text, likes: Number(c.likes), at: c.at, wait: !!c.wait, vid: c.vid });
   const pick = (r: Row) => {
-    const list = byStore.get(r.id) ?? [];
+    const list = byStore.get(key(r.id, r.creator_id)) ?? [];
     const g = list.find(c => c.praise > 0 && c.gripes === 0 && goodOk(asQuote(c), r.name, r.region));
     const b = list.find(c => c.gripes > 0 && c.gripes >= c.praise && badOk(asQuote(c), r.name, r.region));
     return { good: g ? asQuote(g) : null, bad: b ? asQuote(b) : null };
@@ -209,6 +216,12 @@ export async function loadIntro(): Promise<Intro> {
       if (EXCLUDE.has(r.id) || picked.some(p => p.id === r.id)) continue;
       const qs = pick(r);
       if (qs.good) picked.push(toPlace(r, qs));
+    }
+    /* 자기 영상에서 쓸 댓글이 하나도 없는 유튜버 — 남의 영상 댓글을 붙이지 않고 영상 카드만 */
+    for (const r of mine) {
+      if (picked.length >= PER_CREATOR) break;
+      if (EXCLUDE.has(r.id) || picked.some(p => p.id === r.id)) continue;
+      picked.push(toPlace(r, { good: null, bad: null }));
     }
     places.push(...picked);
   }

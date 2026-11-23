@@ -36,7 +36,7 @@ for (const p of d.places) {
   assert.ok(seedIds.has(p.id), `${p.id}: 지도에 없는(숨긴) 식당`);
   per.set(p.creatorId, (per.get(p.creatorId) || 0) + 1);
   assert.ok(Number.isFinite(p.lat) && Number.isFinite(p.lng), `${p.id}: 좌표`);
-  assert.ok(p.good && p.good.text, `${p.id}: 좋았다는 이야기 없음`);
+  if (!p.good) assert.ok(!p.bad, `${p.id}: 좋았다 없이 아쉬웠다만 있음`);
   assert.ok(p.video && p.video.id && p.video.title, `${p.id}: 대표 영상 없음`);
   assert.equal(creatorOf.get(p.video.id), p.creatorId, `${p.id}: 대표 영상이 그 유튜버 영상이 아님`);
   for (const k of ["good", "bad"]) {
@@ -44,6 +44,7 @@ for (const p of d.places) {
     assert.ok(onVideo.has(q.vid), `${p.id}.${k}: 출처 영상 ${q.vid} 를 모름`);
     assert.equal(onVideo.get(q.vid).size, 1, `${p.id}.${k}: 여러 가게 영상 출처 (${[...onVideo.get(q.vid)].join(",")})`);
     assert.notEqual(creatorOf.get(q.vid), "c4", `${p.id}.${k}: 또간집 영상 출처`);
+    assert.equal(creatorOf.get(q.vid), p.creatorId, `${p.id}.${k}: 카드 유튜버(${p.creatorId})가 아닌 ${creatorOf.get(q.vid)} 영상 댓글`);
     assert.equal(typeof q.wait, "boolean", `${p.id}.${k}: wait`);
   }
 }
@@ -89,7 +90,7 @@ for (const p of d.places) {
     const q = p[k]; if (!q) continue;
     assert.ok(flat(q.text).includes(brand(p.name)), `${p.id} ${p.name}.${k}: 가게 이름이 없음 — ${q.text.slice(0, 40)}`);
   }
-  assert.ok(!GRIPE.test(p.good.text), `${p.id} ${p.name}: 좋았다는 이야기에 불만 단어 — ${p.good.text.slice(0, 40)}`);
+  if (p.good) assert.ok(!GRIPE.test(p.good.text), `${p.id} ${p.name}: 좋았다는 이야기에 불만 단어 — ${p.good.text.slice(0, 40)}`);
   for (const k of ["good", "bad"]) {
     const q = p[k]; if (!q) continue;
     assert.ok(!WISH.test(q.text), `${p.id} ${p.name}.${k}: 아직 안 가 본 댓글 — ${q.text.slice(0, 40)}`);

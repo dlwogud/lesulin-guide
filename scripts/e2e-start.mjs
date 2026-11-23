@@ -459,7 +459,7 @@ await scenario("18. 지도 화면도 v3 색·글꼴·로고", async page => {
   ok(st.coral === "#F2622A", `--coral ${st.coral}`);
   ok(st.ink === "#1F1B18", `--ink ${st.ink}`);
   ok(/Noto Sans KR/.test(st.font), `글꼴 ${st.font}`);
-  ok(st.mark === "/img/brand/logo-64.png", `로고 ${st.mark}`);
+  ok(st.mark === "/img/brand/logo-64.png?v=3", `로고 ${st.mark}`);
 });
 
 await browser.close();

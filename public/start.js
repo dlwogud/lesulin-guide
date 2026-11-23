@@ -46,10 +46,10 @@
 
   /* ── 1·2번 칸: 4건 이상이면 저절로 흐르게 카드를 한 번 더 붙입니다(복사본은 .dup, 보조기기에서 숨김) ── */
   const reduceMotion = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
-  function fill(port, items, render) {
+  function fill(port, items, render, empty = "표시할 식당이 없습니다") {
     const still = !!sel || items.length < 4 || reduceMotion();     // 동작 줄이기 설정이면 복사본을 붙이지 않습니다
     port.classList.toggle("static", still);
-    if (!items.length) { port.innerHTML = '<div class="empty">표시할 식당이 없습니다</div>'; return; }
+    if (!items.length) { port.innerHTML = `<div class="empty">${empty}</div>`; return; }
     const html = items.map(x => render(x, false)).join("");
     const dup = still ? "" : items.map(x => render(x, true)).join("");
     port.innerHTML = `<div class="track" style="--dur:${Math.max(30, items.length * 9)}s">${html}${dup}</div>`;
@@ -90,7 +90,9 @@
     for (const p of focus) { if (p.good) reviews.push([p, "good"]); if (p.bad) reviews.push([p, "bad"]); }
 
     fill($("listVideos"), places, videoCard);
-    fill($("listReviews"), reviews, reviewCard);
+    /* 또간집·히밥처럼 자기 영상에서 고른 댓글이 없는 유튜버만 고르면 — 식당은 있는데 댓글이 없는 것 */
+    fill($("listReviews"), reviews, reviewCard,
+         places.length ? "이 유튜버 영상에서 고른 방문 후기가 아직 없습니다" : "표시할 식당이 없습니다");
     $("selbar").hidden = !sel;
     $("bigNum").textContent = nf(places.reduce((n, p) => n + p.used, 0));
     $("bigWrap").hidden = false;
