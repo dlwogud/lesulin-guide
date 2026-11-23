@@ -45,7 +45,8 @@ export async function replies(pollIds: number[], session: string | null) {
     SELECT r.id, r.poll_id, r.body, r.store_id, s.name AS store_name,
            r.nickname, r.created_at,
            COALESCE(v.up, 0) AS ups,
-           COALESCE(mv.value, 0) AS my_vote
+           COALESCE(mv.value, 0) AS my_vote,
+           (r.session = $2) AS mine
       FROM poll_replies r
       LEFT JOIN stores s ON s.id = r.store_id
       LEFT JOIN (SELECT reply_id, count(*) FILTER (WHERE value = 1) AS up

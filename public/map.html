@@ -4,8 +4,9 @@
 <!-- 로컬 개발용. 카카오는 Referer로 도메인을 검사하는데, 아직 등록이 반영되지 않아
      Referer를 보내지 않는 방식으로 우회합니다. 도메인 등록이 확인되면 이 줄을 지우세요. -->
 <title>르슐랭 가이드 — 카카오맵</title>
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="apple-touch-icon" href="/img/brand/apple-icon.png">
+<link rel="icon" href="/favicon.ico?v=3" sizes="any">
+<link rel="icon" type="image/png" sizes="64x64" href="/img/brand/logo-64.png?v=3">
+<link rel="apple-touch-icon" href="/img/brand/apple-icon.png?v=3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap">
@@ -73,21 +74,9 @@ img{display:block;max-width:100%}
 .sect-t span{font-family:var(--mono);font-size:10px;color:var(--muted)}
 
 /* 지역 — 유튜버 위에 한 줄, 가로 스크롤 */
-.regbtn{position:relative;flex:none;margin-left:auto;border-left:1px solid var(--line);display:flex}
-.regbtn > button{display:flex;align-items:center;gap:7px;padding:0 14px;font-size:13px;font-weight:600;
   color:var(--ink2);white-space:nowrap;transition:background .12s}
-.regbtn > button:hover,.regbtn > button[aria-expanded=true]{background:var(--sub)}
-.regbtn > button.on{color:var(--coral-ink)}
-.regbtn svg{transition:transform .15s}
-.regbtn > button[aria-expanded=true] svg{transform:rotate(180deg)}
-.regpop{position:absolute;left:0;top:calc(100% + 1px);z-index:70;width:var(--panel-w);background:var(--paper);
   border:1px solid var(--line);border-radius:0 0 14px 14px;box-shadow:var(--sh3);overflow:hidden;
   display:flex;flex-direction:column;max-height:min(62vh,520px)}
-.regpop-h{flex:none;display:flex;align-items:baseline;gap:8px;padding:13px 15px 9px;border-bottom:1px solid var(--line)}
-.regpop-h b{font-size:12.5px;font-weight:650}
-.regpop-h span{font-family:var(--mono);font-size:10px;color:var(--muted)}
-.regpop-h button{margin-left:auto;font-size:11px;color:var(--coral-ink);text-decoration:underline}
-.regpop-b{flex:1;min-height:0;overflow-y:auto;padding:9px 11px 12px;display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
 .frow.togrow{display:flex;gap:7px;flex-direction:row}
 .tog{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:34px;border-radius:10px;
   border:1px solid var(--line);font-size:11.5px;font-weight:500;color:var(--ink2);background:var(--paper);
@@ -242,20 +231,25 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 .bell.live span{color:var(--coral-ink)}
 .bell.open{background:var(--sub)}
 
-/* 지도 위에 떠 있는 검색창 + 동그란 투표 버튼 — 지도 폭의 3/4, 가운데 */
-.mapbar{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:75%;z-index:30;display:flex;align-items:center;gap:10px}
+/* 지도 위에 떠 있는 검색창(지도 폭의 3/4, 가운데) + 동그란 투표 버튼(지도 오른쪽 위) */
+.mapbar{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:75%;max-width:calc(100% - 172px);z-index:30;display:flex;align-items:center;gap:10px}
 .mapbar .srch{flex:1;height:52px;border-radius:999px;padding:0 20px;background:rgba(255,255,255,.72);
   -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
   border:1px solid rgba(255,255,255,.7);box-shadow:0 8px 24px rgba(30,24,16,.16)}
 .mapbar .srch input{font-size:16px}
+/* 검색으로 고른 지역 — 누르면 풉니다 */
+.rchip{flex:none;display:flex;align-items:center;gap:6px;padding:5px 8px 5px 12px;border-radius:999px;
+  background:var(--ink);color:#fff;font-size:13px;font-weight:600;white-space:nowrap}
+.rchip::after{content:"×";font-size:14px;opacity:.7}
+.rchip[hidden]{display:none}
 .mapbar .srch input::placeholder{color:#8F8A83}
 .mapbar .ac{left:0;right:0;top:calc(100% + 8px)}
-.mapbar .bell{flex:none;width:52px;height:52px;border-radius:50%;padding:0;justify-content:center;gap:0;
+.mapwrap>.bell{position:absolute;top:16px;right:16px;z-index:30;width:52px;height:52px;border-radius:50%;padding:0;justify-content:center;gap:0;
   background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
   border:1px solid rgba(255,255,255,.7);box-shadow:0 8px 24px rgba(30,24,16,.16)}
-.mapbar .bell:hover,.mapbar .bell.open{background:rgba(255,255,255,.95)}
-.mapbar .bell .dot{right:9px;top:9px}
-.mapbar .bell span:not(.dot){font-size:10px;font-weight:600;color:var(--ink2)}
+.mapwrap>.bell:hover,.mapwrap>.bell.open{background:rgba(255,255,255,.95)}
+.mapwrap>.bell .dot{right:9px;top:9px}
+.mapwrap>.bell span:not(.dot){font-size:10px;font-weight:600;color:var(--ink2)}
 
 /* 맥 알림처럼 오른쪽 위에서 밀려 들어옵니다 */
 /* ══ 오류 신고 ══ */
@@ -327,7 +321,7 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 .pitem.hot{border-color:var(--coral);background:#FFFBF9}
 .pitem .ph{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:11.5px;color:var(--muted);margin-bottom:5px}
 .pitem .ph .au{color:var(--ink);font-weight:700}
-.pitem .ph .rk{background:var(--coral);color:#fff;border-radius:5px;padding:0 4px;font-weight:700}
+.pitem .ph .rk{position:static;width:auto;height:auto;display:inline-block;font-size:10.5px;line-height:1.6;background:var(--coral);color:#fff;border-radius:5px;padding:0 5px;font-weight:700;font-family:inherit}
 .pitem .ph .st{background:var(--sub2);color:var(--ink2);border-radius:5px;padding:0 5px;font-weight:600}
 .pitem .pt{font-size:12.5px;line-height:1.5}
 .pitem .pf{display:flex;align-items:center;gap:5px;margin-top:7px}
@@ -343,7 +337,42 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 .prep .who{font-size:11px;font-weight:700;color:var(--ink2);flex:none}
 .plist .pl-h{font-size:11px;color:var(--muted)}
 .prep .rv{margin-left:auto;flex:none}
-.pform{border-top:1px solid var(--line);padding:9px 12px;display:flex;flex-direction:column;gap:6px}
+.pform{border-bottom:1px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--sub)}
+.pform[hidden]{display:none!important}
+/* 글 올리기 — 동그란 배경 없이 주황색 + 하나만 */
+.padd{position:absolute;right:38px;top:7px;width:28px;height:28px;border:0;background:none;color:var(--coral);
+  font-size:26px;font-weight:400;line-height:1;display:grid;place-items:center;cursor:pointer;font-family:inherit;transition:opacity .12s}
+.padd:hover{opacity:.7}
+.pitem{cursor:pointer}
+.pitem.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+/* 글을 누르면 아래에서 올라오는 답글 채팅 */
+.pthread{flex:none;max-height:58%;display:flex;flex-direction:column;border-top:1px solid var(--line);
+  box-shadow:0 -10px 24px rgba(0,0,0,.08);background:#fff;position:relative}
+/* 위 가장자리 손잡이 — 끌면 답글 창 높이가 바뀝니다. 높이를 정하면 max-height 는 풀립니다(app.js) */
+.pth-grip{flex:none;height:12px;margin-bottom:-4px;cursor:row-resize;display:grid;place-items:center;touch-action:none}
+.pth-grip::before{content:"";width:36px;height:4px;border-radius:2px;background:#CFC9C1;transition:background .12s}
+.pth-grip:hover::before,.pth-grip.on::before,.pth-grip:focus-visible::before{background:var(--coral)}
+.pth-grip:focus{outline:none}
+body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
+.pthread[hidden]{display:none!important}
+.pth-h{display:flex;align-items:flex-start;gap:8px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.pth-h p{margin:0;flex:1;font-size:12.5px;font-weight:700;line-height:1.45}
+.pth-h .x2{border:0;background:none;font-size:16px;color:var(--muted);cursor:pointer;line-height:1;padding:0 2px}
+.pth-list{flex:1;min-height:90px;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--sub)}
+.pth-list .none{margin:auto;font-size:12px;color:var(--muted)}
+.bub{max-width:82%;align-self:flex-start;display:flex;flex-direction:column;gap:2px}
+.bub .nm{font-size:10.5px;font-weight:700;color:var(--ink2);padding-left:4px}
+.bub .tx{background:#fff;border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:7px 10px;font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.bub .mt{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);padding-left:4px}
+.bub.me{align-self:flex-end}
+.bub.me .nm,.bub.me .mt{align-self:flex-end;padding:0 4px 0 0}
+.bub.me .tx{background:var(--coral-soft);border-color:transparent;border-radius:14px 14px 4px 14px}
+.pth-err{margin:0;padding:6px 12px 0;font-size:11px;color:var(--coral-ink)}
+.pth-in{display:flex;gap:6px;padding:9px 12px}
+.pth-in input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-size:12.5px;font-family:inherit;outline:none}
+.pth-in input:focus{border-color:var(--coral)}
+.pth-in .send{background:var(--coral);color:#fff;border:0;border-radius:999px;padding:0 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.pth-in .send:disabled{background:var(--sub2);color:var(--muted);cursor:default}
 .pform textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:7px 9px;
   font-size:12px;font-family:inherit;resize:none;height:54px}
 .pform .row{display:flex;align-items:center;gap:6px}
@@ -480,18 +509,9 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
       <button class="grip L" id="gripL" aria-label="왼쪽 바 폭 조절"></button>
     <div class="topleft">
     <a class="brand" href="/" title="처음 화면으로 — 유튜버 바꾸기"><img class="mark" src="/img/brand/logo-64.png" alt="" width="28" height="28"><b>르슐랭 가이드</b></a>
-    <div class="regbtn">
-      <button id="regToggle" aria-expanded="false"><span id="regLabel">지역</span>
-        <svg width="9" height="6" viewBox="0 0 9 6" fill="none"><path d="M1 1l3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-      <div class="regpop" id="regPop" hidden>
-        <div class="regpop-h"><b>지역</b><span id="regHint"></span><button id="regClear">전체</button></div>
-        <div class="regpop-b" id="regList"></div>
-      </div>
-    </div>
     </div>
       <aside class="side">
       <div class="sgrp">
-        <p class="sect-t" style="margin-bottom:6px"><b style="font-size:10px;color:var(--muted);font-weight:500">데이터 출처</b><span id="srcTag" style="font-size:10px">확인 중</span></p>
       <p class="sect-t"><b>유튜버</b>
           <span class="favbtns"><button class="favedit" id="favEdit">내 유튜버 고르기</button><button class="favedit favoff" id="favClear" hidden>해제</button></span>
           <span id="creHint"></span></p>
@@ -533,15 +553,17 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
     <div class="mapbar">
       <div class="srch">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.7"/><path d="M11 11l3.3 3.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <button class="rchip" id="rchip" hidden aria-label="지역 풀기"></button>
         <input id="q" placeholder="지역, 식당, 유튜버로 검색" autocomplete="off">
         <button class="clr" id="clr" hidden>&times;</button>
         <div class="ac" id="ac" hidden></div>
       </div>
-  <button class="bell" id="bell" aria-label="실시간 투표 열기">
+    </div>
+      <!-- 투표 버튼은 검색창과 떼어 지도 오른쪽 위, 오른쪽 목록 바 바로 옆에 둡니다 -->
+      <button class="bell" id="bell" aria-label="실시간 투표 열기">
         <b><svg class="bi" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6a3.4 3.4 0 0 0-3.4 3.4v2.6L3.1 10.1h9.8L11.4 7.6V5A3.4 3.4 0 0 0 8 1.6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.3 11.9a1.75 1.75 0 0 0 3.4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></b>
         <span>투표</span><span class="dot" id="bellDot" hidden></span>
       </button>
-      </div>
 
       <div class="mapmsg" id="mapmsg" hidden><div>
         <h3>카카오맵을 불러오지 못했습니다</h3>
@@ -562,22 +584,30 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
 
   <section class="pollwrap" id="pollWrap" hidden aria-label="실시간 투표">
     <header>
+      <button class="padd" id="pollAdd" aria-label="글 올리기" aria-expanded="false">+</button>
       <button class="x" id="pollX" aria-label="닫기">&times;</button>
       <h3>실시간 투표</h3>
-      <p class="sub" id="pollSub">밤 12시에 새로 시작합니다</p>
+      <p class="sub" id="pollSub">밤 12시에 새로고침됩니다</p>
       <div class="ptabs">
         <button class="ptab on" id="tabHot">반응 많은 순</button>
         <button class="ptab" id="tabNew">최신순</button>
       </div>
     </header>
-    <div class="pbody" id="pollBody"></div>
-    <div class="pform">
+    <div class="pform" id="pollForm" hidden>
       <textarea id="pollText" maxlength="300"
         placeholder="예) 연남동 근처 혼밥하기 좋은 곳 아시는 분 달아주세요"></textarea>
       <div class="row">
         <span class="tag" id="pollTag">위치 확인 중</span>
         <button class="send" id="pollSend" disabled>올리기</button>
       </div>
+    </div>
+    <div class="pbody" id="pollBody"></div>
+    <div class="pthread" id="pThread" hidden>
+      <div class="pth-grip" id="pThGrip" role="separator" aria-orientation="horizontal" aria-label="답글 창 높이 조절" tabindex="0"></div>
+      <div class="pth-h"><p class="t2" id="pThTitle"></p><button class="x2" id="pThX" aria-label="답글 창 닫기">&times;</button></div>
+      <div class="pth-list" id="pThList"></div>
+      <p class="pth-err" id="pThErr" hidden></p>
+      <div class="pth-in"><input id="pThText" maxlength="300" placeholder="답글 달기" autocomplete="off"><button class="send" id="pThSend" disabled>보내기</button></div>
     </div>
   </section>
 
@@ -616,5 +646,5 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=layout2"></script>
+<script src="app.js?v=layout3"></script>
 </body></html>

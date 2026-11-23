@@ -1,0 +1,137 @@
+/* 지도 검색창: 시·도 이름만 넣어도 그 지역으로 가는지, Enter 가 먹는지 실제 브라우저로 확인합니다.
+ *
+ *   node scripts/e2e-map-search.mjs [기준 주소]     기본값: http://localhost:3000
+ *
+ * 하나라도 실패하면 exit 1. 식당 수는 /api/seed 를 직접 받아 비교합니다.
+ * GET 이 아닌 /api 요청(투표·신고·방문 기록)은 전부 막아 실서비스 DB 에 쓰지 않습니다.
+ */
+import { chromium } from "playwright";
+
+const BASE = (process.argv[2] || "http://localhost:3000").replace(/\/$/, "");
+const SEED = await (await fetch(`${BASE}/api/seed`)).json();
+const STORES = SEED.stores;
+const ok = (cond, msg) => { if (!cond) throw new Error(msg); };
+const fails = [];
+
+const browser = await chromium.launch();
+async function scenario(name, fn) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  await ctx.addInitScript(() => {
+    navigator.sendBeacon = () => true;
+    localStorage.setItem("lesulin.fav", "[]");          // 첫 방문 유튜버 고르기 창을 건너뜀
+  });
+  await ctx.route("**/api/**", r => r.request().method() === "GET" ? r.continue()
+    : r.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }));
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(String(e)));
+  try {
+    await page.goto(`${BASE}/map.html`, { waitUntil: "load" });
+    await page.waitForFunction(() => typeof kmap !== "undefined" && kmap, null, { timeout: 20000 });
+    await fn(page);
+    ok(errors.length === 0, `pageerror: ${errors.join(" | ")}`);
+    console.log(`  ✓ ${name}`);
+  } catch (e) {
+    fails.push(name);
+    console.log(`  ✗ ${name}\n    ${e.message}`);
+  }
+  await ctx.close();
+}
+
+const center = page => page.evaluate(() => { const c = kmap.getCenter(); return [c.getLat(), c.getLng()]; });
+const inBusan = ([lat, lng]) => lat > 34.9 && lat < 35.45 && lng > 128.75 && lng < 129.35;
+const typeEnter = async (page, text) => {
+  await page.click("#q");
+  await page.keyboard.type(text, { delay: 30 });
+  await page.waitForTimeout(400);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(1200);
+};
+
+const STORES_N = STORES.length;
+const busanN = STORES.filter(s => s.r.split(" ")[0] === "부산광역시").length;
+
+await scenario("1 '부산' 입력하면 자동완성 맨 위 지역에 '부산 전체'가 뜬다", async page => {
+  await page.click("#q");
+  await page.keyboard.type("부산", { delay: 30 });
+  await page.waitForTimeout(400);
+  const first = (await page.locator("#ac .g").filter({ hasText: "지역" }).locator("button").first().textContent()).replace(/\s+/g, " ").trim();
+  ok(first.includes("부산 전체") && first.includes(`${busanN}곳`), `첫 지역 항목이 '${first}' (기대: 부산 전체 ${busanN}곳)`);
+});
+
+await scenario("2 '부산' + Enter 면 부산 전체로 거르고 지도가 부산으로 간다", async page => {
+  await typeEnter(page, "부산");
+  ok(await page.locator("#ac").isHidden(), "Enter 뒤에도 자동완성이 열려 있음");
+  ok((await page.textContent("#rchip")).trim() === "부산", `지역 표시가 '${await page.textContent("#rchip")}'`);
+  const n = await page.evaluate(() => filtered().length);
+  ok(n === busanN, `걸러진 식당 ${n}곳 (기대 ${busanN})`);
+  const c = await center(page);
+  ok(inBusan(c), `지도 중심이 부산이 아님: ${c}`);
+});
+
+await scenario("3 '부산 해운대' + Enter 면 해운대구로 간다", async page => {
+  await typeEnter(page, "부산 해운대");
+  ok((await page.textContent("#rchip")).trim() === "부산 해운대구", `지역 표시가 '${await page.textContent("#rchip")}'`);
+  ok(inBusan(await center(page)), "지도 중심이 부산이 아님");
+});
+
+await scenario("4 지역이 아닌 말은 띄어 써도 모든 낱말이 들어간 식당만 남긴다", async page => {
+  const hay = s => (s.n + " " + s.addr + " " + s.r + " " + s.cat).toLowerCase();
+  const want = STORES.filter(s => hay(s).includes("해운대") && hay(s).includes("국밥")).length;
+  ok(want > 0, "표본 없음: 해운대 국밥");
+  await page.click("#q");
+  await page.keyboard.type("해운대 국밥", { delay: 30 });
+  await page.waitForTimeout(500);
+  const n = await page.evaluate(() => filtered().length);
+  ok(n >= want, `'해운대 국밥' 결과 ${n}곳 (최소 ${want})`);
+});
+
+await scenario("5 왼쪽 위 지역 메뉴는 없고, 검색창 안 지역 표시를 누르면 풀린다", async page => {
+  ok(await page.locator("#regToggle").count() === 0, "지역 메뉴가 남아 있음");
+  ok(await page.locator("#rchip").isHidden(), "지역을 안 골랐는데 표시가 보임");
+  await typeEnter(page, "부산");
+  await page.click("#rchip");
+  await page.waitForTimeout(500);
+  ok(await page.locator("#rchip").isHidden(), "누른 뒤에도 지역 표시가 남음");
+  const n = await page.evaluate(() => filtered().length);
+  ok(n === STORES_N, `풀린 뒤 식당 ${n}곳 (기대 ${STORES_N})`);
+}, );
+
+/* 투표 답글 창 높이 조절 — 오늘 글이 없어도 돌도록 투표 목록은 가짜로 줍니다 */
+const FAKE_POLLS = { polls: [{ id: 1, body: "점검용 글", nickname: "익명", created_at: new Date().toISOString(),
+  ups: 0, downs: 0, replies: 1, my_vote: 0, mine: false }],
+  replies: [{ id: 11, poll_id: "1", body: "점검용 답글", nickname: "익명", created_at: new Date().toISOString(), ups: 0, my_vote: 0 }],
+  head: { poll: 1, reply: 11 } };
+await scenario("6 답글 창 위 손잡이를 끌면 높이가 늘고 줄며, 다시 열어도 유지된다", async page => {
+  await page.route("**/api/polls?**", r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(FAKE_POLLS) }));
+  await page.click("#bell");
+  await page.locator(".pitem").first().click();
+  await page.waitForTimeout(300);
+  const h = async () => (await page.locator("#pThread").boundingBox()).height;
+  const g = await page.locator("#pThGrip").boundingBox();
+  ok(g, "손잡이(#pThGrip)가 없음");
+  const x = g.x + g.width / 2, y = g.y + g.height / 2, h0 = await h();
+  const drag = async dy => { await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x, y + dy / 2, { steps: 4 }); await page.mouse.move(x, y + dy, { steps: 4 }); await page.mouse.up(); await page.waitForTimeout(150); };
+  await drag(-200);
+  const h1 = await h();
+  ok(h1 > h0 + 150, `위로 끌어도 안 늘어남: ${h0} → ${h1}`);
+  const g2 = await page.locator("#pThGrip").boundingBox();
+  await page.mouse.move(g2.x + g2.width / 2, g2.y + 4); await page.mouse.down();
+  await page.mouse.move(g2.x + g2.width / 2, g2.y + 4 + 120, { steps: 6 }); await page.mouse.up(); await page.waitForTimeout(150);
+  const h2 = await h();
+  ok(h2 < h1 - 90, `아래로 끌어도 안 줄어듦: ${h1} → ${h2}`);
+  /* 닫았다 다시 열어도 그 높이 */
+  await page.click("#pThX"); await page.waitForTimeout(150);
+  await page.locator(".pitem").first().click(); await page.waitForTimeout(300);
+  ok(Math.abs(await h() - h2) < 3, `다시 열었더니 높이가 돌아감: ${h2} → ${await h()}`);
+  /* 너무 크게 끌어도 투표 목록 머리가 가려지지 않게 상한 */
+  const g3 = await page.locator("#pThGrip").boundingBox();
+  await page.mouse.move(g3.x + g3.width / 2, g3.y + 4); await page.mouse.down();
+  await page.mouse.move(g3.x + g3.width / 2, 5, { steps: 6 }); await page.mouse.up(); await page.waitForTimeout(150);
+  const hb = await page.locator(".pollwrap>header").boundingBox(), tb = await page.locator("#pThread").boundingBox();
+  ok(tb.y >= hb.y + hb.height, `답글 창이 투표 머리를 덮음: ${tb.y} < ${hb.y + hb.height}`);
+});
+
+await browser.close();
+if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
+console.log("\n모두 통과");

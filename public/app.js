@@ -408,20 +408,11 @@ window.__sel = select;
 window.__close = () => { selected = null; renderResults(); drawPins(); };
 
 /* ══ 좌측 ══ */
+/* 지역은 검색으로만 고릅니다(왼쪽 위 지역 메뉴는 없앴습니다). 고른 지역은 검색창 안에 표시하고, 누르면 풉니다. */
 function renderChips() {
-  const m = new Map();
-  for (const s of stores) m.set(s.r, (m.get(s.r)||0) + 1);
-  const rs = [...m].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0],"ko"));
-  $("regHint").textContent = `${m.size}개 시군구`;
-  $("regList").innerHTML = rs.map(([r,n]) => `<button class="chip${region===r?" on":""}"
-    onclick="window.__reg('${r}')">${esc(shortRegion(r))}<span class="c">${n}</span></button>`).join("");
-  $("regLabel").textContent = region ? shortRegion(region) : "지역";
-  $("regToggle").classList.toggle("on", !!region);
-}
-function regOpen(v) {
-  $("regPop").hidden = !v;
-  $("regToggle").setAttribute("aria-expanded", String(v));
-  if (v) { const on = $("regList").querySelector(".chip.on"); if (on) on.scrollIntoView({ block:"nearest" }); }
+  const c = $("rchip"); if (!c) return;
+  c.hidden = !region;
+  c.textContent = region ? shortRegion(region) : "";
 }
 /* ══ 선호 유튜버 고르기 ══ */
 const FAV_KEY = "lesulin.fav";
@@ -544,7 +535,7 @@ function renderHist() {
     `<i class="${i >= onFrom ? "on" : ""}" style="height:${Math.max(2, Math.round(b/mx*22))}px"></i>`).join("");
 }
 window.__cre = id => { picked.has(id) ? picked.delete(id) : picked.add(id); selected = null; refresh(true); };
-window.__reg = r => { region = region === r ? null : r; selected = null; regOpen(false); refresh(true); };
+window.__reg = r => { region = r; selected = null; refresh(true); };   // 아래 기록 배선이 감쌉니다
 window.__cat = c => { cat = cat === c ? null : c; selected = null; refresh(true); };
 
 function refresh(fit) {
@@ -595,7 +586,7 @@ function suggest() {
 window.__pick = (k, v) => {
   q = ""; $("q").value = ""; $("clr").hidden = true; $("ac").hidden = true;
   if (k === "c") { picked = new Set([v]); selected = null; refresh(true); }
-  else if (k === "r") { region = v; selected = null; refresh(true); }
+  else if (k === "r") window.__reg(v);
   else { refresh(false); select(v); }
 };
 
@@ -608,6 +599,8 @@ function wire() {
   /* Enter: 자동완성 첫 항목을 고릅니다. 항목이 없으면 지금 걸러진 식당으로 지도를 맞춥니다.
      한글 입력 중 Enter(조합 확정)는 한 번 더 들어오므로 그건 건너뜁니다. */
   $("q").addEventListener("keydown", e => {
+    /* 빈 검색창에서 지우기를 누르면 고른 지역을 풉니다 */
+    if (e.key === "Backspace" && !$("q").value && region) { region = null; selected = null; refresh(true); return; }
     if (e.key !== "Enter" || e.isComposing || e.keyCode === 229) return;
     e.preventDefault();
     clearTimeout(acTimer);
@@ -620,10 +613,7 @@ function wire() {
   });
   $("clr").onclick = () => { q = ""; $("q").value = ""; $("clr").hidden = true; $("ac").hidden = true; refresh(true); };
   document.addEventListener("pointerdown", e => { if (!e.target.closest(".srch")) $("ac").hidden = true; });
-  $("regToggle").onclick = () => regOpen($("regPop").hidden);
-  $("regClear").onclick = () => { region = null; selected = null; regOpen(false); refresh(true); };
-  document.addEventListener("pointerdown", e => { if (!e.target.closest(".regbtn")) regOpen(false); });
-  addEventListener("keydown", e => { if (e.key === "Escape") regOpen(false); });
+  $("rchip").onclick = () => { region = null; selected = null; refresh(true); $("q").focus(); };
   $("onlyRated").onclick = () => { onlyRated = !onlyRated; $("onlyRated").setAttribute("aria-pressed", onlyRated); selected = null; refresh(true); };
   $("onlyWait").onclick = () => { onlyWait = !onlyWait; $("onlyWait").setAttribute("aria-pressed", onlyWait); selected = null; refresh(true); };
   $("vwMin").oninput = e => { minViews = sliderToViews(+e.target.value); refresh(false); };
@@ -833,15 +823,14 @@ function renderPolls() {
   const el = $("pollBody"); if (!el) return;
   if (!polls.length) {
     el.innerHTML = `<p class="hotempty">오늘 올라온 투표가 없습니다.<br>
-      아래에 첫 질문을 올려 보세요 — 밤 12시에 새로 시작합니다.</p>`;
+      오른쪽 위 <b>+</b> 를 눌러 첫 질문을 올려 보세요. 밤 12시에 새로고침됩니다.</p>`;
     return;
   }
   el.innerHTML = polls.map((p, i) => {
     const rs = preps.get(+p.id) || [];
     const isNew = +p.id > seen.poll && !p.mine;
-    return `<article class="pitem${isNew ? " hot" : ""}" id="p${p.id}">
+    return `<article class="pitem${isNew ? " hot" : ""}${+p.id === threadId ? " sel" : ""}" id="p${p.id}" data-id="${p.id}" tabindex="0">
       <div class="ph">
-        ${pollSort === "hot" && i < 3 ? `<span class="rk">${i + 1}</span>` : ""}
         <span class="au">${p.mine ? "내 글" : esc(p.nickname || "익명")}</span><span>·</span><span>${ago(p.created_at)}</span>
         ${p.store_name ? `<span class="st">📍 ${esc(p.store_name)}</span>`
           : p.place ? `<span>· ${esc(shortRegion(p.place))}</span>` : ""}
@@ -852,17 +841,78 @@ function renderPolls() {
           onclick="window.__vote(${p.id},1,'poll')">👍 ${p.ups}</button>
         <button class="vbtn dn${p.my_vote === -1 ? " on" : ""}"
           onclick="window.__vote(${p.id},-1,'poll')">👎 ${p.downs}</button>
-        <button class="rbtn" onclick="window.__reply(${p.id})">답글 ${p.replies || ""}</button>
+        <button class="rbtn" onclick="window.__thread(${p.id})">답글 ${rs.length || ""}</button>
       </div>
-      ${rs.length ? `<div class="plist"><span class="pl-h">답글 ${rs.length}개</span>${rs.map(r => `<div class="prep">
-          <span class="who">${r.mine ? "나" : esc(r.nickname || "익명")}</span>
-          <span>${esc(r.body)}${r.store_name ? ` <b>📍${esc(r.store_name)}</b>` : ""}</span>
-          <button class="vbtn rv${r.my_vote === 1 ? " on" : ""}"
-            onclick="window.__vote(${r.id},1,'reply')">♥ ${r.ups}</button>
-        </div>`).join("")}</div>` : ""}
     </article>`;
   }).join("");
+  renderThread();
 }
+
+/* ── 답글 채팅 — 글을 누르면 아래에서 올라옵니다 ───────────── */
+let threadId = null;
+function renderThread() {
+  const box = $("pThread"); if (!box) return;
+  const p = threadId != null && polls.find(x => +x.id === threadId);
+  if (!p) { box.hidden = true; threadId = null; return; }
+  if (box.hidden) {                                  // 열릴 때 저장해 둔 높이로 (창 크기가 바뀌었으면 상한에 맞춤)
+    box.hidden = false;
+    let v = NaN; try { v = Number(localStorage.getItem(PTH_KEY)); } catch {}
+    if (v > 0) setPthH(v, false);
+  }
+  $("pThTitle").textContent = p.body;
+  const rs = preps.get(+p.id) || [];
+  const list = $("pThList"), atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+  list.innerHTML = rs.length ? rs.map(r => `<div class="bub${r.mine ? " me" : ""}">
+      <span class="nm">${r.mine ? "나" : esc(r.nickname || "익명")}</span>
+      <span class="tx">${esc(r.body)}${r.store_name ? ` <b>📍${esc(r.store_name)}</b>` : ""}</span>
+      <span class="mt">${r.created_at ? ago(r.created_at) : ""}
+        <button class="vbtn rv${r.my_vote === 1 ? " on" : ""}" onclick="window.__vote(${r.id},1,'reply')">♥ ${r.ups}</button></span>
+    </div>`).join("") : `<p class="none">아직 답글이 없습니다. 첫 답글을 달아 보세요.</p>`;
+  if (atBottom || list.dataset.for !== String(p.id)) list.scrollTop = list.scrollHeight;
+  list.dataset.for = String(p.id);
+}
+/* 답글 창 높이 — 위 손잡이를 끌어 정하고, 다음에 열 때도 그 높이로 엽니다.
+   투표창 머리(제목·탭)는 가리지 않게 상한을 둡니다. 더블클릭하면 원래대로. */
+const PTH_KEY = "lesulin.pthH", PTH_MIN = 150;
+function pthMax() {
+  const w = $("pollWrap"), hd = w && w.querySelector("header");
+  return w ? w.clientHeight - (hd ? hd.offsetHeight : 0) - 60 : 600;
+}
+function setPthH(px, save = true) {
+  const box = $("pThread"); if (!box) return;
+  if (px == null) { box.style.height = ""; box.style.maxHeight = ""; try { localStorage.removeItem(PTH_KEY); } catch {} return; }
+  const h = Math.round(Math.max(PTH_MIN, Math.min(pthMax(), px)));
+  box.style.height = h + "px"; box.style.maxHeight = "none";
+  if (save) try { localStorage.setItem(PTH_KEY, String(h)); } catch {}
+}
+function wirePthGrip() {
+  const el = $("pThGrip"); if (!el) return;
+  el.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    const start = e.clientY, base = $("pThread").offsetHeight;
+    el.classList.add("on"); document.body.classList.add("resizing-y");
+    el.setPointerCapture(e.pointerId);
+    const move = ev => setPthH(base - (ev.clientY - start));
+    const up = () => {
+      el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up);
+      el.classList.remove("on"); document.body.classList.remove("resizing-y");
+    };
+    el.addEventListener("pointermove", move); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  });
+  el.addEventListener("dblclick", () => setPthH(null));
+  el.addEventListener("keydown", e => {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    e.preventDefault();
+    setPthH($("pThread").offsetHeight + (e.key === "ArrowUp" ? 30 : -30));
+  });
+}
+function openThread(id) {
+  threadId = threadId === id ? null : id;           // 같은 글을 다시 누르면 닫힙니다
+  $("pThErr").hidden = true;
+  renderPolls();
+  if (threadId != null) $("pThText").focus();
+}
+window.__thread = openThread;
 
 window.__vote = async (id, v, target) => {
   const cur = target === "poll"
@@ -878,19 +928,21 @@ window.__vote = async (id, v, target) => {
   } catch {}
 };
 
-window.__reply = async id => {
-  const body = prompt("답글을 적어 주세요. 가게 이름을 넣으면 다른 사람이 찾기 쉽습니다.");
-  if (!body || !body.trim()) return;
+async function sendReply() {
+  const t = $("pThText"), body = t.value.trim(), id = threadId;
+  if (id == null || !body) return;
+  $("pThSend").disabled = true; $("pThErr").hidden = true;
   try {
     const r = await fetch(`/api/polls/${id}/reply`, {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ session: sid, body: body.trim() }),
+      body: JSON.stringify({ session: sid, body }),
     });
-    const d = await r.json();
-    if (!r.ok) return alert(d.error || "답글을 달지 못했습니다.");
-    await pullPolls(false);
-  } catch { alert("답글을 달지 못했습니다."); }
-};
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { $("pThErr").textContent = d.error || "답글을 달지 못했습니다. 잠시 뒤 다시 보내 주세요."; $("pThErr").hidden = false; }
+    else { t.value = ""; await pullPolls(false); $("pThList").scrollTop = $("pThList").scrollHeight; }
+  } catch { $("pThErr").textContent = "답글을 달지 못했습니다. 인터넷 연결을 확인해 주세요."; $("pThErr").hidden = false; }
+  $("pThSend").disabled = !$("pThText").value.trim();
+}
 
 /* ── 올리기 ─────────────────────────────────────────────── */
 function pollTagHTML() {
@@ -926,7 +978,7 @@ async function sendPoll() {
     });
     const d = await r.json();
     if (!r.ok) { alert(d.error || "올리지 못했습니다."); syncForm(); return; }
-    t.value = ""; pollTarget = null;
+    t.value = ""; pollTarget = null; showForm(false);
     await pullPolls(false);
     markSeen();
   } catch { alert("올리지 못했습니다."); }
@@ -994,6 +1046,12 @@ function openPolls() {
   if (locMode === "gps" && gpsState === "idle") locFromGPS();   // 현재 위치를 물어봅니다
   renderPolls(); markSeen();
 }
+function showForm(on) {
+  $("pollForm").hidden = !on;
+  $("pollAdd").setAttribute("aria-expanded", String(on));
+  $("pollAdd").setAttribute("aria-label", on ? "글쓰기 닫기" : "글 올리기");
+  if (on) { syncForm(); $("pollText").focus(); }
+}
 function closePolls() {
   pollOn = false;
   if ($("pollWrap")) $("pollWrap").hidden = true;
@@ -1016,8 +1074,25 @@ function wirePolls() {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendPoll();
   };
   $("pollSend").onclick = sendPoll;
+  $("pollAdd").onclick = () => showForm($("pollForm").hidden);
+  /* 글(카드)을 누르면 답글 채팅 — 투표·답글 버튼을 누른 건 그대로 */
+  $("pollBody").addEventListener("click", e => {
+    if (e.target.closest("button")) return;
+    const a = e.target.closest(".pitem"); if (a) openThread(+a.dataset.id);
+  });
+  $("pollBody").addEventListener("keydown", e => {
+    const a = e.target.closest(".pitem");
+    if (a && e.target === a && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openThread(+a.dataset.id); }
+  });
+  $("pThX").onclick = () => openThread(threadId);
+  $("pThText").oninput = () => { $("pThSend").disabled = !$("pThText").value.trim(); };
+  $("pThText").onkeydown = e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); sendReply(); } };
+  $("pThSend").onclick = sendReply;
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape" && pollOn) closePolls();
+    if (e.key !== "Escape" || !pollOn) return;
+    if (threadId != null) openThread(threadId);        // 채팅 먼저 닫고
+    else if (!$("pollForm").hidden) showForm(false);   // 글쓰기 칸, 그다음 창
+    else closePolls();
   });
   pullPolls(false);
   pollTimer = setInterval(() => {
@@ -1039,8 +1114,7 @@ window.__askStore = id => {
   pollTarget = s;
   openPolls();
   $("pollText").placeholder = `예) ${s.n} 웨이팅 얼마나 되나요?`;
-  $("pollText").focus();
-  syncForm();
+  showForm(true);
 };
 
 wirePolls();
@@ -1298,3 +1372,4 @@ function wireGrips() {
 
 loadBars();
 wireGrips();
+wirePthGrip();

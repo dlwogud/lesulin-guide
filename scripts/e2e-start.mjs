@@ -65,7 +65,7 @@ console.log(`시작 화면 e2e — ${BASE}`);
 
 await scenario("1. 데스크톱: 제목·숫자·세 칸·칩 (숫자는 API 값과 일치)", async page => {
   await openStart(page);
-  ok((await page.textContent("#hero")).includes("다녀왔다고 적은 사람들"), "핵심 문장");
+  ok((await page.textContent("#hero")).includes("다녀온 사람들은 뭐라고 했을까"), "핵심 문장");
   ok(await page.locator("#kmap").count() === 0, "지도 화면 요소가 섞임");
   ok((await page.textContent("#statStores")).includes(nf(IN.meta.stores)), "식당 수");
   ok((await page.textContent("#statVideos")).includes(nf(IN.meta.videos)), "영상 수");
@@ -84,27 +84,25 @@ await scenario("1. 데스크톱: 제목·숫자·세 칸·칩 (숫자는 API 값
   ok(/^https:\/\/www\.youtube\.com\/watch\?v=/.test(await page.getAttribute("#listVideos .vcard:not(.dup) a.vlink", "href")), "영상 링크");
 });
 
-await scenario("1b. 화면 구성: 헤더 문구 한 줄 · 머리글·구분선·지도 열기 버튼 없음 · 고르기가 세 칸 위", async page => {
+await scenario("1b. 화면 구성(v4): 주황 테두리 표지 · 지도 버튼 화살표 · 구분선·옛 버튼 없음 · 고르기가 세 칸 위", async page => {
   await openStart(page);
-  const tag = page.locator("nav #tagline");
-  ok((await tag.textContent()).trim() === "좋아하는 유튜버가 방문한 맛집의 반응을 알아보세요!", "헤더 문구");
-  const lh = await tag.evaluate(e => parseFloat(getComputedStyle(e).lineHeight) || 20);
-  ok((await tag.boundingBox()).height <= lh * 1.3, "헤더 문구가 줄바꿈됨");
+  ok(await page.locator("#tagline").count() === 0, "헤더 한 줄 문구가 남음(제목과 같은 말이라 v4 에서 뺌)");
+  ok((await page.textContent("#toMap")).trim() === "맛집 지도 열기 →", "지도 버튼 문구");
+  ok((await page.$eval(".cover", e => getComputedStyle(e).boxShadow)).includes("251, 92, 1"), "표지 주황 테두리");
+  ok(await page.$eval(".cover", e => getComputedStyle(e).backgroundColor) === "rgb(255, 255, 255)", "표지 흰 바탕");
   ok(await page.$eval("nav", e => getComputedStyle(e).borderBottomWidth) === "0px", "상단 구분선이 남음");
   ok(await page.locator(".ch").count() === 0, "칸 머리글이 남음");
   ok(await page.locator("#go").count() === 0, "'내 유튜버 맛집 지도 열기'가 남음");
-  ok(!(await page.locator(".hero").textContent()).includes("방문 후기 ×"), "'유튜버 × 방문 후기 × 지도'가 남음");
+  ok(!(await page.locator(".cover").textContent()).includes("방문 후기 ×"), "'유튜버 × 방문 후기 × 지도'가 남음");
   const [pk, st] = [await page.locator(".picker").boundingBox(), await page.locator("#stage").boundingBox()];
   ok(pk.y + pk.height <= st.y, "고르기가 세 칸 위에 있지 않음");
   ok(await page.$eval(".picker", e => getComputedStyle(e).backgroundColor) === "rgba(0, 0, 0, 0)", "고르기 배경이 남음");
 });
 
-await scenario("7b. 모바일에서도 헤더 문구 한 줄 · 넘침 없음", async page => {
+await scenario("7b. 모바일에서도 제목·리본·지도 버튼이 보이고 넘침 없음", async page => {
   await openStart(page);
-  const tag = page.locator("#tagline");
-  ok(await tag.isVisible(), "모바일에서 문구가 안 보임");
-  const lh = await tag.evaluate(e => parseFloat(getComputedStyle(e).lineHeight) || 20);
-  ok((await tag.boundingBox()).height <= lh * 1.3, "줄바꿈됨");
+  ok(await page.locator("#hero").isVisible() && await page.locator(".ribbon").isVisible(), "모바일에서 제목·리본이 안 보임");
+  ok(await page.locator("#toMap").isVisible(), "모바일에서 지도 버튼이 안 보임");
   ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 390, "가로 넘침");
 }, { viewport: { width: 390, height: 844 } });
 
