@@ -488,7 +488,7 @@ function renderCres() {
     const on = picked.has(c.id);
     return `<button class="ytrow${on?" on":""}" onclick="window.__cre('${c.id}')" aria-pressed="${on}">
       <img src="${chImg(c.id)}" alt="">
-      <span class="nm"><b class="t1">${esc(c.n)}${fav.has(c.id) ? " ★" : ""}</b><span class="t1">${esc(c.handle||"")}</span></span>
+      <span class="nm"><b class="t1">${esc(c.n)}</b><span class="t1">${esc(c.handle||"")}</span></span>
       </button>`;
   };
   $("cres").innerHTML = shown.map(row).join("")
