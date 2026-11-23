@@ -32,7 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               style={{ background: "var(--surface)", borderBottom: "1px solid var(--line)" }}>
         <b className="text-sm flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/img/brand/logo-64.png" alt="" width={24} height={24} style={{ borderRadius: 6 }} />
+          <img src="/img/brand/logo-64.png?v=3" alt="" width={24} height={24} style={{ borderRadius: 6 }} />
           르슐랭 운영
         </b>
         <nav className="flex gap-1">
