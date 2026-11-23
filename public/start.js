@@ -277,9 +277,15 @@
   const savePicks = () => { if (loaded) safeSet(picked); };
   window.LesulinIntroSave = savePicks;
   /* 지도로 나가는 링크(상단 "맛집 지도 보러가기", 식당 이름, 지도 카드)를 누르면 방금 고른 것을 남깁니다 */
+  /* 고른 유튜버를 주소(?yt=c1,c2)에도 실어 보냅니다 — 지도 화면이 그 유튜버들을 골라 둔 채로 열립니다 */
   document.addEventListener("click", e => {
     const a = e.target.closest('a[href^="/map.html"]');
-    if (a) savePicks();
+    if (!a) return;
+    savePicks();
+    if (!loaded) return;
+    const u = new URL(a.getAttribute("href"), location.origin);
+    if (picked.length) u.searchParams.set("yt", picked.join(",")); else u.searchParams.delete("yt");
+    a.setAttribute("href", u.pathname + u.search);
   }, true);
 
   /* 방문 기록 — 지도(app.js)와 같은 키·형식으로 /api/track 에 보냅니다 */

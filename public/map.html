@@ -103,15 +103,12 @@ img{display:block;max-width:100%}
 .ytmore .faces img + img{margin-left:-5px;box-shadow:0 0 0 1.5px #fff}
 .ytrow{display:flex;align-items:center;gap:9px;padding:5px 7px;border-radius:10px;width:100%;transition:background .12s}
 .ytrow:hover{background:var(--sub)}
-.ytrow.on{background:var(--coral-soft)}
+.ytrow.on{background:var(--coral-soft);box-shadow:inset 0 0 0 1.5px var(--coral)}
+.ytrow.on .nm b{color:var(--coral-ink)}
 .ytrow img{width:28px;height:28px;border-radius:50%;flex:none;object-fit:cover;background:var(--sub2)}
 .ytrow .nm{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
 .ytrow .nm b{font-size:12.5px;font-weight:600}
 .ytrow .nm span{font-family:var(--mono);font-size:9.5px;color:var(--muted)}
-.ytrow .cnt{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--muted);flex:none}
-.ytrow.on .cnt{color:var(--coral)}
-.chk{width:18px;height:18px;border-radius:6px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;color:transparent;font-size:10px;background:var(--paper)}
-.ytrow.on .chk{background:var(--ink);border-color:var(--ink);color:#fff}
 
 .feed{display:flex;flex-direction:column;gap:11px;max-height:252px;overflow-y:auto}
 .fitem{display:flex;gap:9px;align-items:flex-start;width:100%;border-radius:8px}
@@ -141,7 +138,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
 .sw[aria-pressed=true]{background:var(--coral)}
 .sw[aria-pressed=true]::after{transform:translateX(15px)}
 /* 업종 — 한 줄로 두고 옆으로 넘겨 봅니다 */
-.catrow{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.catrow{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;cursor:grab;user-select:none}
+.catrow::-webkit-scrollbar{display:none}
+.catrow.dragging{cursor:grabbing}
 .catrow .chip{flex:none;white-space:nowrap}
 
 /* 카카오맵 */
@@ -515,7 +514,6 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
     </div>
       <aside class="side">
       <div class="sgrp">
-        <p class="sect-t"><b>업종</b><span id="catHint"></span></p>
         <div class="catrow" id="cats"></div>
       </div>
       <div class="sgrp">
@@ -649,5 +647,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=cat1"></script>
+<script src="app.js?v=cat2"></script>
 </body></html>

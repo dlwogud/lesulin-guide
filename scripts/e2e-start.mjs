@@ -163,7 +163,7 @@ await scenario("3. 고르고 지도로 → 저장됨", async page => {
   const ids = [await chips.nth(0).getAttribute("data-id"), await chips.nth(1).getAttribute("data-id")];
   await chips.nth(0).click(); await chips.nth(1).click();
   await page.click("#toMap");
-  await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
+  await page.waitForURL(/\/map\.html(\?yt=[^&]*)?$/, { timeout: 15000 });
   const saved = JSON.parse(await page.evaluate(() => localStorage.getItem("lesulin.fav")));
   ok(JSON.stringify([...saved].sort()) === JSON.stringify([...ids].sort()), `저장값 ${saved}`);
 });
@@ -200,7 +200,7 @@ await scenario("5a. API 실패 → 세 칸 숨기고 지도로 · 저장해 둔 
   ok(await page.locator("#st1").isHidden(), "세 칸이 보임");
   ok(await page.locator("#chips").isHidden() && await page.locator(".picker .hd").isHidden(), "칩 없이 '내 유튜버를 고르세요'만 남음");
   await page.click("#toMap");
-  await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
+  await page.waitForURL(/\/map\.html(\?yt=[^&]*)?$/, { timeout: 15000 });
   const saved = await page.evaluate(() => localStorage.getItem("lesulin.fav"));
   ok(saved === JSON.stringify(SAVED), `저장값이 바뀜: ${saved}`);
 }, { init: keepSaved });
@@ -209,7 +209,7 @@ await scenario("5c. 데이터가 오기 전에 버튼을 눌러도 저장해 둔
   await page.route("**/api/intro", async r => { await new Promise(res => setTimeout(res, 4000)); await r.continue(); });
   await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
   await page.click("#toMap");
-  await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
+  await page.waitForURL(/\/map\.html(\?yt=[^&]*)?$/, { timeout: 15000 });
   const saved = await page.evaluate(() => localStorage.getItem("lesulin.fav"));
   ok(saved === JSON.stringify(SAVED), `저장값이 바뀜: ${saved}`);
 }, { init: keepSaved });
@@ -228,7 +228,7 @@ await scenario("6. localStorage 차단(시크릿 창) → 그래도 동작", asy
   ok(await page.locator("#hero").isVisible(), "문장");
   ok(errors.length === 0, `시작 화면 오류: ${errors}`);
   await page.click("#toMap");
-  await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
+  await page.waitForURL(/\/map\.html(\?yt=[^&]*)?$/, { timeout: 15000 });
   errors.length = 0;   // 지도 쪽은 이 테스트 범위 밖
 }, { init: () => Object.defineProperty(window, "localStorage", { get() { throw new Error("blocked"); } }) });
 
@@ -418,7 +418,7 @@ await scenario("12. 전체 흐름: 시작 → 2명 → 지도(내 유튜버 표�
   const chips = page.locator("#chips [data-id]");
   await chips.nth(0).click(); await chips.nth(1).click();
   await page.click("#toMap");
-  await page.waitForURL(/\/map\.html$/, { timeout: 15000 });
+  await page.waitForURL(/\/map\.html(\?yt=[^&]*)?$/, { timeout: 15000 });
   await page.waitForSelector(".pinbox.mine, .kcluster.mine", { timeout: 25000 });
   await page.click(".brand");
   await page.waitForSelector("body[data-ready]", { timeout: 15000 });

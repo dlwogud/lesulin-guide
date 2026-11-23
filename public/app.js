@@ -485,11 +485,11 @@ function renderCres() {
   const rest = ord.slice(shown.length);
 
   const row = c => {
-    const n = stores.filter(s => s.cs.includes(c.id)).length, on = picked.has(c.id);
+    const on = picked.has(c.id);
     return `<button class="ytrow${on?" on":""}" onclick="window.__cre('${c.id}')" aria-pressed="${on}">
       <img src="${chImg(c.id)}" alt="">
       <span class="nm"><b class="t1">${esc(c.n)}${fav.has(c.id) ? " ★" : ""}</b><span class="t1">${esc(c.handle||"")}</span></span>
-      <span class="cnt">${n}</span><span class="chk">✓</span></button>`;
+      </button>`;
   };
   $("cres").innerHTML = shown.map(row).join("")
     + (rest.length
@@ -542,9 +542,8 @@ function catGroup(s) {
 function renderCats() {
   const m = new Map();
   for (const s of stores) { const g = catGroup(s); if (g) m.set(g, (m.get(g) || 0) + 1); }
-  $("catHint").textContent = "";
   $("cats").innerHTML = CAT_GROUPS.filter(([g]) => m.get(g)).map(([g]) => `<button class="chip${cat===g?" on":""}"
-    onclick="window.__cat('${g}')">${esc(g)}<span class="c">${m.get(g)}</span></button>`).join("");
+    onclick="window.__cat('${g}')">${esc(g)}</button>`).join("");
 }
 function renderHist() {
   const buckets = new Array(22).fill(0);
@@ -561,6 +560,24 @@ function renderHist() {
 window.__cre = id => { picked.has(id) ? picked.delete(id) : picked.add(id); selected = null; refresh(true); };
 window.__reg = r => { region = r; selected = null; refresh(true); };   // 아래 기록 배선이 감쌉니다
 window.__cat = c => { cat = cat === c ? null : c; selected = null; refresh(true); };
+/* 업종 줄 — 스크롤 막대 없이 마우스 휠이나 끌어서 옆으로 넘깁니다. 끌다가 손을 뗀 건 누른 걸로 치지 않습니다 */
+(function catScroll() {
+  const el = document.getElementById("cats"); if (!el) return;
+  el.addEventListener("wheel", e => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || el.scrollWidth <= el.clientWidth) return;
+    el.scrollLeft += e.deltaY; e.preventDefault();
+  }, { passive: false });
+  let x0 = 0, left0 = 0, down = false, moved = false;
+  el.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse") return; down = true; moved = false; x0 = e.clientX; left0 = el.scrollLeft; });
+  window.addEventListener("pointermove", e => {
+    if (!down) return;
+    const dx = e.clientX - x0;
+    if (Math.abs(dx) > 4) { moved = true; el.classList.add("dragging"); }
+    if (moved) el.scrollLeft = left0 - dx;
+  });
+  window.addEventListener("pointerup", () => { down = false; el.classList.remove("dragging"); });
+  el.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+})();
 
 function refresh(fit) {
   renderChips(); renderCres(); renderFeed(); renderCats(); renderHist();
@@ -708,6 +725,8 @@ function srcLabel(kind) {
   stores = SEED.stores; creators = SEED.creators; META = SEED.meta;
   CRE = new Map(creators.map(c => [c.id, c]));
   loadFav();
+  /* 시작 화면에서 고른 유튜버(?yt=c1,c2)는 왼쪽 목록에서 골라 둔 채로 엽니다 */
+  for (const id of (new URLSearchParams(location.search).get("yt") || "").split(",")) if (CRE.has(id)) picked.add(id);
   wire(); syncFavBtn(); refresh(false);
   /* 유튜버 고르기는 이제 시작 화면(/)이 맡습니다. 지도에서는 자동으로 띄우지 않고,
      ?pick=1 을 붙였을 때와 왼쪽 "내 유튜버 고르기" 버튼으로만 엽니다. */
