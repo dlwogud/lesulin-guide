@@ -75,11 +75,10 @@ function filteredRaw() {
     recent: (a,b) => (topVid(b)?.at||"").localeCompare(topVid(a)?.at||""),
     name:   (a,b) => a.n.localeCompare(b.n, "ko"),
   }[sort];
-  /* 고른 유튜버가 간 곳을 위로 올립니다. 거르는 게 아니라 순서만 바꿉니다 —
-     3명만 남기면 지도가 비어 버려서 "내가 좋아하는 유튜버는 어디 갔나"와
-     "그 동네에 또 뭐가 있나"를 같이 볼 수 없습니다. */
-  const mine = s => fav.size && s.cs.some(c => fav.has(c)) ? 0 : 1;
-  return out.sort((a, b) => mine(a) - mine(b) || by(a, b));
+  /* 고른 유튜버(내 유튜버) 식당은 거르지도, 위로 올리지도 않습니다(11/23 결정).
+     정렬은 고른 기준 그대로(기본: 점수 높은 순)라 별 3개 식당이 늘 맨 위에 보이고,
+     내 유튜버 식당은 카드의 "내 유튜버" 표시와 지도 핀의 주황 테두리로만 구분합니다. */
+  return out.sort(by);
 }
 
 /* ══ 카카오맵 ══ */
@@ -734,8 +733,9 @@ function srcLabel(kind) {
   stores = SEED.stores; creators = SEED.creators; META = SEED.meta;
   CRE = new Map(creators.map(c => [c.id, c]));
   loadFav();
-  /* 시작 화면에서 고른 유튜버(?yt=c1,c2)는 왼쪽 목록에서 골라 둔 채로 엽니다 */
-  for (const id of (new URLSearchParams(location.search).get("yt") || "").split(",")) if (CRE.has(id) && picked.size < 10) picked.add(id);
+  /* 시작 화면에서 고른 유튜버(?yt=c1,c2)는 거르지 않고 "내 유튜버"로 — 모든 식당을 보여 주되 그 유튜버 식당을 위로 올립니다 */
+  const ytParam = (new URLSearchParams(location.search).get("yt") || "").split(",").filter(id => CRE.has(id)).slice(0, FAV_MAX);
+  if (ytParam.length) fav = new Set(ytParam);
   wire(); syncFavBtn(); refresh(false);
   /* 유튜버 고르기는 이제 시작 화면(/)이 맡습니다. 지도에서는 자동으로 띄우지 않고,
      ?pick=1 을 붙였을 때와 왼쪽 "내 유튜버 고르기" 버튼으로만 엽니다. */
