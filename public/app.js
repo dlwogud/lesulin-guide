@@ -260,12 +260,12 @@ function cardHTML(s, i) {
       ${v && v.dur ? `<span class="durchip">${v.dur}</span>` : ""}
       ${fav.size && s.cs.some(c => fav.has(c)) ? `<span class="favchip">내 유튜버</span>` : ""}
     </span>
-    <span class="rmeta"><h5 class="t1">${esc(s.n)}</h5>
+    <span class="rmeta"><span class="rtitle"><h5 class="t1">${esc(s.n)}</h5>${s.sc != null ? `<b class="rsc">${s.sc}점</b>` : ""}</span>
       <span class="rsub"><span>${esc(shortRegion(s.r))}</span>
       ${s.cat ? `<i class="dot"></i><span>${esc(s.cat)}</span>` : ""}
       ${v ? `<i class="dot"></i><span>${views(v.vw)}</span>` : ""}
       <i class="dot"></i>
-      ${s.sc != null ? `<span class="sc">${s.sc}점</span><i class="dot"></i>` : ""}${rated(s) ? `<span class="ev">반응 ${s.cUsed}</span>${s.negN ? `<i class="dot"></i><span class="ng">쓴소리 ${s.negN}</span>` : ""}${s.waitN >= 3 ? `<i class="dot"></i><span class="wt">줄 ${s.waitN}</span>` : ""}`
+      ${rated(s) ? `<span class="ev">반응 ${s.cUsed}</span>${s.negN ? `<i class="dot"></i><span class="ng">쓴소리 ${s.negN}</span>` : ""}${s.waitN >= 3 ? `<i class="dot"></i><span class="wt">줄 ${s.waitN}</span>` : ""}`
                  : `<span>방문댓글 ${s.cVisit}</span>`}
     </span></span></button>`;
 }

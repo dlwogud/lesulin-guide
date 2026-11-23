@@ -435,6 +435,10 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
 .rk{position:absolute;right:9px;top:9px;width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,.93);
   color:#15161A;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:600}
 .rmeta h5{margin:0;font-size:14px;font-weight:650}
+/* 식당 이름 줄 오른쪽 끝에 100점 점수 */
+.rtitle{display:flex;align-items:baseline;gap:8px}
+.rtitle h5{flex:1;min-width:0}
+.rsc{flex:none;font-size:14px;font-weight:800;color:var(--coral-ink);font-variant-numeric:tabular-nums}
 .rsub{font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:7px;margin-top:3px;flex-wrap:wrap}
 .dot{width:3px;height:3px;border-radius:50%;background:var(--line);flex:none}
 .rsub .ev{color:var(--teal-ink);font-weight:600}
@@ -459,7 +463,6 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
 .bdg{padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600}
 .bdg.c{background:var(--coral-soft);color:var(--coral-ink);display:inline-flex;align-items:center;gap:4px}
 .bdg.s{background:var(--ink);color:#fff;font-weight:700}
-.rsub .sc{color:var(--ink);font-weight:700}
 .bdg.t{background:var(--teal-soft);color:var(--teal-ink)}
 .bdg.n{background:var(--sub2);color:var(--muted);font-weight:500}
 .bdg.w{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-ln)}
@@ -649,5 +652,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=score1"></script>
+<script src="app.js?v=score2"></script>
 </body></html>
