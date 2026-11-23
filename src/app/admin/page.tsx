@@ -48,7 +48,7 @@ export default async function Dashboard() {
              (SELECT count(*) FROM comment_analysis
                 WHERE is_visit)::int                      AS visits,
              (SELECT count(*) FROM store_stats
-                WHERE guide_level IS NOT NULL)::int       AS badged,
+                WHERE COALESCE(level_override, score_level) > 0)::int AS badged,
              (SELECT count(*) FROM polls
                 WHERE day = (now() AT TIME ZONE 'Asia/Seoul')::date)::int AS polls,
              (SELECT count(*) FROM feedback WHERE NOT handled)::int AS fb`),

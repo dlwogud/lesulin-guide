@@ -5,7 +5,7 @@ export type StoreRow = {
   category: string | null; lat: number; lng: number; coord_source: string | null;
   hidden: boolean; hide_note: string | null;
   comments_used: number | null; visits: number | null;
-  guide_level: number | null; level_override: number | null;
+  guide_level: number | null; score: number | null; level_override: number | null;
   videos: number; creators: string | null; updated_at: string;
 };
 
@@ -17,12 +17,12 @@ export async function listStores(opts: {
   if (opts.q) { p.push(`%${opts.q}%`); w.push(`(s.name ILIKE $${p.length} OR s.address ILIKE $${p.length})`); }
   if (opts.region) { p.push(opts.region); w.push(`s.region = $${p.length}`); }
   if (opts.onlyHidden) w.push("s.hidden");
-  if (opts.onlyBadged) w.push("COALESCE(st.level_override, st.guide_level) IS NOT NULL");
+  if (opts.onlyBadged) w.push("COALESCE(st.level_override, st.score_level) > 0");
   const where = w.length ? "WHERE " + w.join(" AND ") : "";
   return q<StoreRow>(`
     SELECT s.id, s.name, s.address, s.region, s.category, s.lat, s.lng, s.coord_source,
            s.hidden, s.hide_note, s.updated_at,
-           st.comments_used, st.visits, st.guide_level, st.level_override,
+           st.comments_used, st.visits, st.score_level AS guide_level, st.score, st.level_override,
            (SELECT count(*)::int FROM store_videos sv WHERE sv.store_id = s.id) AS videos,
            (SELECT string_agg(DISTINCT c.short_name, ' · ')
               FROM store_videos sv JOIN videos v ON v.id = sv.video_id

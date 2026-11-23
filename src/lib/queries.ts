@@ -22,7 +22,7 @@ export async function storesInBounds(b?: [number, number, number, number], limit
   return q(`
     SELECT s.id, s.name, s.region, s.address, s.category, s.lat, s.lng, s.coord_source,
            st.comments_all, st.comments_used, st.visits, st.negatives, st.waits,
-           st.aspects, st.guide_level, st.status,
+           st.aspects, NULLIF(COALESCE(st.level_override, st.score_level), 0) AS guide_level, st.score, st.status,
            COALESCE(json_agg(DISTINCT jsonb_build_object(
              'id', v.id, 'title', v.title, 'at', v.published_at,
              'creator', v.creator_id, 'views', v.views, 'duration', v.duration
@@ -40,7 +40,7 @@ export async function storesInBounds(b?: [number, number, number, number], limit
 export async function storeDetail(id: string) {
   const [s] = await q(`
     SELECT s.*, st.comments_all, st.comments_used, st.visits, st.negatives, st.waits,
-           st.aspects, st.quotes, st.guide_level, st.status
+           st.aspects, st.quotes, NULLIF(COALESCE(st.level_override, st.score_level), 0) AS guide_level, st.score, st.status
       FROM stores s LEFT JOIN store_stats st ON st.store_id = s.id
      WHERE s.id = $1`, [id]);
   if (!s) return null;
@@ -81,7 +81,7 @@ export async function adminSummary() {
            (SELECT count(*) FROM store_stats
              WHERE status = 'RATED')                AS rated,
            (SELECT count(*) FROM store_stats
-             WHERE guide_level IS NOT NULL)         AS badged,
+             WHERE COALESCE(level_override, score_level) > 0) AS badged,
            (SELECT count(*) FROM admin_reviews)     AS reviews,
            (SELECT count(*) FROM feedback
              WHERE NOT handled)                     AS feedback_open`);

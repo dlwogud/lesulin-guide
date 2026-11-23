@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 type Store = {
   id: string; name: string; address: string | null; region: string; category: string | null;
   hidden: boolean; hide_note: string | null; comments_used: number | null; visits: number | null;
-  guide_level: number | null; level_override: number | null; videos: number;
+  guide_level: number | null; score: number | null; level_override: number | null; videos: number;
   creators: string | null; coord_source: string | null; updated_at: string;
 };
 type Log = {
@@ -127,7 +127,7 @@ export default function DataManage() {
                 </span>
                 {lv && <span className="text-[9.5px] px-1.5 py-0.5 rounded shrink-0"
                               style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }}>
-                  {"◆".repeat(lv)}{s.level_override ? " 수동" : ""}
+                  {"★".repeat(lv)}{s.level_override ? " 수동" : ""}
                 </span>}
                 {s.hidden && <span className="text-[9.5px] px-1.5 py-0.5 rounded shrink-0"
                                    style={{ background: "#F6E7E4", color: "var(--bad)" }}>가림</span>}
@@ -164,7 +164,7 @@ export default function DataManage() {
                                 level_override: e.target.value === "" ? null : Number(e.target.value) }))}
                               className="block mt-0.5 rounded-lg px-2 py-1.5 text-[12px]"
                               style={{ border: "1px solid var(--line)", background: "var(--surface)" }}>
-                        <option value="">자동 ({s.guide_level ? `${"◆".repeat(s.guide_level)} ${LVL[s.guide_level]}` : "배지 없음"})</option>
+                        <option value="">자동 · 점수 {s.score ?? "없음"} ({s.guide_level ? `${"★".repeat(s.guide_level)} ${LVL[s.guide_level]}` : "배지 없음"})</option>
                         <option value="0">배지 없음으로 고정</option>
                         {[1, 2, 3].map(n => <option key={n} value={n}>{"◆".repeat(n)} {LVL[n]}</option>)}
                       </select>

@@ -16,6 +16,6 @@ export async function siteMeta(): Promise<SiteMeta> {
            (SELECT count(*) FROM store_stats st JOIN stores s ON s.id = st.store_id
              WHERE st.status = 'RATED' AND NOT s.hidden)::int AS rated,
            (SELECT count(*) FROM store_stats st JOIN stores s ON s.id = st.store_id
-             WHERE st.guide_level IS NOT NULL AND NOT s.hidden)::int AS badged`);
+             WHERE COALESCE(st.level_override, st.score_level) > 0 AND NOT s.hidden)::int AS badged`);
   return m;
 }

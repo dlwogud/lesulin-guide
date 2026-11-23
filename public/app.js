@@ -68,6 +68,7 @@ function filteredRaw() {
   });
   const by = {
     ev:     (a,b) => b.cUsed - a.cUsed || b.cVisit - a.cVisit,
+    score:  (a,b) => (b.sc ?? -1) - (a.sc ?? -1) || b.cUsed - a.cUsed,
     neg:    (a,b) => (b.negN ?? -1) - (a.negN ?? -1) || b.cUsed - a.cUsed,
     wait:   (a,b) => (b.waitN ?? -1) - (a.waitN ?? -1) || b.cUsed - a.cUsed,
     views:  (a,b) => (topVid(b)?.vw||0) - (topVid(a)?.vw||0),
@@ -264,7 +265,7 @@ function cardHTML(s, i) {
       ${s.cat ? `<i class="dot"></i><span>${esc(s.cat)}</span>` : ""}
       ${v ? `<i class="dot"></i><span>${views(v.vw)}</span>` : ""}
       <i class="dot"></i>
-      ${rated(s) ? `<span class="ev">반응 ${s.cUsed}</span>${s.negN ? `<i class="dot"></i><span class="ng">쓴소리 ${s.negN}</span>` : ""}${s.waitN >= 3 ? `<i class="dot"></i><span class="wt">줄 ${s.waitN}</span>` : ""}`
+      ${s.sc != null ? `<span class="sc">${s.sc}점</span><i class="dot"></i>` : ""}${rated(s) ? `<span class="ev">반응 ${s.cUsed}</span>${s.negN ? `<i class="dot"></i><span class="ng">쓴소리 ${s.negN}</span>` : ""}${s.waitN >= 3 ? `<i class="dot"></i><span class="wt">줄 ${s.waitN}</span>` : ""}`
                  : `<span>방문댓글 ${s.cVisit}</span>`}
     </span></span></button>`;
 }
@@ -283,6 +284,7 @@ function renderResults() {
     <div class="panel-h"><b>${nfm(listCache.length)}<i>곳</i></b>
       <select id="sort">
         <option value="ev">방문 반응 많은 순</option>
+        <option value="score">점수 높은 순</option>
         <option value="neg">쓴소리 많은 순</option>
         <option value="wait">줄 서는 집 순</option>
         <option value="views">조회수 많은 순</option>
@@ -354,6 +356,7 @@ function renderDetail(s) {
       <div class="det-b">
         <div class="det-title">
           <div class="badges">
+            ${s.sc != null ? `<span class="bdg s">${s.sc}점</span>` : ""}
             ${s.lvl ? `<span class="bdg c"><img class="lvb" src="/img/brand/badge-${s.lvl}.png" alt="">${LVL[s.lvl]}</span>` : ""}
             ${rated(s) ? `<span class="bdg t">방문 반응 ${s.cUsed}</span>` : `<span class="bdg n">근거 부족</span>`}
             ${s.waitN >= 3 ? `<span class="bdg w">줄 서는 집</span>` : ""}

@@ -29,9 +29,10 @@ export async function GET() {
            COALESCE(st.negatives, 0)     AS "negN",
            COALESCE(st.waits, 0)         AS "waitN",
            COALESCE(st.aspects, '[]')    AS aspects,
-           -- 운영자가 손으로 조정한 배지가 있으면 그걸 씁니다.
+           -- 배지는 100점 점수 구간(db/score.sql). 운영자가 손으로 조정한 배지가 있으면 그걸 씁니다.
            -- 0 은 "배지 없음으로 고정"이라 NULL 로 바꿔 내보냅니다.
-           NULLIF(COALESCE(st.level_override, st.guide_level), 0) AS lvl,
+           NULLIF(COALESCE(st.level_override, st.score_level), 0) AS lvl,
+           st.score                      AS sc,
            COALESCE(st.status, 'NEW')    AS status,
            ARRAY(SELECT DISTINCT v.creator_id
                    FROM store_videos sv JOIN videos v ON v.id = sv.video_id

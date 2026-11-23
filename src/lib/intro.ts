@@ -135,7 +135,7 @@ export async function loadIntro(): Promise<Intro> {
          WHERE NOT s.hidden)
       SELECT cand.creator_id, s.id, s.name, s.region, s.category, s.lat, s.lng,
              st.comments_used AS used, st.negatives AS neg, st.waits,
-             NULLIF(COALESCE(st.level_override, st.guide_level), 0) AS lvl,
+             NULLIF(COALESCE(st.level_override, st.score_level), 0) AS lvl,
              rv.id AS v_id, rv.title AS v_title, rv.views AS v_views, rv.duration AS v_dur, rv.at AS v_at
         FROM cand
         JOIN stores s ON s.id = cand.id
