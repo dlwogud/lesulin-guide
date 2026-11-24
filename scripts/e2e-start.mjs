@@ -99,10 +99,13 @@ await scenario("1b. 화면 구성(v4): 주황 테두리 표지 · 지도 버튼 
   ok(await page.locator(".ch").count() === 0, "칸 머리글이 남음");
   ok(await page.locator("#go").count() === 0, "'내 유튜버 맛집 지도 열기'가 남음");
   ok(!(await page.locator(".cover").textContent()).includes("방문 후기 ×"), "'유튜버 × 방문 후기 × 지도'가 남음");
-  /* 상단(로고·숫자·지도 버튼)은 주황 테두리 표지 안에, 리본과 겹치지 않게. 로고·이름은 크게 */
-  ok(await page.locator(".cover nav").count() === 1, "상단이 표지 밖에 있음");
-  const [tm, rb] = [await page.locator("#toMap").boundingBox(), await page.locator(".ribbon").boundingBox()];
-  ok(tm.x + tm.width <= rb.x - 8 || tm.y >= rb.y + rb.height, "지도 버튼이 리본과 겹침");
+  /* 상단(로고·숫자·지도 버튼)은 주황 테두리 표지 바로 위, 좌우는 표지 테두리 안쪽에. 로고·이름은 크게 */
+  ok(await page.locator(".cover nav").count() === 0, "상단이 표지 안에 있음");
+  const [nv, cv, tm, br] = [await page.locator("nav").boundingBox(), await page.locator(".cover").boundingBox(),
+    await page.locator("#toMap").boundingBox(), await page.locator(".brand").boundingBox()];
+  ok(nv.y + nv.height <= cv.y, "상단이 표지 위에 있지 않음");
+  ok(cv.y - (nv.y + nv.height) <= 30, "상단과 표지 사이가 너무 벌어짐");
+  ok(br.x >= cv.x && tm.x + tm.width <= cv.x + cv.width, "상단이 표지 테두리보다 좌우로 삐져나옴");
   ok((await page.locator(".brand .mark").boundingBox()).width >= 50, "로고가 작음");
   ok(parseFloat(await page.$eval(".brand", e => getComputedStyle(e).fontSize)) >= 28, "'르슐랭 가이드' 글자가 작음");
   const [pk, st] = [await page.locator(".picker").boundingBox(), await page.locator("#stage").boundingBox()];

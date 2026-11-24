@@ -793,6 +793,7 @@ function srcLabel(kind) {
 const POLL_MS = 8000;
 const SEEN_KEY = "lesulin.pollSeen";
 let polls = [], preps = new Map(), pollSort = "hot";
+let pollQ = "";                              // 커뮤니티 글 검색어 — 받은 전체 글에서 화면이 거릅니다
 let myLoc = null, seen = { poll: 0, reply: 0 }, pollTimer = null, pollOn = false;
 let pollTarget = null;                       // 가게를 지정해 올릴 때의 식당
 
@@ -885,36 +886,74 @@ function renderHot() {
     <span class="hm">${p.replies ? "답" + p.replies : ""}${p.ups ? " ♥" + p.ups : ""}</span>
   </button>`).join("");
 }
-window.__hot = id => { openPolls(); setTimeout(() => {
+window.__hot = id => { if (pollQ) { pollQ = ""; $("pollQ").value = ""; $("pollQx").hidden = true; } openPolls(); setTimeout(() => {
   const el = document.getElementById("p" + id);
   if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("hot"); }
 }, 60); };
 
+/* ── 글 검색 ─────────────────────────────────────────────────
+   글 본문·지역·가게 이름·답글까지 한 덩어리로 보고, 띄어 쓴 낱말이 모두 들어 있으면 찾습니다
+   (지도 검색과 같은 규칙). 본문에 없는 낱말은 답글 한 줄을 같이 보여 줘서 왜 걸렸는지 알 수 있게 합니다. */
+const pqWords = () => pollQ.trim().toLowerCase().split(/\s+/).filter(Boolean);
+const pollHay = p => [p.body, p.place ? shortRegion(p.place) : "", p.store_name || "",
+  ...(preps.get(+p.id) || []).flatMap(r => [r.body, r.store_name || ""])].join(" ").toLowerCase();
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/* 이스케이프한 뒤에 칠합니다. 낱말도 같은 방식으로 이스케이프해야 "&" 같은 글자가 맞물립니다 */
+function marked(text, words) {
+  const h = esc(text);
+  if (!words.length) return h;
+  /* &lt; 같은 이스케이프 문자는 통째로 건너뛰고, 그 밖에서만 칠합니다 */
+  const re = new RegExp("(&[a-z#0-9]+;)|(" + words.map(w => reEsc(esc(w))).join("|") + ")", "gi");
+  return h.replace(re, (m, ent, hit) => ent ? ent : `<mark>${hit}</mark>`);
+}
+function pollMatch(p, words) {
+  const rs = preps.get(+p.id) || [];
+  const inBody = words.filter(w => p.body.toLowerCase().includes(w));
+  if (inBody.length === words.length) return "";
+  const r = rs.find(r => words.some(w => !inBody.includes(w) && r.body.toLowerCase().includes(w)));
+  return r ? `<p class="pmatch"><b>답글</b>${marked(r.body.length > 80 ? r.body.slice(0, 79) + "…" : r.body, words)}</p>` : "";
+}
+
 /* ── 패널 ───────────────────────────────────────────────── */
+/* 글쓴이 동그라미 색 — 글마다 고정 */
+const AV = ["#F2622A", "#3B82C4", "#2DA06B", "#8B5CF6", "#D9480F", "#0E9AA7", "#C2410C", "#6366F1"];
+const avColor = id => AV[Math.abs(+id || 0) % AV.length];
 function renderPolls() {
   const el = $("pollBody"); if (!el) return;
+  const sub = $("pollSub");
+  if (sub) { let n = 0; for (const v of preps.values()) n += v.length; sub.innerHTML = `<i></i>글 ${polls.length}개 · 답글 ${n}개`; }
   if (!polls.length) {
     el.innerHTML = `<p class="hotempty">아직 올라온 글이 없습니다.</p>`;
     return;
   }
-  el.innerHTML = polls.map((p, i) => {
+  const words = pqWords();
+  const shown = words.length ? polls.filter(p => { const h = pollHay(p); return words.every(w => h.includes(w)); }) : polls;
+  if (!shown.length) {
+    el.innerHTML = `<p class="hotempty">검색 결과가 없습니다.</p>`;
+    renderThread();
+    return;
+  }
+  el.innerHTML = shown.map((p, i) => {
     const rs = preps.get(+p.id) || [];
     const isNew = +p.id > seen.poll && !p.mine;
+    const nm = p.mine ? "내 글" : (p.nickname || "익명");
     return `<article class="pitem${isNew ? " hot" : ""}${+p.id === threadId ? " sel" : ""}" id="p${p.id}" data-id="${p.id}" tabindex="0">
       <div class="ph">
-        <span class="au">${p.mine ? "내 글" : esc(p.nickname || "익명")}</span><span>·</span><span>${ago(p.created_at)}${p.edited_at ? " · 수정됨" : ""}</span>
+        <span class="av" style="background:${p.mine ? "var(--coral)" : avColor(p.id)}" aria-hidden="true">${p.mine ? "나" : esc([...nm][0])}</span>
+        <span class="au">${esc(nm)}</span><span>·</span><span>${ago(p.created_at)}${p.edited_at ? " · 수정됨" : ""}</span>
+        ${isNew ? `<span class="nw">NEW</span>` : ""}
         ${p.store_name ? `<span class="st">📍 ${esc(p.store_name)}</span>`
-          : p.place ? `<span>· ${esc(shortRegion(p.place))}</span>` : ""}
+          : p.place ? `<span class="pl">· ${esc(shortRegion(p.place))}</span>` : ""}
         ${p.mine ? ownBtns("poll", p.id) : ""}
       </div>
-      ${isEdit("poll", p.id) ? editBox() : `<p class="pt">${esc(p.body)}</p>`}
+      ${isEdit("poll", p.id) ? editBox() : `<p class="pt">${marked(p.body, words)}</p>${words.length ? pollMatch(p, words) : ""}`}
       ${isDel("poll", p.id) ? delBar("글과 답글이 모두 지워집니다.") : ""}
       <div class="pf">
         <button class="vbtn${p.my_vote === 1 ? " on" : ""}"
           onclick="window.__vote(${p.id},1,'poll')">👍 ${p.ups}</button>
         <button class="vbtn dn${p.my_vote === -1 ? " on" : ""}"
           onclick="window.__vote(${p.id},-1,'poll')">👎 ${p.downs}</button>
-        <button class="rbtn" onclick="window.__thread(${p.id})">답글 ${rs.length || ""}</button>
+        <button class="rbtn" onclick="window.__thread(${p.id})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-11.2 6.5L4 19.5l1.5-4.6A7.5 7.5 0 1 1 20 11.5Z"/></svg>답글${rs.length ? ` <b>${rs.length}</b>` : ""}</button>
       </div>
     </article>`;
   }).join("");
@@ -1160,9 +1199,36 @@ window.__loctoggle = () => {
   else locFromGPS();
 };
 
+/* ── 커뮤니티 동그라미 → 창 ─────────────────────────────────
+   창은 동그라미가 있는 쪽 모서리에 붙여 열고(placePoll), 동그라미 크기의 원에서
+   창 전체로 커지며 펼쳐집니다(popPoll). 닫을 때는 거꾸로 동그라미로 줄어듭니다. */
+let pollAnim = null;
+const calmMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+function placePoll() {
+  const w = $("pollWrap"), b = $("bell"); if (!w || !b) return;
+  const vw = innerWidth, vh = innerHeight, M = 12;
+  const W = Math.min(384, vw - M * 2), H = Math.min(680, vh - M * 2);
+  const r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let left = cx > vw / 2 ? r.right - W : r.left, top = cy < vh / 2 ? r.top : r.bottom - H;
+  left = Math.max(M, Math.min(vw - W - M, left)); top = Math.max(M, Math.min(vh - H - M, top));
+  Object.assign(w.style, { left: left + "px", top: top + "px", width: W + "px", height: H + "px" });
+}
+function popPoll(open, done) {
+  const w = $("pollWrap"), b = $("bell");
+  if (pollAnim) { pollAnim.cancel(); pollAnim = null; }
+  if (!w || !b || calmMotion() || !w.animate) { done && done(); return; }
+  const r = b.getBoundingClientRect(), wr = w.getBoundingClientRect();
+  const ox = r.left + r.width / 2 - wr.left, oy = r.top + r.height / 2 - wr.top;
+  const far = Math.max(...[[0, 0], [wr.width, 0], [0, wr.height], [wr.width, wr.height]].map(([x, y]) => Math.hypot(x - ox, y - oy)));
+  const a = `circle(${r.width / 2}px at ${ox}px ${oy}px)`, z = `circle(${Math.ceil(far)}px at ${ox}px ${oy}px)`;
+  pollAnim = w.animate({ clipPath: open ? [a, z] : [z, a], opacity: open ? [.6, 1] : [1, .4] },
+    { duration: open ? 360 : 260, easing: open ? "cubic-bezier(.2,.85,.25,1)" : "cubic-bezier(.5,0,.75,.3)" });
+  pollAnim.onfinish = () => { pollAnim = null; done && done(); };
+}
 function openPolls() {
   if (!$("pollWrap")) return;
-  pollOn = true; $("pollWrap").hidden = false;
+  pollOn = true;
+  placePoll(); $("pollWrap").hidden = false; popPoll(true);
   document.body.classList.add("pollopen");
   $("bell")?.classList.add("open");
   locFromMap();                              // 먼저 지도 중심으로 채워 두고
@@ -1177,9 +1243,53 @@ function showForm(on) {
 }
 function closePolls() {
   pollOn = false;
-  if ($("pollWrap")) $("pollWrap").hidden = true;
   document.body.classList.remove("pollopen");
+  popPoll(false, () => { if (!pollOn && $("pollWrap")) $("pollWrap").hidden = true; });
   $("bell")?.classList.remove("open");
+}
+
+/* 동그라미 끌어 옮기기 — 지도 안에서만. 자리는 지도 폭·높이에 대한 비율로 기억해
+   창 크기나 양옆 바 폭이 바뀌어도 같은 쪽에 남습니다. 5px 넘게 움직이면 누른 걸로 치지 않습니다. */
+const BELL_KEY = "lesulin.bellPos", BELL_M = 12;
+let bellPos = null, bellDragged = false;
+function applyBell() {
+  const b = $("bell"), box = b && b.parentElement; if (!b || !box || !bellPos) return;
+  const aw = box.clientWidth - b.offsetWidth - BELL_M * 2, ah = box.clientHeight - b.offsetHeight - BELL_M * 2;
+  Object.assign(b.style, { left: BELL_M + Math.max(0, aw) * bellPos.x + "px", top: BELL_M + Math.max(0, ah) * bellPos.y + "px", right: "auto" });
+}
+function wireBellDrag() {
+  const b = $("bell"), box = b && b.parentElement; if (!b || !box) return;
+  try { const v = JSON.parse(localStorage.getItem(BELL_KEY) || "null"); if (v && v.x >= 0 && v.x <= 1 && v.y >= 0 && v.y <= 1) bellPos = v; } catch {}
+  applyBell();
+  if (window.ResizeObserver) new ResizeObserver(() => { applyBell(); if (pollOn) placePoll(); }).observe(box);
+  addEventListener("resize", () => { if (pollOn) placePoll(); });
+  let st = null;
+  b.addEventListener("pointerdown", e => {
+    if (e.button !== 0) return;
+    st = { x: e.clientX, y: e.clientY, l: b.offsetLeft, t: b.offsetTop, on: false };
+    b.setPointerCapture(e.pointerId);
+  });
+  b.addEventListener("pointermove", e => {
+    if (!st) return;
+    const dx = e.clientX - st.x, dy = e.clientY - st.y;
+    if (!st.on && Math.hypot(dx, dy) < 5) return;
+    st.on = true; b.classList.add("drag");
+    const aw = box.clientWidth - b.offsetWidth - BELL_M * 2, ah = box.clientHeight - b.offsetHeight - BELL_M * 2;
+    const l = Math.max(BELL_M, Math.min(BELL_M + aw, st.l + dx)), t = Math.max(BELL_M, Math.min(BELL_M + ah, st.t + dy));
+    bellPos = { x: aw > 0 ? (l - BELL_M) / aw : 1, y: ah > 0 ? (t - BELL_M) / ah : 0 };
+    Object.assign(b.style, { left: l + "px", top: t + "px", right: "auto" });
+  });
+  const end = () => {
+    if (!st) return;
+    if (st.on) {
+      bellDragged = true; setTimeout(() => { bellDragged = false; }, 0);
+      b.classList.remove("drag");
+      try { localStorage.setItem(BELL_KEY, JSON.stringify(bellPos)); } catch {}
+    }
+    st = null;
+  };
+  b.addEventListener("pointerup", end);
+  b.addEventListener("pointercancel", end);
 }
 
 function wirePolls() {
@@ -1188,11 +1298,15 @@ function wirePolls() {
     const v = JSON.parse(localStorage.getItem(SEEN_KEY) || "null");
     if (v && typeof v.poll === "number") seen = v;
   } catch {}
-  $("bell").onclick = () => (pollOn ? closePolls() : openPolls());
+  $("bell").onclick = () => { if (!bellDragged) (pollOn ? closePolls() : openPolls()); };
+  wireBellDrag();
   $("pollX").onclick = closePolls;
   $("tabHot").onclick = () => setSort("hot");
   $("tabNew").onclick = () => setSort("new");
   $("pollText").oninput = syncForm;
+  const setPq = v => { pollQ = v; $("pollQ").value = v; $("pollQx").hidden = !v; renderPolls(); };
+  $("pollQ").oninput = e => setPq(e.target.value);
+  $("pollQx").onclick = () => { setPq(""); $("pollQ").focus(); };
   $("pollText").onkeydown = e => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") sendPoll();
   };
@@ -1214,6 +1328,7 @@ function wirePolls() {
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape" || !pollOn) return;
     if (pedit || pdel) window.__pcancel();
+    else if (pollQ && document.activeElement === $("pollQ")) { $("pollQx").click(); }
     else if (threadId != null) openThread(threadId);        // 채팅 먼저 닫고
     else if (!$("pollForm").hidden) showForm(false);   // 글쓰기 칸, 그다음 창
     else closePolls();

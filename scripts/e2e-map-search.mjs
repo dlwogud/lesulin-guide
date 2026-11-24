@@ -315,6 +315,94 @@ await scenario("17 '내 유튜버 변경하기' 버튼이 있고, 왼쪽 바 내
   ok(await page.locator("#favWrap").isVisible(), "누르면 유튜버 고르기 창이 안 열림");
 });
 
+/* 18: 커뮤니티 글 검색 — 본문·지역·답글에서 찾고, 찾은 낱말을 칠하며, Esc 로 지운다 */
+await scenario("18 커뮤니티 검색: 본문·지역·답글로 찾고, 여러 낱말은 모두 포함, 결과 없음 안내, Esc 로 지움, 특수문자 글이 깨지지 않음", async page => {
+  const now = new Date().toISOString();
+  const P = (id, body, place, heat) => ({ id, body, nickname: "익명", place, created_at: now, edited_at: null,
+    ups: 0, downs: 0, replies: 0, heat, my_vote: 0, mine: false });
+  const DATA = { polls: [
+      P(31, "성수 근처 혼밥 추천해주세요", "서울특별시 성동구", 3),
+      P(30, "여수 국밥 어디가 맛있나요", "전라남도 여수시", 2),
+      P(29, "대일분식 웨이팅 평균시간", null, 1),
+      P(28, "a<b>t</b> & 특수문자 글", null, 0)],
+    replies: [{ id: 91, poll_id: 30, body: "나진국밥 가보세요 수육 최고", store_name: null, nickname: "익명",
+                created_at: now, edited_at: null, ups: 0, my_vote: 0, mine: false }],
+    head: { poll: 31, reply: 91 } };
+  await page.route("**/api/polls?**", r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(DATA) }));
+  await page.evaluate(() => pullPolls(false));
+  await page.click("#bell"); await page.locator("#p31").waitFor({ timeout: 10000 });
+  const ids = () => page.$$eval(".pitem", els => els.map(e => e.id).join(","));
+  const q = async t => { await page.fill("#pollQ", t); await page.waitForTimeout(150); };
+
+  await q("혼밥");
+  ok(await ids() === "p31", `'혼밥' 결과가 p31 하나가 아님: ${await ids()}`);
+  ok(await page.locator("#p31 .pt mark").textContent() === "혼밥", "본문에서 찾은 낱말이 칠해지지 않음");
+  await q("성동");
+  ok(await ids() === "p31", `지역 '성동'으로 못 찾음: ${await ids()}`);
+  await q("나진");
+  ok(await ids() === "p30", `답글 '나진'으로 못 찾음: ${await ids()}`);
+  ok((await page.locator("#p30 .pmatch").textContent()).includes("나진국밥"), "답글에서만 걸린 글에 답글 줄이 안 보임");
+  await q("여수 수육");
+  ok(await ids() === "p30", `본문+답글에 나뉜 두 낱말로 못 찾음: ${await ids()}`);
+  await q("여수 혼밥");
+  ok((await page.locator(".pitem").count()) === 0 && (await page.locator("#pollBody").textContent()).includes("검색 결과가 없습니다"),
+     "모든 낱말을 담은 글이 없는데 결과가 나오거나 안내가 없음");
+  await q("t");
+  ok(await ids() === "p28", `'t' 결과가 p28 하나가 아님: ${await ids()}`);
+  ok(await page.locator("#p28 .pt").textContent() === "a<b>t</b> & 특수문자 글", "특수문자 글이 깨져 보임");
+  ok(await page.locator("#p28 .pt b").count() === 0, "글 안의 태그가 실제 HTML 로 들어감");
+  await page.focus("#pollQ"); await page.keyboard.press("Escape"); await page.waitForTimeout(150);
+  ok(await page.inputValue("#pollQ") === "" && (await page.locator(".pitem").count()) === 4, "Esc 로 검색이 지워지지 않음");
+  ok(await page.locator("#pollWrap").isVisible(), "검색을 지우는 Esc 에 커뮤니티 창까지 닫힘");
+  await q("대일");
+  ok(await page.locator("#pollQx").isVisible(), "검색어가 있는데 지우기(×) 버튼이 안 보임");
+  await page.click("#pollQx"); await page.waitForTimeout(150);
+  ok(await page.inputValue("#pollQ") === "" && (await page.locator(".pitem").count()) === 4 && await page.locator("#pollQx").isHidden(), "× 로 검색이 지워지지 않음");
+  await q("대일"); await page.evaluate(() => window.__hot(31)); await page.waitForTimeout(200);
+  ok(await page.inputValue("#pollQ") === "" && (await page.locator("#p31").count()) === 1, "왼쪽 인기글을 눌렀는데 검색에 가려 그 글이 안 보임");
+});
+
+/* 19: 커뮤니티 동그라미 — 사람 두 명 아이콘 + '커뮤니티', 끌어 옮기면 열리지 않고 자리를 기억, 누르면 그 자리에서 커지며 창이 열림 */
+await scenario("19 커뮤니티 동그라미: 사람 아이콘·글자, 끌어 옮김(열리지 않음·지도 밖으로 안 나감·새로고침 뒤 유지), 누르면 동그라미 쪽에 창이 펼쳐짐", async page => {
+  const bell = page.locator("#bell");
+  ok((await bell.textContent()).trim() === "커뮤니티", "동그라미 글자가 '커뮤니티'가 아님");
+  ok(await page.locator("#bell svg circle").count() === 2, "사람 두 명 아이콘이 아님");
+  const map = await page.locator(".mapwrap").boundingBox();
+  let b = await bell.boundingBox();
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down();
+  await page.mouse.move(map.x - 300, map.y + map.height + 300, { steps: 15 }); await page.mouse.up();
+  await page.waitForTimeout(400);
+  ok(await page.locator("#pollWrap").isHidden(), "끌기만 했는데 창이 열림");
+  b = await bell.boundingBox();
+  ok(b.x >= map.x && b.y >= map.y && b.x + b.width <= map.x + map.width + 1 && b.y + b.height <= map.y + map.height + 1, "동그라미가 지도 밖으로 나감");
+  ok(b.x < map.x + 40 && b.y + b.height > map.y + map.height - 40, `왼쪽 아래 끝으로 안 감: ${JSON.stringify(b)}`);
+  await page.reload({ waitUntil: "load" }); await page.waitForTimeout(1500);
+  const b2 = await bell.boundingBox();
+  ok(Math.abs(b2.x - b.x) < 3 && Math.abs(b2.y - b.y) < 3, "새로고침하니 동그라미 자리가 돌아감");
+  await bell.click();
+  await page.waitForTimeout(80);
+  const clip = await page.$eval("#pollWrap", e => getComputedStyle(e).clipPath);
+  ok(clip.startsWith("circle"), `동그라미에서 커지며 열리지 않음(clip-path: ${clip})`);
+  await page.waitForTimeout(600);
+  const w = await page.locator("#pollWrap").boundingBox();
+  ok(await page.locator("#pollWrap").isVisible(), "눌렀는데 창이 안 열림");
+  ok(Math.abs(w.x - b2.x) < 16 && Math.abs(w.y + w.height - (b2.y + b2.height)) < 16, `창이 동그라미 자리(왼쪽 아래)에서 안 열림: ${JSON.stringify(w)}`);
+  ok(await page.$eval("#bell", e => getComputedStyle(e).opacity) === "0", "창이 열렸는데 동그라미가 그대로 보임");
+  await page.click("#pollX"); await page.waitForTimeout(500);
+  ok(await page.locator("#pollWrap").isHidden() && await page.$eval("#bell", e => getComputedStyle(e).opacity) === "1", "닫은 뒤 동그라미로 돌아오지 않음");
+});
+
+/* 20: 커뮤니티 창 머리 — 아이콘·제목·글 수, 검색 → 탭 순서 */
+await scenario("20 커뮤니티 창: 머리에 사람 아이콘·글/답글 수, 검색창이 탭 위, 글마다 글쓴이 동그라미·답글 버튼", async page => {
+  await page.click("#bell"); await page.locator(".pitem").first().waitFor({ timeout: 10000 });
+  ok(await page.locator(".pollwrap .pc-ic svg").count() === 1, "창 머리에 커뮤니티 아이콘이 없음");
+  ok(/글 \d+개 · 답글 \d+개/.test(await page.textContent("#pollSub")), "글·답글 수가 없음");
+  const [sq, tb] = [await page.locator(".psrch").boundingBox(), await page.locator(".ptabs").boundingBox()];
+  ok(sq.y < tb.y, "검색창이 탭 아래에 있음");
+  ok(await page.locator(".pitem .av").count() === await page.locator(".pitem").count(), "글쓴이 동그라미가 빠진 글이 있음");
+  ok((await page.locator(".pitem .rbtn").first().textContent()).includes("답글"), "답글 버튼이 없음");
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");
