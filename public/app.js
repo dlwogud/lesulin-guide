@@ -369,7 +369,9 @@ function renderDetail(s) {
             ${s.waitN >= 3 ? `<span class="bdg w">줄 서는 집</span>` : ""}
             ${s.cat ? `<span class="bdg n">${esc(catText(s.cat))}</span>` : ""}
           </div>
-          <h3>${esc(s.n)}</h3><p class="addr">${esc(s.addr || shortRegion(s.r))}</p>
+          <div class="det-nm"><h3>${esc(s.n)}</h3>
+            <button class="rep" onclick="window.__report('${s.id}')" title="정보가 틀렸어요" aria-label="정보가 틀렸어요 — 신고"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 21V3.8"/><path d="M5.5 4.6c2.1-1.4 4.3-1.4 6.5 0s4.4 1.4 6.5 0v9.2c-2.1 1.4-4.3 1.4-6.5 0s-4.4-1.4-6.5 0"/></svg></button></div>
+          <p class="addr">${esc(s.addr || shortRegion(s.r))}</p>
         </div>
         ${aiBlk}
         <div class="blk"><p class="blk-t">소개한 영상 ${s.vids.length}편</p>${vids}</div>
@@ -522,7 +524,7 @@ function renderCres() {
         : (creOpen && creators.length > CRE_SHOWN
             ? `<button class="ytmore" onclick="window.__creMore()" aria-expanded="true">접기</button>`
             : ""));
-  $("creHint").textContent = picked.size ? `${picked.size}개 선택` : "";
+  if ($("creHint")) $("creHint").textContent = picked.size ? `${picked.size}개 선택` : "";   // 표시 칸은 없앴습니다
 }
 function renderFeed() {
   const vs = [];

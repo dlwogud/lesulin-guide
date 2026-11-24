@@ -42,11 +42,12 @@ img{display:block;max-width:100%}
 
 #app{display:flex;flex-direction:column;height:100dvh;background:var(--paper)}
 /* 상단 좌·우 칸의 경계선이 아래 패널과 맞아떨어지게 폭을 고정합니다 */
-.topleft{flex:none;height:62px;display:flex;align-items:stretch;justify-content:center;border-bottom:1px solid var(--line)}
+.topleft{flex:none;height:62px;display:flex;align-items:stretch;justify-content:flex-start;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:9px;padding:0 16px;flex:none;text-decoration:none;color:inherit}
 /* 시작 화면과 같은 로고 — 오렌지 사각 + 흰 마름모 */
-.brand .mark{width:28px;height:28px;border-radius:8px;flex:none;display:block}
-.brand b{font-size:15px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+/* 로고·이름이 머리 칸(62px)을 꽉 채우게 */
+.brand .mark{width:44px;height:44px;flex:none;display:block}
+.brand b{font-size:21px;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
 .srch{flex:1;display:flex;align-items:center;gap:11px;padding:0 18px;position:relative;min-width:0}
 .srch svg{flex:none;color:var(--muted)}
 .srch input{flex:1;min-width:0;border:0;background:none;outline:none;color:var(--ink);font-size:17px;font-weight:600}
@@ -74,15 +75,12 @@ img{display:block;max-width:100%}
 .sect-t b{font-size:12.5px;font-weight:650}
 .sect-t span{font-family:var(--mono);font-size:10px;color:var(--muted)}
 
-/* 지역 — 유튜버 위에 한 줄, 가로 스크롤 */
-  color:var(--ink2);white-space:nowrap;transition:background .12s}
-  border:1px solid var(--line);border-radius:0 0 14px 14px;box-shadow:var(--sh3);overflow:hidden;
-  display:flex;flex-direction:column;max-height:min(62vh,520px)}
+/* 조건 버튼 두 개 — 같은 폭으로 줄을 채우고 글자는 가운데. 켜짐 점은 글자 가운데를 밀지 않게 오른쪽에 띄움 */
 .frow.togrow{display:flex;gap:7px;flex-direction:row}
-.tog{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:34px;border-radius:10px;
+.tog{flex:1 1 0;min-width:0;position:relative;padding:0 18px;display:flex;align-items:center;justify-content:center;gap:7px;height:34px;border-radius:10px;
   border:1px solid var(--line);font-size:11.5px;font-weight:500;color:var(--ink2);background:var(--paper);
   transition:all .12s;white-space:nowrap}
-.tog i{width:7px;height:7px;border-radius:50%;background:var(--line);flex:none;transition:background .12s}
+.tog i{position:absolute;right:10px;top:50%;margin-top:-3.5px;width:7px;height:7px;border-radius:50%;background:var(--line);transition:background .12s}
 .tog:hover{border-color:var(--muted)}
 .tog[aria-pressed=true]{background:var(--coral-soft);border-color:var(--coral);color:var(--coral-ink);font-weight:600}
 .tog[aria-pressed=true] i{background:var(--coral)}
@@ -475,6 +473,12 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
 .det-dur{position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,.78);color:#fff;border-radius:5px;padding:2px 6px;font-family:var(--mono);font-size:10px}
 .det-b{flex:1;min-height:0;overflow-y:auto;padding:15px 18px 18px;display:flex;flex-direction:column;gap:15px}
 .det-title h3{margin:0 0 5px;font-size:19px;font-weight:700;letter-spacing:-.022em}
+/* 식당 이름 줄 오른쪽 끝 — 정보가 틀렸으면 알려 주는 빨간 깃발(관리자 화면 '오류 신고'로 들어감) */
+.det-nm{display:flex;align-items:center;gap:10px}
+.det-nm h3{flex:1;min-width:0}
+.det-nm .rep{flex:none;margin:0 -6px 5px auto;width:32px;height:32px;display:grid;place-items:center;
+  color:#E5484D;background:none;transition:transform .12s,color .12s}
+.det-nm .rep:hover{transform:scale(1.12);color:#C52A30}
 .det-title .addr{font-size:11.5px;color:var(--muted);line-height:1.5}
 .badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
 .bdg{padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:600}
@@ -540,8 +544,7 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
       </div>
       <div class="sgrp">
       <p class="sect-t"><b>유튜버</b>
-          <span class="favbtns"><button class="favedit" id="favEdit">내 유튜버 고르기</button><button class="favedit favoff" id="favClear" hidden>해제</button></span>
-          <span id="creHint"></span></p>
+          </p>
         <div class="ytlist" id="cres"></div>
       </div>
       <div class="sgrp">
@@ -566,7 +569,7 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
         </div>
         <div class="frow togrow">
           <button class="tog" id="onlyWait" aria-pressed="false">줄 서는 집<i></i></button>
-          <button class="tog" id="onlyRated" aria-pressed="false">반응 있는 곳<i></i></button>
+          <button class="tog" id="onlyRated" aria-pressed="false">반응이 있는 곳<i></i></button>
         </div>
       </div>
       </aside>
@@ -668,5 +671,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=thumb2"></script>
+<script src="app.js?v=ui3"></script>
 </body></html>

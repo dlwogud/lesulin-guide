@@ -260,6 +260,47 @@ await scenario("13 로컬 썸네일이 없으면 유튜브 썸네일로 대신 �
   ok(/i\.ytimg\.com\/vi\/.+\/(maxres|sd|hq|mq)default\.jpg/.test(src), `대체 썸네일로 안 바뀜: ${src}`);
 });
 
+await scenario("14 식당 이름 오른쪽 끝에 빨간 신고 아이콘 — 누르면 신고 창", async page => {
+  const s = STORES[0];
+  await page.evaluate(id => window.__sel(id), s.id);
+  await page.waitForSelector(".det-nm .rep", { timeout: 10000 });
+  const [nm, rep, hero] = [await page.locator(".det-nm h3").boundingBox(), await page.locator(".det-nm .rep").boundingBox(), await page.locator(".det-hero").boundingBox()];
+  ok(rep.x + rep.width >= hero.x + hero.width - 40, "신고 아이콘이 오른쪽 끝에 있지 않음");
+  ok(Math.abs((rep.y + rep.height / 2) - (nm.y + nm.height / 2)) < 12, "신고 아이콘이 식당 이름 줄에 있지 않음");
+  const look = await page.$eval(".det-nm .rep", b => { const sv = b.querySelector("svg"), c = getComputedStyle(b);
+    return { svg: !!sv, stroke: sv && getComputedStyle(sv).color, fill: sv && sv.getAttribute("fill"), bg: c.backgroundColor, text: b.textContent.trim() }; });
+  ok(look.svg && look.fill === "none" && !look.text, "선(line) 모양 깃발 그림이 아님");
+  ok(/^rgb\((2[0-5]\d|1[89]\d), \d{1,2}, \d{1,2}\)/.test(look.stroke), `깃발 색이 빨강이 아님: ${look.stroke}`);
+  ok(look.bg === "rgba(0, 0, 0, 0)", `동그란 배경이 남음: ${look.bg}`);
+  await page.click(".det-nm .rep");
+  ok(await page.locator("#fbWrap").isVisible(), "신고 창이 안 열림");
+  ok((await page.textContent("#fbStore")).includes(s.n), "신고 창에 식당 이름이 없음");
+});
+
+await scenario("15 조건의 두 버튼은 가로 한 줄·같은 폭으로 줄을 채움·글자 가운데 · '반응이 있는 곳'", async page => {
+  const [a, b, row] = [await page.locator("#onlyWait").boundingBox(), await page.locator("#onlyRated").boundingBox(), await page.locator(".togrow").boundingBox()];
+  ok(Math.abs(a.y - b.y) < 2, `세로로 쌓임 (${a.y} / ${b.y})`);
+  ok(Math.abs(a.width - b.width) < 2, `두 버튼 폭이 다름 (${a.width} / ${b.width})`);
+  ok(Math.abs(a.x - row.x) < 2 && Math.abs(b.x + b.width - (row.x + row.width)) < 2, "줄 오른쪽에 빈 자리가 남음");
+  for (const id of ["#onlyWait", "#onlyRated"]) {
+    const off = await page.$eval(id, e => { const r = document.createRange(); r.selectNodeContents(e.firstChild);
+      const t = r.getBoundingClientRect(), c = e.getBoundingClientRect(); return Math.abs((t.left + t.right) / 2 - (c.left + c.right) / 2); });
+    ok(off <= 3, `${id} 글자가 가운데에서 ${off.toFixed(1)}px 벗어남`);
+  }
+  ok(a.height >= 30, `버튼 높이 ${a.height}`);
+  ok((await page.textContent("#onlyRated")).trim() === "반응이 있는 곳", `문구: ${await page.textContent("#onlyRated")}`);
+});
+
+await scenario("16 로고·이름이 머리 칸을 채우고, '내 유튜버 고르기'·'N개 선택'은 없음", async page => {
+  ok((await page.locator(".brand .mark").boundingBox()).width >= 40, "로고가 작음");
+  const mk = await page.locator(".brand .mark").boundingBox(), side = await page.locator(".topleft").boundingBox();
+  ok(mk.x - side.x <= 20, `로고가 왼쪽으로 붙지 않음 (왼쪽에서 ${Math.round(mk.x - side.x)}px)`);
+  ok(parseFloat(await page.$eval(".brand b", e => getComputedStyle(e).fontSize)) >= 20, "이름 글자가 작음");
+  ok(await page.locator("#favEdit, #creHint").count() === 0, "'내 유튜버 고르기'나 'N개 선택'이 남음");
+  await page.locator("#cres button").first().click();
+  ok(!/\d+개 선택/.test(await page.textContent(".side")), "유튜버를 고르면 'N개 선택'이 뜸");
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");
