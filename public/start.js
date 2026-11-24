@@ -122,8 +122,7 @@
       const img = document.createElement("img");
       img.src = `img/ch/${encodeURIComponent(c.id)}.jpg`; img.alt = ""; img.loading = "lazy";
       const name = document.createElement("span"); name.textContent = c.name;
-      const n = document.createElement("small"); n.textContent = nf(c.stores);
-      b.append(img, name, n);
+      b.append(img, name);
       b.addEventListener("click", () => {
         const i = picked.indexOf(c.id);
         if (i >= 0) picked.splice(i, 1);                 // 다시 누르면 해제
