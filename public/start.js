@@ -41,7 +41,9 @@
   function shownPlaces() {
     if (!FIXED) {
       const seen = new Set();
-      FIXED = D.places.filter(p => p.good && !seen.has(p.id) && seen.add(p.id));
+      /* 댓글이 없는 예시(또간집·히밥)도 넣습니다 — 빼면 고르기 칩에는 있는 유튜버가 지도에서 사라집니다.
+         2번 칸(다녀온 사람들 이야기)은 render() 에서 댓글이 있는 식당만 씁니다. */
+      FIXED = D.places.filter(p => !seen.has(p.id) && seen.add(p.id));
       for (let i = FIXED.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [FIXED[i], FIXED[j]] = [FIXED[j], FIXED[i]]; }
     }
     return FIXED;
@@ -96,7 +98,7 @@
     fill($("listVideos"), places, videoCard);
     /* 또간집·히밥처럼 자기 영상에서 고른 댓글이 없는 유튜버만 고르면 — 식당은 있는데 댓글이 없는 것 */
     fill($("listReviews"), reviews, reviewCard,
-         places.length ? "이 유튜버 영상에서 고른 방문 후기가 아직 없습니다" : "표시할 식당이 없습니다");
+         places.length ? "이 식당은 고른 방문 후기가 아직 없습니다" : "표시할 식당이 없습니다");
     $("selbar").hidden = !sel;
     if (window.LesulinIntroMap) window.LesulinIntroMap.show(places, sel);
     /* 지도에서 고른 식당이 1번 칸 아래쪽에 있으면 그 카드가 보이게 옮깁니다(칸 안에서만 스크롤) */
@@ -203,7 +205,10 @@
           pos = new kakao.maps.LatLng(lat, lng);
           el.className = "icluster" + (g.items.some(p => p.id === last.selId) ? " sel" : "");
           el.dataset.stores = g.items.map(p => p.id).join(",");
-          el.textContent = String(g.items.length);
+          /* 숫자만 두면 누가 갔는지 안 보여서, 묶인 유튜버 얼굴을 3명까지 겹쳐 보여 주고 숫자는 모서리에 */
+          const who = [...new Set(g.items.map(p => p.creatorId))].slice(0, 3);
+          el.innerHTML = who.map(id => `<img src="img/ch/${encodeURIComponent(id)}.jpg" alt="">`).join("")
+            + `<span class="n">${g.items.length}</span>`;
           el.setAttribute("aria-label", `${g.items.length}곳 묶음, 확대`);
           el.addEventListener("click", e => {
             e.stopPropagation();

@@ -16,7 +16,8 @@ const nf = n => Number(n).toLocaleString("ko-KR");
 
 /* 화면과 같은 규칙: 고른 유튜버(없으면 c1 + 식당 많은 앞 2명)의 식당, 같은 식당은 한 번만 */
 /* 두 칸은 유튜버 고르기와 상관없이 고정 — 댓글 있는 예시 식당 전부(같은 식당은 한 번), 순서는 무작위 */
-const FIXED = (() => { const seen = new Set(); return IN.places.filter(p => p.good && !seen.has(p.id) && seen.add(p.id)); })();
+/* 1번 칸·지도는 예시 식당 전부(댓글이 없는 유튜버도 지도에 나오게), 2번 칸은 그중 댓글이 있는 것만 */
+const FIXED = (() => { const seen = new Set(); return IN.places.filter(p => !seen.has(p.id) && seen.add(p.id)); })();
 const sorted = a => [...a].sort();
 const visible = ids => {
   const seen = new Set(), out = [];
@@ -59,8 +60,10 @@ const openStart = async page => {
 };
 const selected = page => page.$$eval('#chips [aria-pressed="true"]', els => els.map(e => e.dataset.id));
 const shownStores = page => page.$$eval("#listVideos .vcard:not(.dup)", els => els.map(e => e.dataset.store));
-/* 1·2번 칸은 저절로 흐릅니다. 사람처럼 칸 위에 마우스를 올려 멈춘 뒤 누릅니다 */
-const clickIn = async (page, port, target) => { await page.hover(port); await page.click(target); };
+/* 1·2번 칸은 마우스를 올려도 계속 흐릅니다. 움직이는 카드는 Playwright 가 "멈출 때까지" 기다리므로
+   누르기 직전에만 점검용으로 흐름을 멈춥니다(화면 동작 자체는 23번이 따로 봅니다) */
+const freeze = page => page.addStyleTag({ content: ".track{animation-play-state:paused!important}" });
+const clickIn = async (page, port, target) => { await freeze(page); await page.click(target); };
 const num = async (page, sel) => Number((await page.textContent(sel)).replace(/[^0-9]/g, ""));
 
 console.log(`시작 화면 e2e — ${BASE}`);
@@ -96,6 +99,12 @@ await scenario("1b. 화면 구성(v4): 주황 테두리 표지 · 지도 버튼 
   ok(await page.locator(".ch").count() === 0, "칸 머리글이 남음");
   ok(await page.locator("#go").count() === 0, "'내 유튜버 맛집 지도 열기'가 남음");
   ok(!(await page.locator(".cover").textContent()).includes("방문 후기 ×"), "'유튜버 × 방문 후기 × 지도'가 남음");
+  /* 상단(로고·숫자·지도 버튼)은 주황 테두리 표지 안에, 리본과 겹치지 않게. 로고·이름은 크게 */
+  ok(await page.locator(".cover nav").count() === 1, "상단이 표지 밖에 있음");
+  const [tm, rb] = [await page.locator("#toMap").boundingBox(), await page.locator(".ribbon").boundingBox()];
+  ok(tm.x + tm.width <= rb.x - 8 || tm.y >= rb.y + rb.height, "지도 버튼이 리본과 겹침");
+  ok((await page.locator(".brand .mark").boundingBox()).width >= 50, "로고가 작음");
+  ok(parseFloat(await page.$eval(".brand", e => getComputedStyle(e).fontSize)) >= 28, "'르슐랭 가이드' 글자가 작음");
   const [pk, st] = [await page.locator(".picker").boundingBox(), await page.locator("#stage").boundingBox()];
   ok(pk.y + pk.height <= st.y, "고르기가 세 칸 위에 있지 않음");
   ok(await page.$eval(".picker", e => getComputedStyle(e).backgroundColor) === "rgba(0, 0, 0, 0)", "고르기 배경이 남음");
@@ -131,7 +140,7 @@ await scenario("2s. 카드를 누르면 그 식당만 · 전체 보기로 되돌
   await openStart(page);
   const first = page.locator("#listVideos .vcard:not(.dup)").first();
   const sid = await first.getAttribute("data-store");
-  await page.hover("#listVideos");
+  await freeze(page);
   await first.locator(".vm").click();
   ok(await first.getAttribute("aria-pressed") === "true", "선택 표시");
   const stores = await page.$$eval("#listReviews .rcard:not(.dup)", els => els.map(e => e.dataset.store));
@@ -274,7 +283,7 @@ await scenario("14b. 가까운 핀은 묶음 · 누르면 확대돼 펼쳐짐", 
   const cl = page.locator("#introMap .icluster").first();
   ok(await cl.count() === 1, "기본 보기에 묶음이 없음(서울 식당이 겹쳐야 정상)");
   const n = (await cl.getAttribute("data-stores")).split(",").length;
-  ok(Number((await cl.textContent()).trim()) === n, "묶음 숫자 ≠ 묶인 식당 수");
+  ok(Number((await cl.locator(".n").textContent()).trim()) === n, "묶음 숫자 ≠ 묶인 식당 수");
   const members = (await cl.getAttribute("data-stores")).split(",");
   await cl.click();
   await page.waitForTimeout(1200);
@@ -368,15 +377,49 @@ await scenario("21. 지도 타일이 3번 칸을 꽉 채움", async page => {
   ok(levels.length === 1, `칸 안 타일 배율이 섞임: ${levels}`);
 });
 
-await scenario("22. 묶음 숫자가 원 가운데", async page => {
+await scenario("22. 묶음도 숫자만이 아니라 묶인 유튜버 얼굴이 보임", async page => {
   await openStart(page);
   await pinsReady(page);
-  const off = await page.$eval("#introMap .icluster", b => {
-    const rg = document.createRange(); rg.selectNodeContents(b);
-    const t = rg.getBoundingClientRect(), c = b.getBoundingClientRect();
-    return Math.abs((t.left + t.right) / 2 - (c.left + c.right) / 2);
-  });
-  ok(off <= 2, `숫자가 가운데에서 ${off.toFixed(1)}px 벗어남`);
+  const cls = await page.$$eval("#introMap .icluster", els => els.map(e => ({
+    faces: [...e.querySelectorAll("img")].filter(i => i.getBoundingClientRect().width >= 20).length,
+    stores: e.dataset.stores.split(",") })));
+  ok(cls.length > 0, "묶음이 없음");
+  const byId = new Map(IN.places.map(p => [p.id, p.creatorId]));
+  for (const c of cls) {
+    const who = new Set(c.stores.map(id => byId.get(id)));
+    ok(c.faces === Math.min(3, who.size), `묶음 얼굴 ${c.faces}개 (유튜버 ${who.size}명)`);
+  }
+});
+
+await scenario("14c. 지도에 고르기 칩의 유튜버가 모두 나옴", async page => {
+  await openStart(page);
+  await pinsReady(page);
+  const byId = new Map(IN.places.map(p => [p.id, p.creatorId]));
+  const who = new Set((await pinIds(page)).map(id => byId.get(id)));
+  const miss = IN.creators.filter(c => !who.has(c.id)).map(c => c.name);
+  ok(miss.length === 0, `지도에 없는 유튜버: ${miss}`);
+});
+
+await scenario("23. 칸 위에 마우스를 올려도 카드가 계속 흐름", async page => {
+  await openStart(page);
+  for (const port of ["#listVideos", "#listReviews"]) {
+    await page.locator(port).evaluate(e => e.scrollIntoView({ block: "center" }));
+    await page.hover(port);
+    const y = () => page.$eval(`${port} .track`, t => t.getBoundingClientRect().top);
+    const a = await y(); await page.waitForTimeout(1200); const b = await y();
+    ok(Math.abs(b - a) > 3, `${port} 마우스를 올리니 멈춤 (${a} → ${b})`);
+  }
+});
+
+await scenario("24. 세 칸은 각자 테두리 칸 안에 — 카드·지도가 칸 밖으로 안 나옴", async page => {
+  await openStart(page);
+  for (const [col, inner] of [["#st1", "#listVideos"], ["#st2", "#listReviews"], ["#st3", ".mapbox"]]) {
+    const bw = await page.$eval(col, e => parseFloat(getComputedStyle(e).borderTopWidth));
+    ok(bw >= 1, `${col} 칸 테두리 없음`);
+    const [c, i] = [await page.locator(col).boundingBox(), await page.locator(`${col} ${inner}`).boundingBox()];
+    ok(i.x >= c.x + 8 && i.x + i.width <= c.x + c.width - 8 && i.y + i.height <= c.y + c.height - 8,
+       `${inner} 가 ${col} 칸 가장자리에 붙거나 밖으로 나옴`);
+  }
 });
 
 /* ── 지도와 연결 ── */
@@ -443,7 +486,7 @@ await scenario("18. 지도 화면도 v3 색·글꼴·로고", async page => {
   ok(st.coral === "#F2622A", `--coral ${st.coral}`);
   ok(st.ink === "#1F1B18", `--ink ${st.ink}`);
   ok(/Noto Sans KR/.test(st.font), `글꼴 ${st.font}`);
-  ok(st.mark === "/img/brand/logo-64.png?v=3", `로고 ${st.mark}`);
+  ok(st.mark === "/img/brand/logo-64.png?v=4", `로고 ${st.mark}`);
 });
 
 await browser.close();

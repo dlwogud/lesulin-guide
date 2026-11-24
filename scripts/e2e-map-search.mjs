@@ -231,6 +231,13 @@ await scenario("10 지난 글은 'N일 전'으로 보이고, 왼쪽 인기글에
   ok((await page.locator("#tabHot").textContent()).includes("7일"), "인기 탭 이름에 7일이 없음");
 });
 
+await scenario("11 식당 상세에 '정보가 틀렸어요' 버튼이 없다", async page => {
+  await page.evaluate(id => window.__sel(id), STORES[0].id);
+  await page.waitForSelector("#panel .acts", { timeout: 10000 });
+  ok(!(await page.textContent("#panel")).includes("정보가 틀렸어요"), "'정보가 틀렸어요' 버튼이 남음");
+  ok(await page.locator("#panel .acts").count() === 1, "버튼 줄이 둘");
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");

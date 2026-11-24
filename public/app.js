@@ -378,10 +378,6 @@ function renderDetail(s) {
       <div class="acts">
         <a class="pri" href="${kakaoTo}" target="_blank" rel="noreferrer">카카오맵 길찾기</a>
         <button class="sec" onclick="window.__askStore('${s.id}')">이 가게 물어보기</button>
-      </div>
-      <div class="acts" style="border-top:0;padding-top:0">
-        <button class="sec" style="flex:none;padding:8px 12px;font-size:11.5px"
-          onclick="window.__report('${s.id}')">정보가 틀렸어요</button>
       </div></div>`;
 }
 
