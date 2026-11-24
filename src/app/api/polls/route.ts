@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q, dbReady } from "@/lib/db";
 import { feed, replies, head, badBody, badSession, tooFast, type Sort } from "@/lib/polls";
+import { INSERT_POLL } from "@/lib/pollsSql";
 
 /** 화면이 8초마다 부릅니다. 목록 + 답글 + 최신 id 를 한 번에 줍니다. */
 export async function GET(req: NextRequest) {
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   /* 위치를 주소로 바꾸는 API를 또 부르지 않습니다.
      이미 1,512곳의 좌표가 DB에 있으니 가장 가까운 식당의 시군구를 씁니다.
-     "서울 마포구" 정도만 보여 주면 되고, 정확한 번지는 알 필요도 없습니다. */
+     "서울 마포구" 정도만 보여 주면 되고, 좌표는 이 계산에만 쓰고 저장하지 않습니다. */
   let place: string | null = null;
   if (lat !== null && lng !== null) {
     const [near] = await q<{ region: string }>(`
@@ -51,9 +52,7 @@ export async function POST(req: NextRequest) {
   }
   const nick = typeof b.nickname === "string" ? b.nickname.trim().slice(0, 12) || null : null;
 
-  const [row] = await q<{ id: string }>(`
-    INSERT INTO polls (kind, body, store_id, lat, lng, place, nickname, session)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-    [kind, (b.body as string).trim(), storeId, lat, lng, place, nick, session]);
+  const [row] = await q<{ id: string }>(INSERT_POLL,
+    [kind, (b.body as string).trim(), storeId, place, nick, session]);
   return NextResponse.json({ ok: true, id: Number(row.id) });
 }

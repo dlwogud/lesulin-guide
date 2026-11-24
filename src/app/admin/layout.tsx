@@ -23,6 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ["/admin/review", "AI 결과 검수"],
     ["/admin/compare", "AI 비교(규칙·LLM)"],
     ["/admin/feedback", "피드백·신고"],
+    ["/admin/community", "커뮤니티"],
     ["/admin/ai", "AI 실시간·운영 로그"],
   ] as const;
 

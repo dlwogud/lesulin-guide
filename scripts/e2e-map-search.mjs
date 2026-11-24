@@ -213,6 +213,24 @@ await scenario("9 '내 유튜버 해제'를 누르면 핀의 주황 테두리와
   ok(await mine() === 0 && await page.locator(".favchip").count() === 0, "새로고침했더니 해제한 유튜버가 다시 강조됨");
 });
 
+/* 10: 밤 12시 초기화 없음 — 지난 글도 보이고, 인기글은 최근 7일만 */
+await scenario("10 지난 글은 'N일 전'으로 보이고, 왼쪽 인기글에는 7일 넘은 글이 빠지며, '밤 12시' 안내가 없다", async page => {
+  const day = d => new Date(Date.now() - d * 864e5).toISOString();
+  const OLD = { polls: [
+    { id: 21, body: "사흘 전 글", nickname: "익명", created_at: day(3), edited_at: null, ups: 1, downs: 0, replies: 0, heat: 1, my_vote: 0, mine: false },
+    { id: 20, body: "여드레 전 인기 글", nickname: "익명", created_at: day(8), edited_at: null, ups: 50, downs: 0, replies: 9, heat: 68, my_vote: 0, mine: false }],
+    replies: [], head: { poll: 21, reply: 0 } };
+  await page.route("**/api/polls?**", r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(OLD) }));
+  await page.evaluate(() => pullPolls(false)); await page.waitForTimeout(300);
+  const hot = await page.locator("#hotList").textContent();
+  ok(hot.includes("사흘 전 글") && !hot.includes("여드레 전"), `왼쪽 인기글에 7일 넘은 글이 남음: ${hot}`);
+  await page.click("#bell"); await page.locator("#p21").waitFor({ timeout: 10000 });
+  ok((await page.locator("#p21 .ph").textContent()).includes("3일 전"), "사흘 전 글이 '3일 전'으로 안 보임");
+  const head = await page.locator(".pollwrap>header").textContent();
+  ok(!head.includes("12시"), `패널 머리에 '12시' 안내가 남음: ${head}`);
+  ok((await page.locator("#tabHot").textContent()).includes("7일"), "인기 탭 이름에 7일이 없음");
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");

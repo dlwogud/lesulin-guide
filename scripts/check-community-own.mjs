@@ -1,15 +1,16 @@
-/* 커뮤니티 글·답글을 쓴 사람만 고치고 지울 수 있는지 — SQL 을 운영 DB 에서 직접 돌려 봅니다.
+/* 커뮤니티 SQL 검사 — 쓴 사람만 고치고 지우는지, 목록·인기글 기간, 좌표를 남기지 않는지.
+ * 운영 DB 에서 직접 돌려 봅니다.
  *
  *   node scripts/check-community-own.mjs
  *
  * 모든 쓰기는 BEGIN … ROLLBACK 안에서만 합니다. 운영 커뮤니티에 글이 남지 않고,
  * 다른 사람 화면에도 뜨지 않습니다(커밋 전이라 다른 연결에서는 보이지 않음).
- * 실제 API 가 쓰는 SQL 그대로(src/lib/pollsOwn.ts)를 불러와 씁니다.
+ * 실제 API 가 쓰는 SQL 그대로(src/lib/pollsSql.ts)를 불러와 씁니다.
  */
 import fs from "fs";
 import assert from "assert/strict";
 import { createRequire } from "module";
-import { OWN_SQL } from "../src/lib/pollsOwn.ts";
+import { OWN_SQL, feedSql, INSERT_POLL } from "../src/lib/pollsSql.ts";
 
 const require = createRequire(import.meta.url);
 const { Client } = require("pg");
@@ -67,11 +68,42 @@ try {
     assert.equal(n(await c.query(OWN_SQL.deletePoll, [pid, A])), 1);
     assert.equal((await c.query(`SELECT 1 FROM poll_replies WHERE poll_id = $1`, [pid])).rowCount, 0);
   });
-  await t("어제 글은 고칠 수 없다 (화면에서 사라진 글)", async () => {
+  await t("어제 글도 고칠 수 있다 (밤 12시 초기화 없음)", async () => {
     const [{ id: old }] = (await c.query(
-      `INSERT INTO polls (kind, body, session, day) VALUES ('ask', '어제 글', $1,
-         (now() AT TIME ZONE 'Asia/Seoul')::date - 1) RETURNING id`, [A])).rows;
-    assert.equal(n(await c.query(OWN_SQL.editPoll, [old, A, "고침"])), 0);
+      `INSERT INTO polls (kind, body, session, day, created_at) VALUES ('ask', '어제 글', $1,
+         (now() AT TIME ZONE 'Asia/Seoul')::date - 1, now() - interval '1 day') RETURNING id`, [A])).rows;
+    assert.equal(n(await c.query(OWN_SQL.editPoll, [old, A, "고침"])), 1);
+  });
+  await t("관리자가 가린 글은 쓴 사람도 고칠 수 없다", async () => {
+    const [{ id: h }] = (await c.query(
+      `INSERT INTO polls (kind, body, session, hidden) VALUES ('ask', '가린 글', $1, true) RETURNING id`, [A])).rows;
+    assert.equal(n(await c.query(OWN_SQL.editPoll, [h, A, "고침"])), 0);
+  });
+  await t("8일 된 글은 최신순 목록에는 있고 인기순에는 없다", async () => {
+    const [{ id: old8 }] = (await c.query(
+      `INSERT INTO polls (kind, body, session, day, created_at) VALUES ('ask', '8일 전 글', $1,
+         (now() AT TIME ZONE 'Asia/Seoul')::date - 8, now() - interval '8 days') RETURNING id`, [A])).rows;
+    /* 이 트랜잭션 안에서 가장 최근 글이 되도록 id 가 가장 큽니다 — 최신순 40개 안에 반드시 듭니다 */
+    const newIds = (await c.query(feedSql("new"), [A])).rows.map(r => String(r.id));
+    const hotIds = (await c.query(feedSql("hot"), [A])).rows.map(r => String(r.id));
+    assert.ok(newIds.includes(String(old8)), "최신순에 8일 된 글이 없음");
+    assert.ok(!hotIds.includes(String(old8)), "인기순에 8일 된 글이 들어감");
+    const mine = (await c.query(feedSql("new"), [A])).rows.find(r => String(r.id) === String(old8));
+    assert.equal(mine.mine, true, "내 글 표시가 안 됨");
+    assert.ok(!("session" in mine), "목록에 세션 값이 나감");
+  });
+  await t("가린 글은 목록 어디에도 나오지 않는다", async () => {
+    const [{ id: h2 }] = (await c.query(
+      `INSERT INTO polls (kind, body, session, hidden) VALUES ('ask', '가린 글 2', $1, true) RETURNING id`, [A])).rows;
+    for (const s of ["new", "hot"]) {
+      const ids = (await c.query(feedSql(s), [A])).rows.map(r => String(r.id));
+      assert.ok(!ids.includes(String(h2)), `${s} 목록에 가린 글이 나옴`);
+    }
+  });
+  await t("새 글에는 위치 좌표가 남지 않고 시군구만 남는다", async () => {
+    const [{ id: np }] = (await c.query(INSERT_POLL, ["ask", "좌표 점검", null, "서울특별시 성동구", null, A])).rows;
+    const r = (await c.query(`SELECT lat, lng, place FROM polls WHERE id = $1`, [np])).rows[0];
+    assert.equal(r.lat, null); assert.equal(r.lng, null); assert.equal(r.place, "서울특별시 성동구");
   });
 } finally {
   await c.query("ROLLBACK");

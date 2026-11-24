@@ -1,11 +1,8 @@
 -- 실시간 투표·토론 (에브리타임식)
 --   .venv/bin/python scripts/db_init.py --file db/polls.sql
 --
--- "밤 12시 초기화"를 크론으로 지우지 않습니다.
--- day 컬럼에 한국 날짜를 박아 두고 화면은 오늘 것만 봅니다.
---   · 0시가 되면 저절로 새 판이 시작됩니다 (스케줄러·실패 지점 없음)
---   · 지난 토론은 DB에 남아서 Admin에서 보고 분석할 수 있습니다
---     ("어느 동에서 질문이 많았나" — 사용 현황·피드백 심사 항목에 그대로 씁니다)
+-- 2026-11-24 부터 밤 12시 초기화가 없습니다. 글은 쓴 사람이 지우거나 관리자가 가리기 전까지 남고,
+-- 화면의 인기순만 최근 7일 글로 좁힙니다(src/lib/pollsSql.ts). day 칸은 하루 통계용으로 남겨 둡니다.
 
 BEGIN;
 
@@ -14,7 +11,7 @@ CREATE TABLE IF NOT EXISTS polls (
   kind       text NOT NULL,                  -- ask: 자유 질문 · store: 가게 지정
   body       text NOT NULL,
   store_id   text REFERENCES stores(id) ON DELETE SET NULL,
-  lat        double precision,               -- 올린 사람 위치 (없을 수 있습니다)
+  lat        double precision,               -- 쓰지 않음 (11/24 부터 좌표는 저장하지 않고 place 만 남김)
   lng        double precision,
   place      text,                           -- "서울 마포구" 처럼 사람이 읽는 위치
   nickname   text,

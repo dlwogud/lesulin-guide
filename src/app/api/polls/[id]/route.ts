@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q, dbReady } from "@/lib/db";
 import { badBody, badSession } from "@/lib/polls";
-import { OWN_SQL } from "@/lib/pollsOwn";
+import { OWN_SQL } from "@/lib/pollsSql";
 
 /* 쓴 사람이 자기 글을 고치거나 지웁니다. 세션이 다르면 0행 → 404.
    남의 글인지 없는 글인지는 구분해 알려 주지 않습니다. */

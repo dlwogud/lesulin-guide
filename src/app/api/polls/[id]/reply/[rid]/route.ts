@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { q, dbReady } from "@/lib/db";
 import { badBody, badSession } from "@/lib/polls";
-import { OWN_SQL } from "@/lib/pollsOwn";
+import { OWN_SQL } from "@/lib/pollsSql";
 
 /* 쓴 사람이 자기 답글을 고치거나 지웁니다. 세션이 다르면 0행 → 404. */
 const NOT_MINE = "없는 답글이거나 내가 쓴 답글이 아닙니다.";
