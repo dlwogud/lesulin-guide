@@ -331,7 +331,7 @@ body.pmoving iframe,body.pmoving #kmap{pointer-events:none}
 .pc-top{display:flex;align-items:center;gap:10px;padding-right:62px}
 .pc-ic{width:38px;height:38px;border-radius:12px;background:var(--coral-soft);color:var(--coral);display:grid;place-items:center;flex:none}
 .pollwrap h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
-.pollwrap .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.pollwrap .sub{font-size:11px;color:var(--muted);margin:2px 0 0}
 .pollwrap .sub i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#2DB55D;margin-right:5px;vertical-align:1px;
   box-shadow:0 0 0 3px rgba(45,181,93,.16)}
 .pollwrap .x{position:absolute;right:12px;top:17px;width:32px;height:32px;border-radius:10px;border:0;background:none;font-size:19px;
@@ -404,10 +404,10 @@ body.pmoving iframe,body.pmoving #kmap{pointer-events:none}
 .prep .rv{margin-left:auto;flex:none}
 .pform{border-bottom:1px solid var(--line);padding:12px 16px;display:flex;flex-direction:column;gap:6px;background:var(--sub)}
 .pform[hidden]{display:none!important}
-/* 글 올리기 — 동그란 배경 없이 주황색 + 하나만 */
-.padd{position:absolute;right:46px;top:19px;width:28px;height:28px;border:0;background:none;color:var(--coral);
-  font-size:26px;font-weight:400;line-height:1;display:grid;place-items:center;cursor:pointer;font-family:inherit;transition:opacity .12s}
-.padd:hover{opacity:.7}
+/* 글 올리기 — 옅은 주황 동그라미 위 주황 +. 닫기(×)와 구별됩니다 */
+.padd{position:absolute;right:52px;top:17px;width:32px;height:32px;border:0;border-radius:50%;background:var(--coral-soft);color:var(--coral);
+  padding:0;display:grid;place-items:center;cursor:pointer;transition:background .12s,color .12s}
+.padd:hover,.padd[aria-expanded=true]{background:var(--coral);color:#fff}
 .pitem{cursor:pointer}
 .pitem.sel{background:#FFF8F4}
 .pitem.sel::before{background:var(--coral)}
@@ -663,7 +663,7 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
 
   <section class="pollwrap" id="pollWrap" hidden aria-label="실시간 커뮤니티">
     <header>
-      <button class="padd" id="pollAdd" aria-label="글 올리기" aria-expanded="false">+</button>
+      <button class="padd" id="pollAdd" aria-label="글 올리기" aria-expanded="false"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       <button class="x" id="pollX" aria-label="닫기">&times;</button>
       <div class="pc-top">
         <span class="pc-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 19.6c.5-3.4 3-5.6 6.2-5.6s5.7 2.2 6.2 5.6"/><circle cx="16.6" cy="9" r="2.7"/><path d="M16.4 14.1c2.6.1 4.4 2 4.8 4.9"/></svg></span>

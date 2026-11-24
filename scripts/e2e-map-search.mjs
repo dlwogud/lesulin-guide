@@ -396,6 +396,10 @@ await scenario("19 커뮤니티 동그라미: 사람 아이콘·글자, 끌어 �
 await scenario("20 커뮤니티 창: 머리에 사람 아이콘·글/답글 수, 검색창이 탭 위, 글마다 글쓴이 동그라미·답글 버튼", async page => {
   await page.click("#bell"); await page.locator(".pitem").first().waitFor({ timeout: 10000 });
   ok(await page.locator(".pollwrap .pc-ic svg").count() === 1, "창 머리에 커뮤니티 아이콘이 없음");
+  const [ic, tx] = [await page.locator(".pollwrap .pc-ic").boundingBox(), await page.locator(".pollwrap .pc-top > div").boundingBox()];
+  ok(Math.abs((ic.y + ic.height / 2) - (tx.y + tx.height / 2)) <= 1.5, `아이콘과 제목·글 수의 세로 가운데가 안 맞음: ${JSON.stringify([ic, tx])}`);
+  const [pbg, xbg] = [await page.$eval("#pollAdd", e => getComputedStyle(e).backgroundColor), await page.$eval("#pollX", e => getComputedStyle(e).backgroundColor)];
+  ok(pbg !== "rgba(0, 0, 0, 0)" && pbg !== xbg && await page.$eval("#pollAdd", e => getComputedStyle(e).borderRadius) === "50%", "+ 버튼에 동그란 배경이 없거나 ×와 같아 보임");
   ok(/글 \d+개 · 답글 \d+개/.test(await page.textContent("#pollSub")), "글·답글 수가 없음");
   const [sq, tb] = [await page.locator(".psrch").boundingBox(), await page.locator(".ptabs").boundingBox()];
   ok(sq.y < tb.y, "검색창이 탭 아래에 있음");
