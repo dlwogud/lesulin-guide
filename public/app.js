@@ -1215,15 +1215,21 @@ function bellRect() {
   const left = box.left + b.offsetLeft, top = box.top + b.offsetTop, width = b.offsetWidth, height = b.offsetHeight;
   return { left, top, width, height, right: left + width, bottom: top + height };
 }
+/* 창은 지도 칸 안에서만 — 열 때·옮길 때·크기를 바꿀 때 모두 지도 칸(가장자리 8px 안쪽)에 가둡니다 */
+const POLL_M = 8;
+function mapArea() {
+  const m = document.querySelector(".mapwrap"), r = m ? m.getBoundingClientRect() : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+  return { l: r.left + POLL_M, t: r.top + POLL_M, r: r.left + r.width - POLL_M, b: r.top + r.height - POLL_M };
+}
 function placePoll() {
   const w = $("pollWrap"), b = $("bell"); if (!w || !b) return;
-  const vw = innerWidth, vh = innerHeight, M = 12;
-  const W = Math.max(Math.min(PBOX_MIN.w, vw - M * 2), Math.min(pbox ? pbox.w : 384, vw - M * 2));
-  const H = Math.max(Math.min(PBOX_MIN.h, vh - M * 2), Math.min(pbox ? pbox.h : 680, vh - M * 2));
+  const A = mapArea(), aw = A.r - A.l, ah = A.b - A.t;
+  const W = Math.max(Math.min(PBOX_MIN.w, aw), Math.min(pbox ? pbox.w : 384, aw));
+  const H = Math.max(Math.min(PBOX_MIN.h, ah), Math.min(pbox ? pbox.h : 680, ah));
   const r = bellRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-  let left = cx > vw / 2 ? r.right - W : r.left, top = cy < vh / 2 ? r.top : r.bottom - H;
+  let left = cx > (A.l + A.r) / 2 ? r.right - W : r.left, top = cy < (A.t + A.b) / 2 ? r.top : r.bottom - H;
   if (pbox && pbox.x != null) { left = pbox.x; top = pbox.y; }
-  left = Math.max(M, Math.min(vw - W - M, left)); top = Math.max(M, Math.min(vh - H - M, top));
+  left = Math.max(A.l, Math.min(A.r - W, left)); top = Math.max(A.t, Math.min(A.b - H, top));
   Object.assign(w.style, { left: left + "px", top: top + "px", width: W + "px", height: H + "px" });
 }
 function popPoll(open, done) {
@@ -1298,17 +1304,17 @@ function wirePollBox() {
       if (st.mode === "move") w.classList.add("moving");
       if (pollAnim) { pollAnim.cancel(); pollAnim = null; }
     }
-    const vw = innerWidth, vh = innerHeight, M = 8;
+    const A = mapArea(), mw = Math.min(PBOX_MIN.w, A.r - A.l), mh = Math.min(PBOX_MIN.h, A.b - A.t);
     let { l, t, w: W, h: H } = st;
     if (st.mode === "move") {
-      l = Math.max(M - W + 80, Math.min(vw - 80, l + dx));       // 머리 80px 은 늘 화면 안에
-      t = Math.max(M, Math.min(vh - 60, t + dy));
+      l = Math.max(A.l, Math.min(A.r - W, l + dx));
+      t = Math.max(A.t, Math.min(A.b - H, t + dy));
     } else {
       const m = st.mode;
-      if (m.includes("e")) W = Math.max(PBOX_MIN.w, Math.min(vw - M - l, W + dx));
-      if (m.includes("s")) H = Math.max(PBOX_MIN.h, Math.min(vh - M - t, H + dy));
-      if (m.includes("w")) { const nw = Math.max(PBOX_MIN.w, Math.min(st.l + st.w - M, W - dx)); l = st.l + st.w - nw; W = nw; }
-      if (m.includes("n")) { const nh = Math.max(PBOX_MIN.h, Math.min(st.t + st.h - M, H - dy)); t = st.t + st.h - nh; H = nh; }
+      if (m.includes("e")) W = Math.max(mw, Math.min(A.r - l, W + dx));
+      if (m.includes("s")) H = Math.max(mh, Math.min(A.b - t, H + dy));
+      if (m.includes("w")) { const nw = Math.max(mw, Math.min(st.l + st.w - A.l, W - dx)); l = st.l + st.w - nw; W = nw; }
+      if (m.includes("n")) { const nh = Math.max(mh, Math.min(st.t + st.h - A.t, H - dy)); t = st.t + st.h - nh; H = nh; }
     }
     Object.assign(w.style, { left: l + "px", top: t + "px", width: W + "px", height: H + "px" });
   });

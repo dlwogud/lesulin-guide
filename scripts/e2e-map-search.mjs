@@ -436,6 +436,45 @@ await scenario("21 커뮤니티 창: 머리 잡고 이동·모서리로 크기 �
   ok(Math.abs(g.width - a.width) < 2 && Math.abs(g.x - a.x) < 2, `머리를 두 번 눌러도 처음 자리·크기로 안 돌아감: ${JSON.stringify([a, f, g])}`);
 });
 
+/* 22: 펼친 커뮤니티 창은 지도 칸 안에서만 — 옮기기·크기 조절 모두 지도 밖으로 못 나감 */
+await scenario("22 커뮤니티 창은 지도 칸 밖으로 못 나감(옮기기·크기 조절·다시 열기)", async page => {
+  await page.click("#bell"); await page.locator(".pitem").first().waitFor({ timeout: 10000 }); await page.waitForTimeout(500);
+  const map = await page.locator(".mapwrap").boundingBox();
+  const box = () => page.locator("#pollWrap").boundingBox();
+  const inMap = r => r.x >= map.x - 0.5 && r.y >= map.y - 0.5 && r.x + r.width <= map.x + map.width + 0.5 && r.y + r.height <= map.y + map.height + 0.5;
+  const drag = async (x, y, dx, dy) => { await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + dx, y + dy, { steps: 10 }); await page.mouse.up(); await page.waitForTimeout(150); };
+  ok(inMap(await box()), "처음 열 때부터 지도 밖");
+  let h = await page.locator(".pollwrap h3").boundingBox();
+  await drag(h.x + 20, h.y + 8, -2000, -500);
+  let r = await box();
+  ok(inMap(r) && r.x - map.x < 12, `왼쪽 위로 끌었더니 지도 밖으로 나감: ${JSON.stringify([map, r])}`);
+  h = await page.locator(".pollwrap h3").boundingBox();
+  await drag(h.x + 20, h.y + 8, 3000, 3000);
+  r = await box();
+  ok(inMap(r) && map.x + map.width - (r.x + r.width) < 12, `오른쪽 아래로 끌었더니 지도 밖으로 나감: ${JSON.stringify([map, r])}`);
+  await drag(r.x + 10, r.y + 10, -3000, -3000);                 // 왼쪽 위 모서리 손잡이로 크게
+  r = await box();
+  ok(inMap(r), `크기를 키웠더니 지도 밖으로 나감: ${JSON.stringify([map, r])}`);
+  ok(r.width > map.width - 30 && r.height > map.height - 30, "지도 칸만큼 키워지지 않음");
+  await page.click("#pollX"); await page.waitForTimeout(500); await page.click("#bell"); await page.waitForTimeout(600);
+  ok(inMap(await box()), "다시 열었더니 지도 밖");
+});
+
+/* 23: 왼쪽 위 — 로고는 왼쪽 끝, 이름은 칸 가운데. 왼쪽 바를 넓혀도 가운데 유지 */
+await scenario("23 왼쪽 위 이름은 칸 가운데, 로고는 왼쪽 끝 — 왼쪽 바를 넓혀도 그대로", async page => {
+  const check = async tag => {
+    const [tl, mk, nm] = [await page.locator(".topleft").boundingBox(), await page.locator(".brand .mark").boundingBox(), await page.locator(".brand b").boundingBox()];
+    ok(mk.x - tl.x <= 20, `${tag}: 로고가 왼쪽 끝에 있지 않음`);
+    ok(Math.abs((nm.x + nm.width / 2) - (tl.x + tl.width / 2)) <= 2, `${tag}: 이름이 칸 가운데가 아님 (${Math.round(nm.x + nm.width / 2 - tl.x - tl.width / 2)}px 어긋남)`);
+  };
+  await check("처음");
+  const g = await page.locator("#gripL").boundingBox();
+  await page.mouse.move(g.x + g.width / 2, g.y + 300); await page.mouse.down();
+  await page.mouse.move(g.x + g.width / 2 + 150, g.y + 300, { steps: 10 }); await page.mouse.up(); await page.waitForTimeout(300);
+  ok((await page.locator(".topleft").boundingBox()).width > 380, "왼쪽 바가 넓어지지 않음");
+  await check("넓힌 뒤");
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");
