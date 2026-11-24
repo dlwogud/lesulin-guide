@@ -464,16 +464,32 @@ function openFav() {
    그 뒤로 영원히 안 뜨었습니다. */
 function closeFav(record) {
   if ($("favWrap")) $("favWrap").hidden = true;
-  if (record) saveFav();
-  syncFavBtn(); renderCres(); refresh(false);
+  if (record) { saveFav(); dropYtParam(); }
+  favChanged();
 }
 function syncFavBtn() {
   if ($("favEdit")) $("favEdit").textContent =
     fav.size ? `내 유튜버 ${fav.size}명 바꾸기` : "내 유튜버 고르기";
   if ($("favClear")) $("favClear").hidden = !fav.size;
 }
-function clearFav() {                         // 고른 3명을 되돌립니다
-  fav.clear(); saveFav(); syncFavBtn(); renderCres(); refresh(false);
+function clearFav() {                         // 고른 유튜버를 모두 풉니다
+  fav.clear(); saveFav(); dropYtParam(); favChanged();
+}
+/* 내 유튜버가 바뀌면 핀을 새로 그립니다.
+   핀은 식당 번호로 재사용하므로(drawPins), 그대로 두면 이미 그려진 핀이
+   주황 테두리(mine)와 예전 얼굴을 계속 달고 있습니다. */
+function favChanged() {
+  for (const v of pinPool.values()) v.ov.setMap(null);
+  pinPool.clear();
+  syncFavBtn(); renderCres(); refresh(false);
+}
+/* 시작 화면에서 넘어온 ?yt= 는 첫 화면에만 씁니다. 지도에서 직접 바꾼 뒤에도 주소에 남으면
+   새로고침할 때 해제한 유튜버가 다시 살아납니다. 이후로는 브라우저 저장값이 기준입니다. */
+function dropYtParam() {
+  const u = new URL(location.href);
+  if (!u.searchParams.has("yt")) return;
+  u.searchParams.delete("yt");
+  history.replaceState(history.state, "", u.pathname + u.search + u.hash);
 }
 
 const CRE_SHOWN = 5;             // 10명을 다 펼치면 왼쪽 칸이 너무 길어집니다

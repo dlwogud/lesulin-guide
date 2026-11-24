@@ -195,6 +195,24 @@ await scenario("8 답글도 내 것에만 수정·삭제가 있고, 맞는 주�
   ok(d && d.path === "/api/polls/1/reply/11", `답글 DELETE 이상: ${JSON.stringify(d)}`);
 });
 
+/* 9: 시작 화면에서 고른 유튜버(?yt=)를 지도에서 해제하면 목록·핀 강조·주소가 함께 지워진다 */
+await scenario("9 '내 유튜버 해제'를 누르면 핀의 주황 테두리와 주소의 ?yt= 도 사라지고, 새로고침해도 돌아오지 않는다", async page => {
+  await page.goto(`${BASE}/map.html?yt=c1`, { waitUntil: "load" });
+  await page.waitForFunction(() => typeof kmap !== "undefined" && kmap, null, { timeout: 20000 });
+  await page.waitForTimeout(1500);
+  const mine = () => page.locator(".pinbox.mine, .kcluster.mine").count();
+  ok(await mine() > 0, "?yt=c1 로 들어왔는데 강조된 핀이 없음 (점검 전제가 깨짐)");
+  ok(await page.locator(".favchip").count() > 0, "목록에 '내 유튜버' 표시가 없음 (점검 전제가 깨짐)");
+  await page.click("#favClear"); await page.waitForTimeout(500);
+  ok(await page.locator(".favchip").count() === 0, "해제했는데 목록에 '내 유튜버'가 남음");
+  ok(await mine() === 0, `해제했는데 주황 테두리 핀이 ${await mine()}개 남음`);
+  ok(!new URL(page.url()).searchParams.has("yt"), `해제했는데 주소에 ?yt= 가 남음: ${page.url()}`);
+  await page.reload({ waitUntil: "load" });
+  await page.waitForFunction(() => typeof kmap !== "undefined" && kmap, null, { timeout: 20000 });
+  await page.waitForTimeout(1500);
+  ok(await mine() === 0 && await page.locator(".favchip").count() === 0, "새로고침했더니 해제한 유튜버가 다시 강조됨");
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");
