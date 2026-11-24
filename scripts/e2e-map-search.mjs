@@ -291,14 +291,26 @@ await scenario("15 조건의 두 버튼은 가로 한 줄·같은 폭으로 줄�
   ok((await page.textContent("#onlyRated")).trim() === "반응이 있는 곳", `문구: ${await page.textContent("#onlyRated")}`);
 });
 
-await scenario("16 로고·이름이 머리 칸을 채우고, '내 유튜버 고르기'·'N개 선택'은 없음", async page => {
+await scenario("16 로고·이름이 머리 칸을 채우고, 'N개 선택'은 없음", async page => {
   ok((await page.locator(".brand .mark").boundingBox()).width >= 40, "로고가 작음");
   const mk = await page.locator(".brand .mark").boundingBox(), side = await page.locator(".topleft").boundingBox();
   ok(mk.x - side.x <= 20, `로고가 왼쪽으로 붙지 않음 (왼쪽에서 ${Math.round(mk.x - side.x)}px)`);
   ok(parseFloat(await page.$eval(".brand b", e => getComputedStyle(e).fontSize)) >= 20, "이름 글자가 작음");
-  ok(await page.locator("#favEdit, #creHint").count() === 0, "'내 유튜버 고르기'나 'N개 선택'이 남음");
+  ok(await page.locator("#creHint").count() === 0, "'N개 선택' 칸이 남음");
   await page.locator("#cres button").first().click();
   ok(!/\d+개 선택/.test(await page.textContent(".side")), "유튜버를 고르면 'N개 선택'이 뜸");
+});
+
+await scenario("17 '내 유튜버 변경하기' 버튼이 있고, 왼쪽 바 내 유튜버 이름 옆에 별표", async page => {
+  await page.goto(`${BASE}/map.html?yt=c1`, { waitUntil: "load" });
+  await page.waitForSelector("#cres .ytrow", { timeout: 20000 });
+  ok((await page.textContent("#favEdit")).trim() === "내 유튜버 변경하기", `버튼 문구: ${await page.textContent("#favEdit")}`);
+  const rows = await page.$$eval("#cres .ytrow", els => els.map(e => ({ name: e.querySelector(".nm b").textContent, star: !!e.querySelector(".nm .star") })));
+  const c1 = SEED.creators.find(c => c.id === "c1").n;
+  ok(rows.find(r => r.name.includes(c1))?.star, `내 유튜버(${c1}) 옆에 별표가 없음`);
+  ok(rows.filter(r => r.star).length === 1, `별표가 내 유튜버 말고도 붙음: ${rows.filter(r => r.star).map(r => r.name)}`);
+  await page.click("#favEdit");
+  ok(await page.locator("#favWrap").isVisible(), "누르면 유튜버 고르기 창이 안 열림");
 });
 
 await browser.close();

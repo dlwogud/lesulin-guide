@@ -473,7 +473,7 @@ function closeFav(record) {
 }
 function syncFavBtn() {
   if ($("favEdit")) $("favEdit").textContent =
-    fav.size ? `내 유튜버 ${fav.size}명 바꾸기` : "내 유튜버 고르기";
+    fav.size ? "내 유튜버 변경하기" : "내 유튜버 고르기";
   if ($("favClear")) $("favClear").hidden = !fav.size;
 }
 function clearFav() {                         // 고른 유튜버를 모두 풉니다
@@ -512,7 +512,7 @@ function renderCres() {
     const on = picked.has(c.id);
     return `<button class="ytrow${on?" on":""}" onclick="window.__cre('${c.id}')" aria-pressed="${on}">
       <img src="${chImg(c.id)}" alt="">
-      <span class="nm"><b class="t1">${esc(c.n)}</b><span class="t1">${esc(c.handle||"")}</span></span>
+      <span class="nm"><b class="t1">${esc(c.n)}${fav.has(c.id) ? `<span class="star" aria-label="내 유튜버">★</span>` : ""}</b><span class="t1">${esc(c.handle||"")}</span></span>
       </button>`;
   };
   $("cres").innerHTML = shown.map(row).join("")

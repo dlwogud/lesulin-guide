@@ -444,6 +444,8 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
 .favedit{font-size:11px;color:var(--coral-ink);text-decoration:underline;background:none;border:0;cursor:pointer;font-family:inherit}
 .favedit.favoff{color:var(--muted)}
 .favedit[hidden]{display:none!important}
+/* 내 유튜버 — 왼쪽 바 이름 옆 별표 */
+.ytrow .nm .star{color:var(--coral);margin-left:4px;font-size:.92em}
 .lvchip{position:absolute;left:9px;top:9px;background:var(--coral);color:#fff;border-radius:7px;padding:3px 8px 3px 5px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px}
 .lvb{width:20px;height:auto;flex:none;display:block}
 .rk{position:absolute;right:9px;top:9px;width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,.93);
@@ -544,7 +546,7 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
       </div>
       <div class="sgrp">
       <p class="sect-t"><b>유튜버</b>
-          </p>
+          <span class="favbtns"><button class="favedit" id="favEdit">내 유튜버 고르기</button><button class="favedit favoff" id="favClear" hidden>해제</button></span></p>
         <div class="ytlist" id="cres"></div>
       </div>
       <div class="sgrp">
@@ -671,5 +673,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=ui3"></script>
+<script src="app.js?v=ui4"></script>
 </body></html>
