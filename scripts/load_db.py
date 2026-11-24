@@ -154,9 +154,7 @@ def load_stats(cur, seed):
           aspects=EXCLUDED.aspects, quotes=EXCLUDED.quotes,
           guide_level=EXCLUDED.guide_level, status=EXCLUDED.status, updated_at=now()""", rows)
     # 100점 점수와 점수 기반 배지 — 공식은 db/score.sql 한 곳에만 둡니다(그 파일을 먼저 적용해야 합니다)
-    cur.execute("""UPDATE store_stats
-        SET score = lesulin_score(comments_used, negatives, visits),
-            score_level = lesulin_score_level(lesulin_score(comments_used, negatives, visits))""")
+    cur.execute("SELECT lesulin_refresh_scores()")
     return len(rows)
 
 
