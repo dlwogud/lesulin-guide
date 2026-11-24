@@ -802,7 +802,7 @@ function toast(p) {
   el.className = "ntf";
   const where = p.store_name ? `📍 ${esc(p.store_name)}`
               : p.place ? `📍 ${esc(shortRegion(p.place))}` : "르슐랭 가이드";
-  el.innerHTML = `<div class="th"><b>새 투표</b><span>·</span><span>${where}</span></div>
+  el.innerHTML = `<div class="th"><b>새 글</b><span>·</span><span>${where}</span></div>
                   <div class="tb">${esc(p.body)}</div>`;
   el.onclick = () => { openPolls(); kill(); };
   box.prepend(el);
@@ -823,7 +823,7 @@ let head = { poll: 0, reply: 0 };
 function paintBell() {
   const unseen = polls.filter(p => +p.id > seen.poll && !p.mine).length;
   /* 숫자는 두지 않습니다 — 빨간 점만으로 "새 게 있다"가 전해집니다.
-     오늘 몇 건인지는 왼쪽 "실시간 인기 투표" 쪽에 적습니다. */
+     오늘 몇 건인지는 왼쪽 "실시간 인기글" 쪽에 적습니다. */
   const dot = $("bellDot"), b = $("bell");
   if (dot) dot.hidden = unseen === 0;
   if (b) b.classList.toggle("live", unseen > 0);
@@ -857,7 +857,7 @@ function renderHot() {
   const top = [...polls].sort((a, b) => b.heat - a.heat || +b.id - +a.id).slice(0, 5);
   if ($("hotHint")) $("hotHint").textContent = `오늘 ${polls.length}건`;
   if (!top.length) {
-    el.innerHTML = `<p class="hotempty">오늘 올라온 투표가 없습니다.</p>`;
+    el.innerHTML = `<p class="hotempty">오늘 올라온 글이 없습니다.</p>`;
     return;
   }
   el.innerHTML = top.map((p, i) => `<button class="hotrow" onclick="window.__hot(${p.id})">
@@ -875,7 +875,7 @@ window.__hot = id => { openPolls(); setTimeout(() => {
 function renderPolls() {
   const el = $("pollBody"); if (!el) return;
   if (!polls.length) {
-    el.innerHTML = `<p class="hotempty">오늘 올라온 투표가 없습니다.</p>`;
+    el.innerHTML = `<p class="hotempty">오늘 올라온 글이 없습니다.</p>`;
     return;
   }
   el.innerHTML = polls.map((p, i) => {

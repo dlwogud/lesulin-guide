@@ -62,7 +62,7 @@ export default async function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-7 gap-2">
         {[["식당", c.stores], ["영상", c.videos], ["댓글", c.comments],
           ["방문 명시", c.visits], ["배지", c.badged],
-          ["오늘 투표", c.polls], ["미처리 신고", c.fb]].map(([k, v]) => (
+          ["오늘 글", c.polls], ["미처리 신고", c.fb]].map(([k, v]) => (
           <div key={k as string} className="rounded-xl px-3 py-2.5"
                style={{ background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}>
             <div className="text-[15px] font-semibold tabular-nums">
@@ -104,7 +104,7 @@ export default async function Dashboard() {
         <Card title="오늘 사용 현황" note="한국 시간 기준">
           <dl className="grid grid-cols-3 gap-2">
             {[["방문자", today?.visitors], ["세션", today?.sessions], ["조회", today?.views],
-              ["검색", today?.searches], ["식당 열람", today?.store_opens], ["투표 열람", today?.poll_opens]]
+              ["검색", today?.searches], ["식당 열람", today?.store_opens], ["커뮤니티 열람", today?.poll_opens]]
               .map(([k, v]) => (
               <div key={k as string}>
                 <dd className="text-[15px] font-semibold tabular-nums">{Number(v ?? 0)}</dd>

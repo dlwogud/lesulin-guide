@@ -251,7 +251,7 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
   border:1px solid rgba(255,255,255,.7);box-shadow:0 8px 24px rgba(30,24,16,.16)}
 .mapwrap>.bell:hover,.mapwrap>.bell.open{background:rgba(255,255,255,.95)}
 .mapwrap>.bell .dot{right:9px;top:9px}
-.mapwrap>.bell span:not(.dot){font-size:10px;font-weight:600;color:var(--ink2)}
+.mapwrap>.bell span:not(.dot){font-size:10px;letter-spacing:-.03em;font-weight:600;color:var(--ink2)}
 
 /* 맥 알림처럼 오른쪽 위에서 밀려 들어옵니다 */
 /* ══ 오류 신고 ══ */
@@ -533,7 +533,7 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
         <div class="feed" id="feed"></div>
       </div>
       <div class="sgrp" id="hotGrp">
-        <p class="sect-t"><b>실시간 인기 투표</b><span id="hotHint">오늘 0건</span></p>
+        <p class="sect-t"><b>실시간 인기글</b><span id="hotHint">오늘 0건</span></p>
         <div class="hotlist" id="hotList"></div>
       </div>
       <div class="sgrp">
@@ -567,9 +567,9 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
       </div>
     </div>
       <!-- 투표 버튼은 검색창과 떼어 지도 오른쪽 위, 오른쪽 목록 바 바로 옆에 둡니다 -->
-      <button class="bell" id="bell" aria-label="실시간 투표 열기">
+      <button class="bell" id="bell" aria-label="실시간 커뮤니티 열기">
         <b><svg class="bi" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6a3.4 3.4 0 0 0-3.4 3.4v2.6L3.1 10.1h9.8L11.4 7.6V5A3.4 3.4 0 0 0 8 1.6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.3 11.9a1.75 1.75 0 0 0 3.4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></b>
-        <span>투표</span><span class="dot" id="bellDot" hidden></span>
+        <span>커뮤니티</span><span class="dot" id="bellDot" hidden></span>
       </button>
 
       <div class="mapmsg" id="mapmsg" hidden><div>
@@ -589,11 +589,11 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
 </div>
   <div class="ntfs" id="ntfs" aria-live="polite"></div>
 
-  <section class="pollwrap" id="pollWrap" hidden aria-label="실시간 투표">
+  <section class="pollwrap" id="pollWrap" hidden aria-label="실시간 커뮤니티">
     <header>
       <button class="padd" id="pollAdd" aria-label="글 올리기" aria-expanded="false">+</button>
       <button class="x" id="pollX" aria-label="닫기">&times;</button>
-      <h3>실시간 투표</h3>
+      <h3>실시간 커뮤니티</h3>
       <p class="sub" id="pollSub">밤 12시에 새로고침됩니다</p>
       <div class="ptabs">
         <button class="ptab on" id="tabHot">반응 많은 순</button>
@@ -653,5 +653,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=qa1"></script>
+<script src="app.js?v=comm1"></script>
 </body></html>
