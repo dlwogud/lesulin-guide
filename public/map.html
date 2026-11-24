@@ -45,7 +45,7 @@ img{display:block;max-width:100%}
 .topleft{flex:none;height:62px;display:flex;align-items:stretch;justify-content:flex-start;border-bottom:1px solid var(--line)}
 /* 로고는 왼쪽 끝 그대로, 이름은 칸 가운데. 왼쪽 바 폭을 늘려도 가운데를 유지합니다(칸이 좁으면 로고 옆으로 밀림) */
 .brand{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:8px;padding:0 16px;text-decoration:none;color:inherit}
-.brand .mark{justify-self:start}
+.brand .mark{justify-self:start;max-width:none}   /* 전역 img{max-width:100%} 가 좁은 바에서 로고 폭만 줄여 찌그러뜨림 */
 /* 시작 화면과 같은 로고 — 오렌지 사각 + 흰 마름모 */
 /* 로고·이름이 머리 칸(62px)을 꽉 채우게 */
 .brand .mark{width:44px;height:44px;flex:none;display:block}

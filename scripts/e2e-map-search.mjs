@@ -461,7 +461,7 @@ await scenario("22 커뮤니티 창은 지도 칸 밖으로 못 나감(옮기기
 });
 
 /* 23: 왼쪽 위 — 로고는 왼쪽 끝, 이름은 칸 가운데. 왼쪽 바를 넓혀도 가운데 유지 */
-await scenario("23 왼쪽 위 이름은 칸 가운데, 로고는 왼쪽 끝 — 왼쪽 바를 넓혀도 그대로", async page => {
+await scenario("23 왼쪽 위 이름은 칸 가운데, 로고는 왼쪽 끝 — 왼쪽 바를 넓혀도 그대로, 좁혀도 로고가 안 찌그러짐", async page => {
   const check = async tag => {
     const [tl, mk, nm] = [await page.locator(".topleft").boundingBox(), await page.locator(".brand .mark").boundingBox(), await page.locator(".brand b").boundingBox()];
     ok(mk.x - tl.x <= 20, `${tag}: 로고가 왼쪽 끝에 있지 않음`);
@@ -473,6 +473,12 @@ await scenario("23 왼쪽 위 이름은 칸 가운데, 로고는 왼쪽 끝 — 
   await page.mouse.move(g.x + g.width / 2 + 150, g.y + 300, { steps: 10 }); await page.mouse.up(); await page.waitForTimeout(300);
   ok((await page.locator(".topleft").boundingBox()).width > 380, "왼쪽 바가 넓어지지 않음");
   await check("넓힌 뒤");
+  await page.mouse.move(g.x + g.width / 2 + 150, g.y + 300); await page.mouse.down();
+  await page.mouse.move(g.x - 400, g.y + 300, { steps: 12 }); await page.mouse.up(); await page.waitForTimeout(300);
+  const [tl, mk, nm] = [await page.locator(".topleft").boundingBox(), await page.locator(".brand .mark").boundingBox(), await page.locator(".brand b").boundingBox()];
+  ok(tl.width < 240, `왼쪽 바가 좁아지지 않음 (${tl.width})`);
+  ok(Math.abs(mk.width - 44) < 0.5 && Math.abs(mk.height - 44) < 0.5, `좁은 바에서 로고가 찌그러짐 (${mk.width.toFixed(1)}×${mk.height.toFixed(1)})`);
+  ok(nm.x >= mk.x + mk.width && nm.x + nm.width <= tl.x + tl.width, "좁은 바에서 이름이 로고와 겹치거나 칸 밖으로 나감");
 });
 
 await browser.close();
