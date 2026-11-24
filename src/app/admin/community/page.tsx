@@ -14,6 +14,7 @@ export default function Community() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [armed, setArmed] = useState<string | null>(null);   // 삭제를 한 번 누른 버튼 — 한 번 더 눌러야 지웁니다
 
   const load = useCallback(async () => {
     const d = await (await fetch("/api/admin/community")).json();
@@ -30,13 +31,32 @@ export default function Community() {
     setBusy(null); load();
   }
 
-  const btn = (target: "poll" | "reply", id: string, hidden: boolean) => (
-    <button onClick={() => toggle(target, id, !hidden)} disabled={busy === `${target}${id}`}
-            className="text-[10.5px] px-2.5 py-1 rounded-lg shrink-0"
-            style={{ border: "1px solid var(--line)", color: hidden ? "var(--accent-ink)" : "var(--bad)" }}>
-      {hidden ? "다시 보이기" : "숨기기"}
-    </button>
-  );
+  async function remove(target: "poll" | "reply", id: string) {
+    setBusy(`${target}${id}`);
+    await fetch(`/api/admin/community/${id}?target=${target}`, { method: "DELETE" });
+    setBusy(null); setArmed(null); load();
+  }
+
+  const btn = (target: "poll" | "reply", id: string, hidden: boolean) => {
+    const key = `${target}${id}`;
+    const on = armed === key;
+    return (
+      <div className="flex gap-1.5 shrink-0">
+        <button onClick={() => toggle(target, id, !hidden)} disabled={busy === key}
+                className="text-[10.5px] px-2.5 py-1 rounded-lg"
+                style={{ border: "1px solid var(--line)", color: hidden ? "var(--accent-ink)" : "var(--ink-2)" }}>
+          {hidden ? "다시 보이기" : "숨기기"}
+        </button>
+        <button onClick={() => (on ? remove(target, id) : setArmed(key))} onBlur={() => on && setArmed(null)}
+                disabled={busy === key}
+                className="text-[10.5px] px-2.5 py-1 rounded-lg"
+                style={on ? { background: "var(--bad)", color: "#fff", border: "1px solid var(--bad)" }
+                          : { border: "1px solid var(--line)", color: "var(--bad)" }}>
+          {on ? (target === "poll" ? "답글까지 삭제" : "정말 삭제") : "삭제"}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-4 max-w-[1000px]">

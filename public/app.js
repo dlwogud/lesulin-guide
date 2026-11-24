@@ -787,7 +787,7 @@ function srcLabel(kind) {
    실시간 투표 — 8초마다 확인하고, 새 글이 오면 오른쪽 위에 알립니다.
 
    글은 지우기 전까지 남습니다(11/24 에 밤 12시 초기화를 없앰).
-   최신순은 전체, 인기순과 왼쪽 "실시간 인기글"은 최근 7일 글만 봅니다.
+   최신순·인기순·왼쪽 "실시간 인기글" 모두 기간 제한 없이 전체 글을 봅니다.
    지난 토론은 DB에 남아서 Admin에서 볼 수 있습니다.
    ══════════════════════════════════════════════════════════════════ */
 const POLL_MS = 8000;
@@ -874,12 +874,9 @@ async function pullPolls(notify) {
 /* ── 좌측 실시간 인기 ───────────────────────────────────── */
 function renderHot() {
   const el = $("hotList"); if (!el) return;
-  /* 인기글은 최근 7일 글에서만 — 최신순 탭에서 받은 목록에는 더 오래된 글도 섞여 있습니다 */
-  const since = Date.now() - 7 * 864e5;
-  const top = polls.filter(p => new Date(p.created_at) > since)
-    .sort((a, b) => b.heat - a.heat || +b.id - +a.id).slice(0, 5);
+  const top = [...polls].sort((a, b) => b.heat - a.heat || +b.id - +a.id).slice(0, 5);
   if (!top.length) {
-    el.innerHTML = `<p class="hotempty">최근 7일 동안 올라온 글이 없습니다.</p>`;
+    el.innerHTML = `<p class="hotempty">아직 올라온 글이 없습니다.</p>`;
     return;
   }
   el.innerHTML = top.map((p, i) => `<button class="hotrow" onclick="window.__hot(${p.id})">
@@ -897,7 +894,7 @@ window.__hot = id => { openPolls(); setTimeout(() => {
 function renderPolls() {
   const el = $("pollBody"); if (!el) return;
   if (!polls.length) {
-    el.innerHTML = `<p class="hotempty">${pollSort === "hot" ? "최근 7일 동안 올라온 글이 없습니다." : "아직 올라온 글이 없습니다."}</p>`;
+    el.innerHTML = `<p class="hotempty">아직 올라온 글이 없습니다.</p>`;
     return;
   }
   el.innerHTML = polls.map((p, i) => {

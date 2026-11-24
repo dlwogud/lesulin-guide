@@ -79,18 +79,26 @@ try {
       `INSERT INTO polls (kind, body, session, hidden) VALUES ('ask', '가린 글', $1, true) RETURNING id`, [A])).rows;
     assert.equal(n(await c.query(OWN_SQL.editPoll, [h, A, "고침"])), 0);
   });
-  await t("8일 된 글은 최신순 목록에는 있고 인기순에는 없다", async () => {
+  await t("1년 된 글도 최신순·인기순 모두에 남는다", async () => {
     const [{ id: old8 }] = (await c.query(
-      `INSERT INTO polls (kind, body, session, day, created_at) VALUES ('ask', '8일 전 글', $1,
-         (now() AT TIME ZONE 'Asia/Seoul')::date - 8, now() - interval '8 days') RETURNING id`, [A])).rows;
-    /* 이 트랜잭션 안에서 가장 최근 글이 되도록 id 가 가장 큽니다 — 최신순 40개 안에 반드시 듭니다 */
+      `INSERT INTO polls (kind, body, session, day, created_at) VALUES ('ask', '1년 전 글', $1,
+         (now() AT TIME ZONE 'Asia/Seoul')::date - 365, now() - interval '365 days') RETURNING id`, [A])).rows;
     const newIds = (await c.query(feedSql("new"), [A])).rows.map(r => String(r.id));
     const hotIds = (await c.query(feedSql("hot"), [A])).rows.map(r => String(r.id));
-    assert.ok(newIds.includes(String(old8)), "최신순에 8일 된 글이 없음");
-    assert.ok(!hotIds.includes(String(old8)), "인기순에 8일 된 글이 들어감");
+    assert.ok(newIds.includes(String(old8)), "최신순에 1년 된 글이 없음");
+    assert.ok(hotIds.includes(String(old8)), "인기순에 1년 된 글이 없음");
     const mine = (await c.query(feedSql("new"), [A])).rows.find(r => String(r.id) === String(old8));
     assert.equal(mine.mine, true, "내 글 표시가 안 됨");
     assert.ok(!("session" in mine), "목록에 세션 값이 나감");
+  });
+  await t("글 개수 제한이 없다 — 숨기지 않은 글은 전부 목록에 나온다", async () => {
+    for (let i = 0; i < 45; i++) await c.query(
+      `INSERT INTO polls (kind, body, session) VALUES ('ask', $1, $2)`, ["개수 점검 " + i, A]);
+    const total = Number((await c.query(`SELECT count(*) n FROM polls WHERE NOT hidden`)).rows[0].n);
+    for (const s of ["new", "hot"]) {
+      const rows = (await c.query(feedSql(s), [A])).rowCount;
+      assert.equal(rows, total, `${s} 목록 ${rows}개 / 전체 ${total}개`);
+    }
   });
   await t("가린 글은 목록 어디에도 나오지 않는다", async () => {
     const [{ id: h2 }] = (await c.query(

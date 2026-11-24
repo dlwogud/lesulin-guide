@@ -554,7 +554,7 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
         <div class="feed" id="feed"></div>
       </div>
       <div class="sgrp" id="hotGrp">
-        <p class="sect-t"><b>실시간 인기글</b><span id="hotHint">최근 7일</span></p>
+        <p class="sect-t"><b>실시간 인기글</b></p>
         <div class="hotlist" id="hotList"></div>
       </div>
       <div class="sgrp">
@@ -616,7 +616,7 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
       <button class="x" id="pollX" aria-label="닫기">&times;</button>
       <h3>실시간 커뮤니티</h3>
       <div class="ptabs">
-        <button class="ptab on" id="tabHot">7일 인기</button>
+        <button class="ptab on" id="tabHot">인기순</button>
         <button class="ptab" id="tabNew">최신순</button>
       </div>
     </header>
@@ -673,5 +673,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=ui4"></script>
+<script src="app.js?v=comm5"></script>
 </body></html>

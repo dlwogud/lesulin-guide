@@ -25,7 +25,7 @@ export async function tooFast(session: string, table: "polls" | "poll_replies", 
 
 export type Sort = "hot" | "new";
 
-/** 최신순은 전체, 인기순은 최근 7일 (SQL 은 pollsSql.ts). 밤 12시 초기화는 없앴습니다. */
+/** 최신순·인기순 모두 전체 글, 기간·개수 제한 없음 (SQL 은 pollsSql.ts). */
 export async function feed(sort: Sort, session: string | null) {
   return q(feedSql(sort), [session ?? ""]);
 }

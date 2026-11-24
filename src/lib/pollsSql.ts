@@ -3,17 +3,14 @@
  * 다른 파일을 import 하지 않습니다. scripts/check-community-own.mjs 가 이 SQL 을 그대로 불러와
  * 롤백되는 트랜잭션에서 검사하기 때문입니다.
  *
- * 2026-11-24: 밤 12시 초기화를 없앴습니다. 글은 지우기 전까지 남고,
- *   · 최신순 = 전체에서 최근 40개
- *   · 인기순 = 최근 7일 글 중 반응 많은 순 (누적 점수로 옛 글이 1위에 붙어 있지 않게)
+ * 2026-11-24: 밤 12시 초기화를 없앴습니다. 글은 쓴 사람이나 관리자가 지우기 전까지 남고,
+ *   기간·개수 제한 없이 전부 보여 줍니다(7일 인기·최근 40개 제한도 없앰).
+ *   · 최신순 = 전체 글, 새 글부터
+ *   · 인기순 = 전체 글, 반응(답글×2 + 👍 + 👎) 많은 순
  * 위치는 "서울 성동구" 같은 시군구만 남기고 좌표(lat/lng)는 저장하지 않습니다.
  */
-export const HOT_DAYS = 7;
-export const FEED_LIMIT = 40;
-
 /** $1 세션(내 글·내 투표 표시용, 없으면 ''). 세션 값 자체는 내보내지 않고 mine 만 내보냅니다. */
 export function feedSql(sort: "hot" | "new"): string {
-  const where = sort === "hot" ? `WHERE f.created_at > now() - interval '${HOT_DAYS} days'` : "";
   const order = sort === "hot" ? "heat DESC, id DESC" : "id DESC";
   return `
     SELECT f.*,
@@ -22,9 +19,7 @@ export function feedSql(sort: "hot" | "new"): string {
       FROM (SELECT pf.*, p.edited_at, CASE WHEN p.session = $1 THEN 1 END AS session_me
               FROM poll_feed pf JOIN polls p ON p.id = pf.id) f
       LEFT JOIN poll_votes mv ON mv.poll_id = f.id AND mv.session = $1
-     ${where}
-     ORDER BY ${order}
-     LIMIT ${FEED_LIMIT}`;
+     ORDER BY ${order}`;
 }
 
 /** 가장 큰 id — 화면이 "내가 본 뒤 새 글이 있나"를 이걸로 판단합니다. */
