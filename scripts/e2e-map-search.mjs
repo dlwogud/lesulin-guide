@@ -238,6 +238,28 @@ await scenario("11 식당 상세에 '정보가 틀렸어요' 버튼이 없다", 
   ok(await page.locator("#panel .acts").count() === 1, "버튼 줄이 둘");
 });
 
+await scenario("12 식당 상세 썸네일: 고화질(640px 이상)로 뜨고, 지도와 썸네일 사이에 선이 없다", async page => {
+  await page.evaluate(id => window.__sel(id), STORES[0].id);
+  await page.waitForSelector(".det-hero img", { timeout: 10000 });
+  await page.waitForFunction(() => { const i = document.querySelector(".det-hero img"); return i && i.complete; }, null, { timeout: 15000 });
+  const w = await page.$eval(".det-hero img", i => i.naturalWidth);
+  ok(w >= 640, `썸네일 폭 ${w}px (안 뜨거나 저화질)`);
+  const bw = await page.$eval(".panelwrap", e => getComputedStyle(e).borderLeftWidth);
+  ok(bw === "0px", `패널 왼쪽 선 ${bw}`);
+});
+
+await scenario("13 로컬 썸네일이 없으면 유튜브 썸네일로 대신 뜬다", async page => {
+  await page.route("**/img/vid/**", r => r.fulfill({ status: 404, body: "" }));
+  /* 목록에서 이미 받은 썸네일은 메모리에 남아 요청이 안 나가므로, 막은 뒤 새로 엽니다 */
+  await page.reload({ waitUntil: "load" });
+  await page.waitForFunction(() => typeof kmap !== "undefined" && kmap, null, { timeout: 20000 });
+  await page.evaluate(id => window.__sel(id), STORES[0].id);
+  await page.waitForFunction(() => { const i = document.querySelector(".det-hero img"); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 15000 })
+    .catch(() => {});
+  const src = await page.$eval(".det-hero img", i => i.currentSrc || i.src);
+  ok(/i\.ytimg\.com\/vi\/.+\/(maxres|sd|hq|mq)default\.jpg/.test(src), `대체 썸네일로 안 바뀜: ${src}`);
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");

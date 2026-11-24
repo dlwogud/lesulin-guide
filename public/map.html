@@ -179,8 +179,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
   box-shadow:var(--sh2);border-radius:999px;padding:8px 16px;font-size:12.5px;color:var(--ink2);white-space:nowrap}
 
 /* 우측 */
-.panelwrap{width:var(--panel-w);flex:none;position:relative;display:flex;min-height:0;
-  border-left:1px solid var(--line)}
+/* 왼쪽 선은 두지 않습니다 — 상세 썸네일과 지도 사이에 흰 줄처럼 보였습니다 */
+.panelwrap{width:var(--panel-w);flex:none;position:relative;display:flex;min-height:0}
 .panel{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
 .panel-h{flex:none;padding:15px 18px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .panel-h b{font-size:15px;font-weight:650}
@@ -668,5 +668,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=comm2"></script>
+<script src="app.js?v=thumb2"></script>
 </body></html>

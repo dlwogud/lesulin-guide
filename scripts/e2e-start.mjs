@@ -138,7 +138,9 @@ await scenario("2b. 유튜버를 골라도 두 칸은 그대로(고정)", async 
 
 await scenario("2s. 카드를 누르면 그 식당만 · 전체 보기로 되돌림", async page => {
   await openStart(page);
-  const first = page.locator("#listVideos .vcard:not(.dup)").first();
+  /* 댓글이 있는 식당 카드로 — 또간집·히밥 예시는 댓글이 없어 2번 칸이 비는 게 정상입니다 */
+  const withRev = IN.places.filter(p => p.good || p.bad).map(p => p.id);
+  const first = page.locator(withRev.map(id => `#listVideos .vcard[data-store="${id}"]:not(.dup)`).join(",")).first();
   const sid = await first.getAttribute("data-store");
   await freeze(page);
   await first.locator(".vm").click();

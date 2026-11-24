@@ -65,8 +65,8 @@
     <div class="vcard${dup ? " dup" : ""}" data-store="${esc(p.id)}" role="button" tabindex="${dup ? -1 : 0}"
          aria-pressed="${sel === p.id}"${dup ? ' aria-hidden="true"' : ""}>
       <a class="thumb vlink"${dup ? ' tabindex="-1"' : ""} href="${YT(p.video.id)}" target="_blank" rel="noreferrer" aria-label="${esc(p.video.title)} 유튜브에서 보기">
-        <img src="img/vid/${encodeURIComponent(p.video.id)}.jpg" alt="" loading="lazy"
-             onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${encodeURIComponent(p.video.id)}/hqdefault.jpg'">
+        <img src="img/vid/${encodeURIComponent(p.video.id)}.jpg?v=2" alt="" loading="lazy"
+             onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${encodeURIComponent(p.video.id)}/mqdefault.jpg'">
         ${p.lvl ? `<span class="bd"><img src="/img/brand/badge-${p.lvl}.png" alt="">${LVL[p.lvl] || ""}</span>` : ""}
         <span class="who"><img class="av" src="img/ch/${encodeURIComponent(p.creatorId)}.jpg" alt="">${esc(creatorName(p.creatorId))}</span>
         ${p.video.dur ? `<span class="du">${esc(p.video.dur)}</span>` : ""}

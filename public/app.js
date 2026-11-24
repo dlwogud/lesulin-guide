@@ -18,7 +18,13 @@ const views = n => n >= 10000 ? (n/10000).toFixed(n >= 100000 ? 0 : 1).replace(/
                  : n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,"") + "천회" : n + "회";
 const dateK = d => d.replace(/-/g, ".");
 const chImg = id => `img/ch/${id}.jpg`;
-const vdImg = id => `img/vid/${id}.jpg`;
+const vdImg = id => `img/vid/${id}.jpg?v=2`;      // v=2: 640x360 고화질 (/img 는 1년 캐시라 주소를 바꿔야 새로 받음)
+/* 우리 썸네일(640x360)이 없거나 못 받으면 유튜브 썸네일로 대신합니다 — 회색 빈 칸이 남지 않게.
+   이미지 error 는 버블링하지 않아 캡처 단계에서 받습니다. */
+document.addEventListener("error", e => {
+  const im = e.target, m = im && im.tagName === "IMG" && /\/img\/vid\/([\w-]+)\.jpg/.exec(im.src);
+  if (m && !im.dataset.yt) { im.dataset.yt = "1"; im.src = `https://i.ytimg.com/vi/${m[1]}/mqdefault.jpg`; }
+}, true);
 const YT = id => "https://www.youtube.com/watch?v=" + id;
 const topVid = s => s.vids[0];
 const rated = s => s.status === "RATED";
