@@ -243,6 +243,9 @@ function drawPins(fit) {
 const PAGE = 24;
 let listCache = [], listShown = 0;
 
+/* 업종 원문이 "육류,고기요리"처럼 쉼표 뒤가 붙어 있어 띄워서 보여줍니다 */
+const catText = c => String(c).replace(/\s*,\s*/g, ", ");
+
 function cardHTML(s, i) {
   const v = topVid(s);
   /* 둘 이상이 간 집은 56곳이고 전부 2명이라 "외 1" 대신 그냥 나열합니다 */
@@ -261,12 +264,11 @@ function cardHTML(s, i) {
     </span>
     <span class="rmeta"><span class="rtitle"><h5 class="t1">${esc(s.n)}</h5>${s.sc != null ? `<b class="rsc">${s.sc}점</b>` : ""}</span>
       <span class="rsub"><span>${esc(shortRegion(s.r))}</span>
-      ${s.cat ? `<i class="dot"></i><span>${esc(s.cat)}</span>` : ""}
-      ${v ? `<i class="dot"></i><span>${views(v.vw)}</span>` : ""}
-      <i class="dot"></i>
-      ${rated(s) ? `<span class="ev">반응 ${s.cUsed}</span>${s.negN ? `<i class="dot"></i><span class="ng">쓴소리 ${s.negN}</span>` : ""}${s.waitN >= 3 ? `<i class="dot"></i><span class="wt">줄 ${s.waitN}</span>` : ""}`
-                 : `<span>방문댓글 ${s.cVisit}</span>`}
-    </span></span></button>`;
+      ${s.cat ? `<i class="dot"></i><span>${esc(catText(s.cat))}</span>` : ""}
+      ${v ? `<i class="dot"></i><span>${views(v.vw)}</span>` : ""}</span>
+      <span class="rsub">${rated(s) ? `<span class="ev">반응 ${s.cUsed}</span>${s.negN ? `<i class="dot"></i><span class="ng">쓴소리 ${s.negN}</span>` : ""}${s.waitN >= 3 ? `<i class="dot"></i><span class="wt">줄 ${s.waitN}</span>` : ""}`
+                 : `<span>방문댓글 ${s.cVisit}</span>`}</span>
+    </span></button>`;
 }
 
 function appendCards() {
@@ -359,7 +361,7 @@ function renderDetail(s) {
             ${s.lvl ? `<span class="bdg c"><img class="lvb" src="/img/brand/badge-${s.lvl}.png" alt="">${LVL[s.lvl]}</span>` : ""}
             ${rated(s) ? `<span class="bdg t">방문 반응 ${s.cUsed}</span>` : `<span class="bdg n">근거 부족</span>`}
             ${s.waitN >= 3 ? `<span class="bdg w">줄 서는 집</span>` : ""}
-            ${s.cat ? `<span class="bdg n">${esc(s.cat)}</span>` : ""}
+            ${s.cat ? `<span class="bdg n">${esc(catText(s.cat))}</span>` : ""}
           </div>
           <h3>${esc(s.n)}</h3><p class="addr">${esc(s.addr || shortRegion(s.r))}</p>
         </div>
@@ -855,8 +857,7 @@ function renderHot() {
   const top = [...polls].sort((a, b) => b.heat - a.heat || +b.id - +a.id).slice(0, 5);
   if ($("hotHint")) $("hotHint").textContent = `오늘 ${polls.length}건`;
   if (!top.length) {
-    el.innerHTML = `<p class="hotempty">아직 오늘 올라온 투표가 없습니다.<br>
-      지도 위 <b>투표</b> 버튼에서 첫 글을 올려 보세요.</p>`;
+    el.innerHTML = `<p class="hotempty">오늘 올라온 투표가 없습니다.</p>`;
     return;
   }
   el.innerHTML = top.map((p, i) => `<button class="hotrow" onclick="window.__hot(${p.id})">
@@ -874,8 +875,7 @@ window.__hot = id => { openPolls(); setTimeout(() => {
 function renderPolls() {
   const el = $("pollBody"); if (!el) return;
   if (!polls.length) {
-    el.innerHTML = `<p class="hotempty">오늘 올라온 투표가 없습니다.<br>
-      오른쪽 위 <b>+</b> 를 눌러 첫 질문을 올려 보세요. 밤 12시에 새로고침됩니다.</p>`;
+    el.innerHTML = `<p class="hotempty">오늘 올라온 투표가 없습니다.</p>`;
     return;
   }
   el.innerHTML = polls.map((p, i) => {

@@ -440,6 +440,7 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
 .rtitle h5{flex:1;min-width:0}
 .rsc{flex:none;font-size:14px;font-weight:800;color:var(--coral-ink);font-variant-numeric:tabular-nums}
 .rsub{font-family:var(--mono);font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:7px;margin-top:3px;flex-wrap:wrap}
+.rsub+.rsub{margin-top:2px}
 .dot{width:3px;height:3px;border-radius:50%;background:var(--line);flex:none}
 .rsub .ev{color:var(--teal-ink);font-weight:600}
 .rsub .ng{color:var(--bad);font-weight:600}
@@ -652,5 +653,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=score7"></script>
+<script src="app.js?v=qa1"></script>
 </body></html>
