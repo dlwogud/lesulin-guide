@@ -132,6 +132,69 @@ await scenario("6 답글 창 위 손잡이를 끌면 높이가 늘고 줄며, �
   ok(tb.y >= hb.y + hb.height, `답글 창이 투표 머리를 덮음: ${tb.y} < ${hb.y + hb.height}`);
 });
 
+/* 7·8: 쓴 사람만 고치고 지운다 — 화면이 내 글에만 버튼을 보이고, 맞는 주소로 요청을 보내는지.
+   요청은 위 scenario() 가 모두 가로채므로 운영 DB 에는 아무것도 가지 않습니다. */
+const MINE = { polls: [
+  { id: 1, body: "내가 쓴 글", nickname: "익명", created_at: new Date().toISOString(), edited_at: null,
+    ups: 0, downs: 0, replies: 2, heat: 4, my_vote: 0, mine: true },
+  { id: 2, body: "남이 쓴 글", nickname: "익명", created_at: new Date().toISOString(), edited_at: new Date().toISOString(),
+    ups: 0, downs: 0, replies: 0, heat: 0, my_vote: 0, mine: false }],
+  replies: [
+    { id: 11, poll_id: "1", body: "내 답글", nickname: "익명", created_at: new Date().toISOString(), edited_at: null, ups: 0, my_vote: 0, mine: true },
+    { id: 12, poll_id: "1", body: "남의 답글", nickname: "익명", created_at: new Date().toISOString(), edited_at: null, ups: 0, my_vote: 0, mine: false }],
+  head: { poll: 2, reply: 12 } };
+const sent = page => {
+  const log = [];
+  page.on("request", r => { if (r.method() !== "GET" && r.url().includes("/api/polls/"))
+    log.push({ m: r.method(), path: new URL(r.url()).pathname, body: JSON.parse(r.postData() || "{}") }); });
+  return log;
+};
+await scenario("7 내 글에만 수정·삭제가 있고, 고치는 중엔 새로고침이 덮어쓰지 않으며, 맞는 요청이 나간다", async page => {
+  await page.route("**/api/polls?**", r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MINE) }));
+  const log = sent(page);
+  await page.click("#bell");
+  await page.locator("#p2").waitFor({ timeout: 10000 });            // 가짜 목록이 그려질 때까지
+  ok(await page.locator("#p1 .ownb").count() === 2, "내 글에 수정·삭제 버튼이 없음");
+  ok(await page.locator("#p2 .ownb").count() === 0, "남의 글에 수정·삭제 버튼이 있음");
+  ok((await page.locator("#p2 .ph").textContent()).includes("수정됨"), "고친 글에 '수정됨' 표시가 없음");
+  await page.locator("#p1 .ownb", { hasText: "수정" }).click();
+  ok(await page.locator("#pThread").isHidden(), "수정 버튼을 눌렀는데 답글 창이 열림");
+  const ta = page.locator("#p1 textarea.pedt");
+  ok(await ta.inputValue() === "내가 쓴 글", "수정 칸에 원래 글이 안 채워짐");
+  await ta.fill("고친 글입니다");
+  await page.evaluate(() => pullPolls(false)); await page.waitForTimeout(200);   // 8초 새로고침이 와도
+  ok(await page.locator("#p1 textarea.pedt").inputValue() === "고친 글입니다", "새로고침이 고치던 내용을 지움");
+  await page.locator("#p1 .pesave").click(); await page.waitForTimeout(300);
+  const e = log.find(x => x.m === "PATCH");
+  ok(e && e.path === "/api/polls/1" && e.body.body === "고친 글입니다" && e.body.session, `PATCH 요청이 이상함: ${JSON.stringify(e)}`);
+  await page.locator("#p1 .ownb", { hasText: "삭제" }).click();
+  ok(await page.locator("#p1 .pdel").isVisible(), "삭제 확인이 안 뜸");
+  ok(!log.some(x => x.m === "DELETE"), "확인 전에 지워짐");
+  await page.locator("#p1 .pdelgo").click(); await page.waitForTimeout(300);
+  const d = log.find(x => x.m === "DELETE");
+  ok(d && d.path === "/api/polls/1" && d.body.session, `DELETE 요청이 이상함: ${JSON.stringify(d)}`);
+});
+await scenario("8 답글도 내 것에만 수정·삭제가 있고, 맞는 주소로 요청이 나간다", async page => {
+  await page.route("**/api/polls?**", r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MINE) }));
+  const log = sent(page);
+  await page.click("#bell");
+  await page.locator("#p2").waitFor({ timeout: 10000 });
+  await page.locator("#p1 .pt").click(); await page.waitForTimeout(300);
+  const mine = page.locator("#pThList .bub.me"), other = page.locator("#pThList .bub:not(.me)");
+  ok(await mine.locator(".ownb").count() === 2, "내 답글에 수정·삭제가 없음");
+  ok(await other.locator(".ownb").count() === 0, "남의 답글에 수정·삭제가 있음");
+  await mine.locator(".ownb", { hasText: "수정" }).click();
+  const ta = page.locator("#pThList textarea.pedt");
+  ok(await ta.inputValue() === "내 답글", "답글 수정 칸에 원래 답글이 안 채워짐");
+  await ta.fill("고친 답글"); await ta.press("Enter"); await page.waitForTimeout(300);
+  const e = log.find(x => x.m === "PATCH");
+  ok(e && e.path === "/api/polls/1/reply/11" && e.body.body === "고친 답글", `답글 PATCH 이상: ${JSON.stringify(e)}`);
+  await page.locator("#pThList .bub.me .ownb", { hasText: "삭제" }).click();
+  await page.locator("#pThList .pdelgo").click(); await page.waitForTimeout(300);
+  const d = log.find(x => x.m === "DELETE");
+  ok(d && d.path === "/api/polls/1/reply/11", `답글 DELETE 이상: ${JSON.stringify(d)}`);
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");

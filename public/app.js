@@ -846,7 +846,7 @@ async function pullPolls(notify) {
     }
     if (notify) for (const p of fresh.slice(0, 2)) toast(p);
     paintBell(); renderHot();
-    if (pollOn) renderPolls();
+    if (pollOn && !pedit && !pdel) renderPolls();   // 고치거나 지우는 중이면 그 칸을 덮어쓰지 않습니다
     return true;
   } catch { return false; }
 }
@@ -883,11 +883,13 @@ function renderPolls() {
     const isNew = +p.id > seen.poll && !p.mine;
     return `<article class="pitem${isNew ? " hot" : ""}${+p.id === threadId ? " sel" : ""}" id="p${p.id}" data-id="${p.id}" tabindex="0">
       <div class="ph">
-        <span class="au">${p.mine ? "내 글" : esc(p.nickname || "익명")}</span><span>·</span><span>${ago(p.created_at)}</span>
+        <span class="au">${p.mine ? "내 글" : esc(p.nickname || "익명")}</span><span>·</span><span>${ago(p.created_at)}${p.edited_at ? " · 수정됨" : ""}</span>
         ${p.store_name ? `<span class="st">📍 ${esc(p.store_name)}</span>`
           : p.place ? `<span>· ${esc(shortRegion(p.place))}</span>` : ""}
+        ${p.mine ? ownBtns("poll", p.id) : ""}
       </div>
-      <p class="pt">${esc(p.body)}</p>
+      ${isEdit("poll", p.id) ? editBox() : `<p class="pt">${esc(p.body)}</p>`}
+      ${isDel("poll", p.id) ? delBar("글과 답글이 모두 지워집니다.") : ""}
       <div class="pf">
         <button class="vbtn${p.my_vote === 1 ? " on" : ""}"
           onclick="window.__vote(${p.id},1,'poll')">👍 ${p.ups}</button>
@@ -916,9 +918,11 @@ function renderThread() {
   const list = $("pThList"), atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
   list.innerHTML = rs.length ? rs.map(r => `<div class="bub${r.mine ? " me" : ""}">
       <span class="nm">${r.mine ? "나" : esc(r.nickname || "익명")}</span>
-      <span class="tx">${esc(r.body)}${r.store_name ? ` <b>📍${esc(r.store_name)}</b>` : ""}</span>
-      <span class="mt">${r.created_at ? ago(r.created_at) : ""}
-        <button class="vbtn rv${r.my_vote === 1 ? " on" : ""}" onclick="window.__vote(${r.id},1,'reply')">♥ ${r.ups}</button></span>
+      ${isEdit("reply", r.id) ? editBox() : `<span class="tx">${esc(r.body)}${r.store_name ? ` <b>📍${esc(r.store_name)}</b>` : ""}</span>`}
+      <span class="mt">${r.created_at ? ago(r.created_at) : ""}${r.edited_at ? " · 수정됨" : ""}
+        <button class="vbtn rv${r.my_vote === 1 ? " on" : ""}" onclick="window.__vote(${r.id},1,'reply')">♥ ${r.ups}</button>
+        ${r.mine ? ownBtns("reply", r.id) : ""}</span>
+      ${isDel("reply", r.id) ? delBar("답글을 지웁니다.") : ""}
     </div>`).join("") : `<p class="none">아직 답글이 없습니다. 첫 답글을 달아 보세요.</p>`;
   if (atBottom || list.dataset.for !== String(p.id)) list.scrollTop = list.scrollHeight;
   list.dataset.for = String(p.id);
@@ -978,6 +982,54 @@ window.__vote = async (id, v, target) => {
     });
     if (r.ok) await pullPolls(false);
   } catch {}
+};
+
+/* ── 내 글·답글 고치기·지우기 ─────────────────────────────
+   서버가 글을 쓴 브라우저의 세션과 같은지 확인합니다. 화면은 mine 인 것에만 버튼을 둡니다.
+   pedit/pdel 이 있는 동안은 8초 새로고침이 목록을 다시 그리지 않습니다(쓰던 내용이 날아가지 않게). */
+let pedit = null, pdel = null;          // {t:"poll"|"reply", id, text?, err?}
+const isEdit = (t, id) => pedit && pedit.t === t && pedit.id === +id;
+const isDel = (t, id) => pdel && pdel.t === t && pdel.id === +id;
+const ownBtns = (t, id) => `<span class="own"><button class="ownb" onclick="window.__pedit('${t}',${id})">수정</button><button class="ownb" onclick="window.__pdel('${t}',${id})">삭제</button></span>`;
+const editBox = () => `<div class="pedit"><textarea class="pedt" maxlength="300" rows="2">${esc(pedit.text)}</textarea>
+  ${pedit.err ? `<p class="perr">${esc(pedit.err)}</p>` : ""}
+  <div class="pea"><button class="ownb" onclick="window.__pcancel()">취소</button><button class="pesave" onclick="window.__psave()">저장</button></div></div>`;
+const delBar = msg => `<div class="pdel"><span>${msg}</span><button class="ownb" onclick="window.__pcancel()">취소</button><button class="pdelgo" onclick="window.__pdelgo()">삭제</button></div>`;
+const ownItem = (t, id) => t === "poll" ? polls.find(p => +p.id === id) : [...preps.values()].flat().find(r => +r.id === id);
+const ownUrl = (t, id) => t === "poll" ? `/api/polls/${id}` : `/api/polls/${+ownItem(t, id).poll_id}/reply/${id}`;
+
+function focusEdit() {
+  const ta = document.querySelector("textarea.pedt"); if (!ta) return;
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+  ta.oninput = () => { if (pedit) pedit.text = ta.value; };
+  ta.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); window.__psave(); } };
+}
+window.__pedit = (t, id) => {
+  const it = ownItem(t, id); if (!it) return;
+  pedit = { t, id, text: it.body }; pdel = null;
+  renderPolls(); focusEdit();
+};
+window.__pdel = (t, id) => { pdel = { t, id }; pedit = null; renderPolls(); };
+window.__pcancel = () => { pedit = pdel = null; renderPolls(); };
+window.__psave = async () => {
+  if (!pedit) return;
+  const { t, id } = pedit, body = pedit.text.trim();
+  if (!body) return;
+  try {
+    const r = await fetch(ownUrl(t, id), { method: "PATCH", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ session: sid, body }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { pedit.err = d.error || "고치지 못했습니다. 잠시 뒤 다시 해 주세요."; renderPolls(); focusEdit(); return; }
+  } catch { pedit.err = "고치지 못했습니다. 인터넷 연결을 확인해 주세요."; renderPolls(); focusEdit(); return; }
+  pedit = null; await pullPolls(false); renderPolls();
+};
+window.__pdelgo = async () => {
+  if (!pdel) return;
+  const { t, id } = pdel, url = ownUrl(t, id);
+  pdel = null;
+  try { await fetch(url, { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ session: sid }) }); } catch {}
+  if (t === "poll" && threadId === id) threadId = null;
+  await pullPolls(false); renderPolls();
 };
 
 async function sendReply() {
@@ -1129,7 +1181,7 @@ function wirePolls() {
   $("pollAdd").onclick = () => showForm($("pollForm").hidden);
   /* 글(카드)을 누르면 답글 채팅 — 투표·답글 버튼을 누른 건 그대로 */
   $("pollBody").addEventListener("click", e => {
-    if (e.target.closest("button")) return;
+    if (e.target.closest("button, .pedit, .pdel")) return;
     const a = e.target.closest(".pitem"); if (a) openThread(+a.dataset.id);
   });
   $("pollBody").addEventListener("keydown", e => {
@@ -1142,7 +1194,8 @@ function wirePolls() {
   $("pThSend").onclick = sendReply;
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape" || !pollOn) return;
-    if (threadId != null) openThread(threadId);        // 채팅 먼저 닫고
+    if (pedit || pdel) window.__pcancel();
+    else if (threadId != null) openThread(threadId);        // 채팅 먼저 닫고
     else if (!$("pollForm").hidden) showForm(false);   // 글쓰기 칸, 그다음 창
     else closePolls();
   });

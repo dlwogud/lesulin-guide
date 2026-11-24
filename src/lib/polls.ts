@@ -31,7 +31,7 @@ export async function feed(sort: Sort, session: string | null, limit = 40) {
     SELECT f.*,
            COALESCE(mv.value, 0) AS my_vote,
            (f.session_me IS NOT NULL) AS mine
-      FROM (SELECT pf.*, CASE WHEN p.session = $1 THEN 1 END AS session_me
+      FROM (SELECT pf.*, p.edited_at, CASE WHEN p.session = $1 THEN 1 END AS session_me
               FROM poll_feed pf JOIN polls p ON p.id = pf.id) f
       LEFT JOIN poll_votes mv ON mv.poll_id = f.id AND mv.session = $1
      WHERE f.day = (now() AT TIME ZONE 'Asia/Seoul')::date
@@ -43,7 +43,7 @@ export async function replies(pollIds: number[], session: string | null) {
   if (!pollIds.length) return [];
   return q(`
     SELECT r.id, r.poll_id, r.body, r.store_id, s.name AS store_name,
-           r.nickname, r.created_at,
+           r.nickname, r.created_at, r.edited_at,
            COALESCE(v.up, 0) AS ups,
            COALESCE(mv.value, 0) AS my_vote,
            (r.session = $2) AS mine

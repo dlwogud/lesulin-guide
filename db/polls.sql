@@ -63,6 +63,10 @@ CREATE TABLE IF NOT EXISTS reply_votes (
   CONSTRAINT reply_votes_pm1 CHECK (value IN (-1, 1))
 );
 
+-- 쓴 사람이 고친 시각. 화면에 "수정됨"을 붙입니다 (2026-11-24).
+ALTER TABLE polls        ADD COLUMN IF NOT EXISTS edited_at timestamptz;
+ALTER TABLE poll_replies ADD COLUMN IF NOT EXISTS edited_at timestamptz;
+
 /* 좌측 "실시간 인기" — 반응이 많은 순.
    답글은 투표보다 품이 들어서 2배로 셉니다. 찬반이 갈려 시끄러운 글도
    올라오도록 투표는 부호를 지우고 양으로 셉니다(에브리타임 실시간 느낌).
