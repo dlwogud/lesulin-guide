@@ -1204,12 +1204,25 @@ window.__loctoggle = () => {
    창 전체로 커지며 펼쳐집니다(popPoll). 닫을 때는 거꾸로 동그라미로 줄어듭니다. */
 let pollAnim = null;
 const calmMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* 창을 끌어 옮기거나 크기를 바꾸면 기억합니다(pbox). 크기는 계속, 자리는 동그라미를 옮기면 다시 동그라미 쪽으로. */
+const PBOX_KEY = "lesulin.pollBox", PBOX_MIN = { w: 300, h: 380 };
+let pbox = null;
+try { const v = JSON.parse(localStorage.getItem(PBOX_KEY) || "null"); if (v && v.w > 0 && v.h > 0) pbox = v; } catch {}
+const savePbox = () => { try { pbox ? localStorage.setItem(PBOX_KEY, JSON.stringify(pbox)) : localStorage.removeItem(PBOX_KEY); } catch {} };
+/* 동그라미 자리 — 창이 열려 있으면 동그라미가 줄어(scale) 있으므로 변형 전 크기·자리로 잽니다 */
+function bellRect() {
+  const b = $("bell"), box = b.parentElement.getBoundingClientRect();
+  const left = box.left + b.offsetLeft, top = box.top + b.offsetTop, width = b.offsetWidth, height = b.offsetHeight;
+  return { left, top, width, height, right: left + width, bottom: top + height };
+}
 function placePoll() {
   const w = $("pollWrap"), b = $("bell"); if (!w || !b) return;
   const vw = innerWidth, vh = innerHeight, M = 12;
-  const W = Math.min(384, vw - M * 2), H = Math.min(680, vh - M * 2);
-  const r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const W = Math.max(Math.min(PBOX_MIN.w, vw - M * 2), Math.min(pbox ? pbox.w : 384, vw - M * 2));
+  const H = Math.max(Math.min(PBOX_MIN.h, vh - M * 2), Math.min(pbox ? pbox.h : 680, vh - M * 2));
+  const r = bellRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
   let left = cx > vw / 2 ? r.right - W : r.left, top = cy < vh / 2 ? r.top : r.bottom - H;
+  if (pbox && pbox.x != null) { left = pbox.x; top = pbox.y; }
   left = Math.max(M, Math.min(vw - W - M, left)); top = Math.max(M, Math.min(vh - H - M, top));
   Object.assign(w.style, { left: left + "px", top: top + "px", width: W + "px", height: H + "px" });
 }
@@ -1217,7 +1230,7 @@ function popPoll(open, done) {
   const w = $("pollWrap"), b = $("bell");
   if (pollAnim) { pollAnim.cancel(); pollAnim = null; }
   if (!w || !b || calmMotion() || !w.animate) { done && done(); return; }
-  const r = b.getBoundingClientRect(), wr = w.getBoundingClientRect();
+  const r = bellRect(), wr = w.getBoundingClientRect();
   const ox = r.left + r.width / 2 - wr.left, oy = r.top + r.height / 2 - wr.top;
   const far = Math.max(...[[0, 0], [wr.width, 0], [0, wr.height], [wr.width, wr.height]].map(([x, y]) => Math.hypot(x - ox, y - oy)));
   const a = `circle(${r.width / 2}px at ${ox}px ${oy}px)`, z = `circle(${Math.ceil(far)}px at ${ox}px ${oy}px)`;
@@ -1257,6 +1270,67 @@ function applyBell() {
   const aw = box.clientWidth - b.offsetWidth - BELL_M * 2, ah = box.clientHeight - b.offsetHeight - BELL_M * 2;
   Object.assign(b.style, { left: BELL_M + Math.max(0, aw) * bellPos.x + "px", top: BELL_M + Math.max(0, ah) * bellPos.y + "px", right: "auto" });
 }
+/* 머리를 잡으면 창 이동, 가장자리·모서리를 잡으면 크기 조절. 머리를 두 번 누르면 처음 자리·크기로 */
+function wirePollBox() {
+  const w = $("pollWrap"), hd = w && w.querySelector("header"); if (!w || !hd) return;
+  for (const d of ["n", "s", "e", "w", "nw", "ne", "sw", "se"]) {
+    const g = document.createElement("div");
+    g.className = "prz"; g.dataset.d = d; g.setAttribute("aria-hidden", "true");
+    w.appendChild(g);
+  }
+  let st = null;
+  const begin = (e, mode) => {
+    if (e.button !== 0) return;
+    const r = w.getBoundingClientRect();
+    st = { mode, x: e.clientX, y: e.clientY, l: r.left, t: r.top, w: r.width, h: r.height, on: false, id: e.pointerId, el: e.currentTarget };
+  };
+  hd.addEventListener("pointerdown", e => {
+    if (e.target.closest("button, input, textarea, a, .prz")) return;
+    begin(e, "move");
+  });
+  w.querySelectorAll(".prz").forEach(g => g.addEventListener("pointerdown", e => { e.stopPropagation(); begin(e, g.dataset.d); }));
+  addEventListener("pointermove", e => {
+    if (!st || e.pointerId !== st.id) return;
+    const dx = e.clientX - st.x, dy = e.clientY - st.y;
+    if (!st.on) {
+      if (Math.hypot(dx, dy) < 3) return;
+      st.on = true; document.body.classList.add("pmoving");
+      if (st.mode === "move") w.classList.add("moving");
+      if (pollAnim) { pollAnim.cancel(); pollAnim = null; }
+    }
+    const vw = innerWidth, vh = innerHeight, M = 8;
+    let { l, t, w: W, h: H } = st;
+    if (st.mode === "move") {
+      l = Math.max(M - W + 80, Math.min(vw - 80, l + dx));       // 머리 80px 은 늘 화면 안에
+      t = Math.max(M, Math.min(vh - 60, t + dy));
+    } else {
+      const m = st.mode;
+      if (m.includes("e")) W = Math.max(PBOX_MIN.w, Math.min(vw - M - l, W + dx));
+      if (m.includes("s")) H = Math.max(PBOX_MIN.h, Math.min(vh - M - t, H + dy));
+      if (m.includes("w")) { const nw = Math.max(PBOX_MIN.w, Math.min(st.l + st.w - M, W - dx)); l = st.l + st.w - nw; W = nw; }
+      if (m.includes("n")) { const nh = Math.max(PBOX_MIN.h, Math.min(st.t + st.h - M, H - dy)); t = st.t + st.h - nh; H = nh; }
+    }
+    Object.assign(w.style, { left: l + "px", top: t + "px", width: W + "px", height: H + "px" });
+  });
+  const end = e => {
+    if (!st || (e && e.pointerId !== st.id)) return;
+    if (st.on) {
+      const r = w.getBoundingClientRect();
+      pbox = { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) };
+      savePbox();
+      const th = $("pThread");                                  // 답글 창이 새 높이보다 크면 줄임
+      if (th && !th.hidden && th.style.height && parseFloat(th.style.height) > pthMax()) setPthH(pthMax(), false);
+    }
+    document.body.classList.remove("pmoving"); w.classList.remove("moving");
+    st = null;
+  };
+  addEventListener("pointerup", end);
+  addEventListener("pointercancel", end);
+  hd.addEventListener("dblclick", e => {
+    if (e.target.closest("button, input, textarea, a")) return;
+    pbox = null; savePbox(); placePoll();
+  });
+}
 function wireBellDrag() {
   const b = $("bell"), box = b && b.parentElement; if (!b || !box) return;
   try { const v = JSON.parse(localStorage.getItem(BELL_KEY) || "null"); if (v && v.x >= 0 && v.x <= 1 && v.y >= 0 && v.y <= 1) bellPos = v; } catch {}
@@ -1285,6 +1359,7 @@ function wireBellDrag() {
       bellDragged = true; setTimeout(() => { bellDragged = false; }, 0);
       b.classList.remove("drag");
       try { localStorage.setItem(BELL_KEY, JSON.stringify(bellPos)); } catch {}
+      if (pbox && pbox.x != null) { pbox = { w: pbox.w, h: pbox.h }; savePbox(); }   // 창은 새 동그라미 자리에서 열림
     }
     st = null;
   };
@@ -1299,7 +1374,7 @@ function wirePolls() {
     if (v && typeof v.poll === "number") seen = v;
   } catch {}
   $("bell").onclick = () => { if (!bellDragged) (pollOn ? closePolls() : openPolls()); };
-  wireBellDrag();
+  wireBellDrag(); wirePollBox();
   $("pollX").onclick = closePolls;
   $("tabHot").onclick = () => setSort("hot");
   $("tabNew").onclick = () => setSort("new");

@@ -403,6 +403,35 @@ await scenario("20 커뮤니티 창: 머리에 사람 아이콘·글/답글 수,
   ok((await page.locator(".pitem .rbtn").first().textContent()).includes("답글"), "답글 버튼이 없음");
 });
 
+/* 21: 열린 커뮤니티 창 — 머리를 잡고 이동, 모서리·가장자리로 크기 조절, 닫았다 열어도 유지, 두 번 누르면 처음대로 */
+await scenario("21 커뮤니티 창: 머리 잡고 이동·모서리로 크기 조절·최소 크기·다시 열어도 유지·머리 두 번 누르면 처음대로", async page => {
+  await page.click("#bell"); await page.locator(".pitem").first().waitFor({ timeout: 10000 }); await page.waitForTimeout(500);
+  const box = () => page.locator("#pollWrap").boundingBox();
+  const drag = async (x, y, dx, dy) => { await page.mouse.move(x, y); await page.mouse.down(); await page.mouse.move(x + dx, y + dy, { steps: 10 }); await page.mouse.up(); await page.waitForTimeout(150); };
+  const a = await box();
+  const h3 = await page.locator(".pollwrap h3").boundingBox();
+  await drag(h3.x + 20, h3.y + 8, -400, 60);
+  const b = await box();
+  ok(Math.abs(b.x - (a.x - 400)) < 3 && Math.abs(b.y - (a.y + 60)) < 3 && Math.abs(b.width - a.width) < 1, `머리를 끌었는데 창이 안 움직임: ${JSON.stringify([a, b])}`);
+  await drag(b.x + b.width - 10, b.y + b.height - 10, 120, -100);
+  const c = await box();
+  ok(Math.abs(c.width - (b.width + 120)) < 3 && Math.abs(c.height - (b.height - 100)) < 3 && Math.abs(c.x - b.x) < 1, `오른쪽 아래 모서리로 크기가 안 바뀜: ${JSON.stringify([b, c])}`);
+  await drag(c.x + 2, c.y + c.height / 2, 60, 0);
+  const d = await box();
+  ok(Math.abs(d.x - (c.x + 60)) < 3 && Math.abs(d.width - (c.width - 60)) < 3, "왼쪽 가장자리로 크기가 안 바뀜");
+  await drag(d.x + d.width - 10, d.y + d.height - 10, -900, -900);
+  const e = await box();
+  ok(e.width >= 299 && e.height >= 379, `최소 크기보다 작아짐: ${JSON.stringify(e)}`);
+  ok(await page.locator("#pollWrap").isVisible() && await page.locator("#pollBody").isVisible(), "크기 조절 뒤 창이 사라짐");
+  await page.click("#pollX"); await page.waitForTimeout(500);
+  await page.click("#bell"); await page.waitForTimeout(600);
+  const f = await box();
+  ok(Math.abs(f.x - e.x) < 2 && Math.abs(f.y - e.y) < 2 && Math.abs(f.width - e.width) < 2, "닫았다 열면 옮긴 자리·크기가 안 남음");
+  await page.dblclick(".pollwrap h3"); await page.waitForTimeout(200);
+  const g = await box();
+  ok(Math.abs(g.width - a.width) < 2 && Math.abs(g.x - a.x) < 2, `머리를 두 번 눌러도 처음 자리·크기로 안 돌아감: ${JSON.stringify([a, f, g])}`);
+});
+
 await browser.close();
 if (fails.length) { console.log(`\n실패 ${fails.length}건`); process.exit(1); }
 console.log("\n모두 통과");

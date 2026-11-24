@@ -71,6 +71,8 @@ console.log(`시작 화면 e2e — ${BASE}`);
 await scenario("1. 데스크톱: 제목·숫자·세 칸·칩 (숫자는 API 값과 일치)", async page => {
   await openStart(page);
   ok((await page.textContent("#hero")).includes("직접 다녀온 사람들의 반응은"), "핵심 문장");
+  ok((await page.textContent("#hero .hl")) === "직접 다녀온 사람들" &&
+     await page.$eval("#hero .hl", e => getComputedStyle(e).color) === await page.$eval(".cta", e => getComputedStyle(e).backgroundColor), "'직접 다녀온 사람들'이 주황색이 아님");
   ok(await page.locator("#kmap").count() === 0, "지도 화면 요소가 섞임");
   ok((await page.textContent("#statStores")).includes(nf(IN.meta.stores)), "식당 수");
   ok((await page.textContent("#statVideos")).includes(nf(IN.meta.videos)), "영상 수");

@@ -310,7 +310,24 @@ body.resizing iframe,body.resizing #kmap{pointer-events:none}
   flex-direction:column;background:#fff;border-radius:22px;border:1px solid rgba(0,0,0,.06);
   box-shadow:0 24px 60px rgba(30,24,16,.22),0 4px 14px rgba(30,24,16,.08);overflow:hidden}
 .pollwrap[hidden]{display:none!important}
-.pollwrap>header{position:relative;padding:16px 16px 0;border-bottom:1px solid var(--line);background:#fff}
+.pollwrap>header{position:relative;padding:16px 16px 0;border-bottom:1px solid var(--line);background:#fff;cursor:grab;touch-action:none}
+.pollwrap>header input{cursor:text}
+.pollwrap.moving>header{cursor:grabbing}
+/* 둥근 모서리 밖은 눌리지 않으므로 모서리 손잡이는 안쪽으로 들여 둡니다. 창 가장자리·모서리를 끌면 크기가 바뀝니다(app.js wirePollBox). 오른쪽 아래엔 손잡이 표시 */
+.prz{position:absolute;z-index:6;touch-action:none}
+.prz[data-d=n]{top:0;left:14px;right:14px;height:6px;cursor:ns-resize}
+.prz[data-d=s]{bottom:0;left:14px;right:14px;height:6px;cursor:ns-resize}
+.prz[data-d=e]{right:0;top:14px;bottom:14px;width:6px;cursor:ew-resize}
+.prz[data-d=w]{left:0;top:14px;bottom:14px;width:6px;cursor:ew-resize}
+.prz[data-d=nw]{left:3px;top:3px;width:18px;height:18px;cursor:nwse-resize}
+.prz[data-d=se]{right:3px;bottom:3px;width:20px;height:20px;cursor:nwse-resize}
+.prz[data-d=ne]{right:3px;top:3px;width:18px;height:18px;cursor:nesw-resize}
+.prz[data-d=sw]{left:3px;bottom:3px;width:18px;height:18px;cursor:nesw-resize}
+.prz[data-d=se]::after{content:"";position:absolute;right:5px;bottom:5px;width:8px;height:8px;opacity:.55;
+  background:linear-gradient(135deg,transparent 0 45%,var(--muted) 45% 52%,transparent 52% 68%,var(--muted) 68% 75%,transparent 75%)}
+.prz[data-d=se]:hover::after{opacity:1}
+body.pmoving{user-select:none}
+body.pmoving iframe,body.pmoving #kmap{pointer-events:none}
 .pc-top{display:flex;align-items:center;gap:10px;padding-right:62px}
 .pc-ic{width:38px;height:38px;border-radius:12px;background:var(--coral-soft);color:var(--coral);display:grid;place-items:center;flex:none}
 .pollwrap h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
@@ -715,5 +732,5 @@ body.resizing-y,body.resizing-y *{cursor:row-resize!important;user-select:none}
    내려주는 /api/mapkey 를 씁니다. ?key= 는 로컬에서 쓰던 길로 남겨 둡니다. */
 window.__MAPKEY__ = new URLSearchParams(location.search).get("key") || "";
 </script>
-<script src="app.js?v=comm6"></script>
+<script src="app.js?v=comm7"></script>
 </body></html>
